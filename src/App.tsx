@@ -1840,20 +1840,31 @@ function App() {
       }
       return;
     }
-    if (!videoRef.current) return;
-    const maxStart = Math.max(
-      0,
-      videoRef.current.duration - windowSecondsRef.current,
-    );
-    const panAmount = e.deltaY * 0.08;
-    const newTarget = Math.max(
-      0,
-      Math.min(maxStart, windowTargetRef.current + panAmount),
-    );
-    windowTargetRef.current = newTarget;
-    isScrollingManuallyRef.current = true;
-    if (autoFollowingRef.current) {
-      setAutoFollowing(false);
+    if (e.ctrlKey) {
+      // Ctrl+scroll = pan lateral (moverse en el tiempo)
+      e.preventDefault();
+      if (!videoRef.current) return;
+      const maxStart = Math.max(
+        0,
+        videoRef.current.duration - windowSecondsRef.current,
+      );
+      const panAmount = e.deltaY * 0.08;
+      const newTarget = Math.max(
+        0,
+        Math.min(maxStart, windowTargetRef.current + panAmount),
+      );
+      windowTargetRef.current = newTarget;
+      isScrollingManuallyRef.current = true;
+      if (autoFollowingRef.current) {
+        setAutoFollowing(false);
+      }
+      return;
+    }
+    // Scroll normal = subir/bajar entre los carriles de hablantes
+    const area = trackAreaRef.current;
+    if (area) {
+      e.preventDefault();
+      area.scrollTop += e.deltaY;
     }
   };
 
