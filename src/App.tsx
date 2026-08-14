@@ -2193,34 +2193,21 @@ function App() {
       }
     }
 
-    // Playhead (firma): línea coral con halo, alineado con grid y carriles
+    // Playhead (firma): un único div HTML (.playheadLine) que cruza canvas y
+    // tracks — evita pintar el playhead DENTRO del canvas (que aparecía como
+    // una segunda línea).
     const enVentana = currentTime >= ws && currentTime <= ws + wSec;
-    if (enVentana) {
-      const playheadX =
-        TRACK_LABEL_W +
-        ((currentTime - ws) / wSec) * (width - TRACK_LABEL_W);
-      ctx.strokeStyle = "rgba(232, 93, 78, 0.25)";
-      ctx.lineWidth = 7;
-      ctx.beginPath();
-      ctx.moveTo(playheadX, 0);
-      ctx.lineTo(playheadX, height);
-      ctx.stroke();
-      ctx.strokeStyle = "#e85d4e";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(playheadX, 0);
-      ctx.lineTo(playheadX, height);
-      ctx.stroke();
-
-      // Línea del playhead sobre el área de carriles (mismo tiempo)
-      const phEl = playheadLineRef.current;
-      if (phEl) {
+    const playheadX =
+      TRACK_LABEL_W +
+      ((currentTime - ws) / wSec) * (width - TRACK_LABEL_W);
+    const phEl = playheadLineRef.current;
+    if (phEl) {
+      if (enVentana) {
         phEl.style.display = "block";
         phEl.style.left = `${playheadX}px`;
+      } else {
+        phEl.style.display = "none";
       }
-    } else {
-      const phEl = playheadLineRef.current;
-      if (phEl) phEl.style.display = "none";
     }
   }
 
@@ -2726,14 +2713,12 @@ function App() {
                       const wSec = windowSecondsRef.current;
                       const drag = isDraggingCaptionEdgeRef.current;
                       const bd = bodyDragRef.current;
+                      // Durante el body drag, el clip se renderiza como
+                      // preview en el track destino (no en su track original).
+                      if (bd && bd.ids.includes(cap.id)) return null;
                       let s = cap.inicio;
                       let e = cap.fin;
-                      if (bd && bd.ids.includes(cap.id)) {
-                        const dur = cap.fin - cap.inicio;
-                        const t = bd.startTimes.get(cap.id) ?? cap.inicio;
-                        s = t + bd.deltaT;
-                        e = s + dur;
-                      } else if (drag && drag.captionId === cap.id) {
+                      if (drag && drag.captionId === cap.id) {
                         const t = dragCurrentTimeRef.current;
                         if (drag.edge === "start") s = t;
                         else e = t;
@@ -2783,15 +2768,11 @@ function App() {
               ))}
               {bodyDragRef.current && dropFila !== null && (() => {
                 const bd = bodyDragRef.current;
-                const filaColor =
-                  dropFila === 0
-                    ? "#4a4853"
-                    : hablantes[dropFila - 1]?.color ?? "#4a4853";
                 const ws = windowStart;
                 const wSec = windowSecondsRef.current;
                 return (
                   <div
-                    className="dragGhosts"
+                    className="dragPreview"
                     style={{
                       position: "absolute",
                       left: TRACK_LABEL_W,
@@ -2799,6 +2780,7 @@ function App() {
                       top: dropFila * TRACK_H + 1,
                       height: TRACK_H - 2,
                       pointerEvents: "none",
+                      zIndex: 8,
                     }}
                   >
                     {bd.ids.map((id) => {
@@ -2811,14 +2793,17 @@ function App() {
                       if (e <= s) return null;
                       const left = ((s - ws) / wSec) * 100;
                       const width = ((e - s) / wSec) * 100;
+                      const color =
+                        speakerMap.get(cap.hablante_id ?? "")?.color ??
+                        "#4a4853";
                       return (
                         <div
                           key={id}
-                          className="dragGhost"
+                          className="clip"
                           style={{
                             left: `${left}%`,
                             width: `${width}%`,
-                            background: filaColor,
+                            background: color,
                           }}
                           title={cap.texto}
                         >

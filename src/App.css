@@ -784,32 +784,6 @@ body {
   display: none;
 }
 
-.dragGhost {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  padding-left: 5px;
-  font-size: 9px;
-  font-weight: 500;
-  color: #121114;
-  overflow: hidden;
-  white-space: nowrap;
-  user-select: none;
-  opacity: 0.7;
-  outline: 1.5px dashed rgba(255, 255, 255, 0.5);
-  outline-offset: -1.5px;
-}
-
-.dragGhost .clipText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
 .captionTime {
   font-family: var(--font-mono);
   font-size: 11px;
