@@ -1109,6 +1109,9 @@ function App() {
             Math.min(maxStart, windowStartRef.current),
           );
           updateScrollbarThumb(windowStartRef.current, windowSecondsRef.current, video.duration);
+          // Re-render por frame durante el pan/follow (incluso con video
+          // pausado, donde el playhead no tickea): los clips siguen al canvas.
+          setWindowStart(windowStartRef.current);
         }
 
         playheadFrameSkipRef.current++;
@@ -1930,8 +1933,8 @@ function App() {
       if (sw > 1) {
         ctx.imageSmoothingEnabled = false;
         ctx.save();
-        ctx.translate(-frac * (width / sw), 0);
-        ctx.drawImage(wfCanvas, sx, 0, sw, 90, 0, 0, width, height);
+        ctx.translate(-frac * ((width - TRACK_LABEL_W) / sw), 0);
+        ctx.drawImage(wfCanvas, sx, 0, sw, 90, TRACK_LABEL_W, 0, width - TRACK_LABEL_W, height);
         ctx.restore();
         ctx.imageSmoothingEnabled = true;
       }
