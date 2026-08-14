@@ -78,6 +78,7 @@ function App() {
   const [analizando, setAnalizando] = useState<boolean>(false);
   const [playheadTime, setPlayheadTime] = useState<number>(0);
   const [windowSeconds, setWindowSeconds] = useState<number>(10);
+  const [windowStart, setWindowStart] = useState<number>(0);
   const [captions, setCaptions] = useState<Caption[]>([]);
   const [arrastrando, setArrastrando] = useState<boolean>(false);
   const [reproduciendo, setReproduciendo] = useState<boolean>(false);
@@ -1126,6 +1127,12 @@ function App() {
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, []);
+
+  // Patrón #1: sincroniza el state con el ref para que los clips del trackArea
+  // sigan el pan/follow/seek (el ref cambia en el rAF, no en un re-render).
+  useEffect(() => {
+    setWindowStart(windowStartRef.current);
+  });
 
   function togglePlay() {
     const video = videoRef.current;
@@ -2351,10 +2358,18 @@ function App() {
                   </span>
                   <div className="trackClips">
                     {row.caps.map((cap) => {
-                      const ws = windowStartRef.current;
+                      const ws = windowStart;
                       const wSec = windowSecondsRef.current;
-                      const s = Math.max(cap.inicio, ws);
-                      const e = Math.min(cap.fin, ws + wSec);
+                      const drag = isDraggingCaptionEdgeRef.current;
+                      let s = cap.inicio;
+                      let e = cap.fin;
+                      if (drag && drag.captionId === cap.id) {
+                        const t = dragCurrentTimeRef.current;
+                        if (drag.edge === "start") s = t;
+                        else e = t;
+                      }
+                      s = Math.max(s, ws);
+                      e = Math.min(e, ws + wSec);
                       if (e <= s) return null;
                       const left = ((s - ws) / wSec) * 100;
                       const width = ((e - s) / wSec) * 100;
