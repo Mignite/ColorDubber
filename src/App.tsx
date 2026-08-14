@@ -908,7 +908,9 @@ function App() {
     };
     const onSeeked = () => {
       if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
-        audio.currentTime = video.currentTime;
+        if (Math.abs(audio.currentTime - video.currentTime) > 0.5) {
+          audio.currentTime = video.currentTime;
+        }
       }
     };
 
@@ -930,8 +932,14 @@ function App() {
     // de que el elemento estuviera listo (NotSupportedError silenciado por el
     // catch), el siguiente canplay reintenta. Un sync con { once: true } se
     // consume mientras el video está pausado y deja el audio mudo para siempre.
+    // El currentTime solo se ajusta si el desfase supera el umbral: resetearlo
+    // a cada canplay/seek del video (stalls de decodificación, seeks) hace que
+    // el audio tartamudee como un juego a bajos fps.
+    const UMBRAL_SYNC = 0.5;
     const sync = () => {
-      audio.currentTime = video.currentTime;
+      if (Math.abs(audio.currentTime - video.currentTime) > UMBRAL_SYNC) {
+        audio.currentTime = video.currentTime;
+      }
       if (!video.paused) {
         audio.play().catch(() => {});
       }
@@ -945,9 +953,9 @@ function App() {
         "src:",
         audio.src,
       );
-      // Fallback: si el archivo extraído no puede reproducirse, el video
-      // (muteado por diseño) aporta su audio nativo.
-      video.muted = false;
+      // Reintentar la carga en vez de desmutear el video: desmutear dejaría
+      // dos fuentes sonando a la vez (combate de fase / tartamudeo).
+      audio.load();
     };
 
     if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
@@ -958,7 +966,6 @@ function App() {
     return () => {
       audio.removeEventListener("canplay", sync);
       audio.removeEventListener("error", onAudioError);
-      video.muted = true;
     };
   }, [audioSrc]);
 
