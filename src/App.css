@@ -737,6 +737,7 @@ body {
   pointer-events: none;
   z-index: 5;
   display: none;
+  transform: translateX(-50%);
 }
 
 /* ===== LISTA DE SUBTÍTULOS ===== */

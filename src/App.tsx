@@ -109,6 +109,7 @@ function App() {
   const modoMuestreoWhisperRef = useRef("beam5");
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [dropFila, setDropFila] = useState<number | null>(null);
+  const [bodyDragTick, setBodyDragTick] = useState(0);
   const isScrollingManuallyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1647,6 +1648,7 @@ function App() {
           } else {
             setDropFila(null);
           }
+          setBodyDragTick((t) => t + 1);
         }
         return;
       }
@@ -2767,6 +2769,7 @@ function App() {
                 </div>
               ))}
               {bodyDragRef.current && dropFila !== null && (() => {
+                void bodyDragTick;
                 const bd = bodyDragRef.current;
                 const ws = windowStart;
                 const wSec = windowSecondsRef.current;
