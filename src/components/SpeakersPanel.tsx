@@ -7,11 +7,27 @@ interface Props {
   onTogglePanel: () => void;
   onAgregar: () => void;
   onActualizar: (id: string, campo: keyof Hablante, valor: string) => void;
+  onCambiarColor: (id: string, color: string) => void;
   onEliminar: (id: string) => void;
   onCommit: () => void;
 }
 
-function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onActualizar, onEliminar, onCommit }: Props) {
+function normalizarColor(color: string): string {
+  if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+    return (
+      "#" +
+      color[1] +
+      color[1] +
+      color[2] +
+      color[2] +
+      color[3] +
+      color[3]
+    );
+  }
+  return color;
+}
+
+function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onActualizar, onCambiarColor, onEliminar, onCommit }: Props) {
   const usersSvg = (
     <svg
       className="icon"
@@ -64,7 +80,18 @@ function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onAc
         <div className="speakersPanel">
           {hablantes.map((h) => (
             <div key={h.id} className="speakerRow">
-              <span className="speakerDot" style={{ backgroundColor: h.color }} />
+              <label className="speakerDotWrap" title="Cambiar color">
+                <span
+                  className="speakerDot"
+                  style={{ backgroundColor: h.color }}
+                />
+                <input
+                  type="color"
+                  value={normalizarColor(h.color)}
+                  onChange={(e) => onCambiarColor(h.id, e.target.value)}
+                  className="speakerColorInput"
+                />
+              </label>
               <input
                 className="speakerInput"
                 placeholder="Nombre..."

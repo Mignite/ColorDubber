@@ -35,7 +35,7 @@ import {
   FormatOverlapReport,
   findSnapTime,
 } from "./utils/captions";
-import { filtrarPorMarquee } from "./utils/selection";
+import { filtrarPorMarquee, captionRowIndex } from "./utils/selection";
 
 import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
@@ -190,6 +190,7 @@ function App() {
     modo: "replace" | "add" | "toggle";
   } | null>(null);
   const marqueeOverlayRef = useRef<HTMLDivElement | null>(null);
+  const dropLineRef = useRef<HTMLDivElement | null>(null);
   const [exportMensaje, setExportMensaje] = useState<string>("");
   const [showHelp, setShowHelp] = useState(false);
   const { pushHistorial, deshacer, rehacer } = useHistory(
@@ -1614,15 +1615,40 @@ function App() {
       }
 
       if (bodyDragRef.current) {
+        const bd = bodyDragRef.current;
         const area = trackAreaRef.current;
         if (area) {
           const areaWidth = Math.max(1, area.clientWidth - TRACK_LABEL_W);
           const wSec = windowSecondsRef.current;
-          const deltaT =
-            ((e.clientX - bodyDragRef.current.startX) / areaWidth) * wSec;
-          bodyDragRef.current.deltaT = deltaT;
-          if (Math.abs(deltaT) > 0.002) bodyDragRef.current.moved = true;
-          for (const id of bodyDragRef.current.ids) updateClipDiv(id);
+          let deltaT = ((e.clientX - bd.startX) / areaWidth) * wSec;
+          // Snap al borde de otros captions (Ctrl desactiva)
+          if (!e.ctrlKey) {
+            const lead = captionsRef.current.find((c) => c.id === bd.ids[0]);
+            if (lead) {
+              const leadNuevo = lead.inicio + deltaT;
+              const snap = findSnapTime(
+                leadNuevo,
+                lead.id,
+                captionsRef.current,
+              );
+              if (snap !== null) deltaT = snap - lead.inicio;
+            }
+          }
+          bd.deltaT = deltaT;
+          if (Math.abs(deltaT) > 0.002) bd.moved = true;
+          for (const id of bd.ids) updateClipDiv(id);
+          // Línea de drop (fila destino)
+          const rect = area.getBoundingClientRect();
+          const fila = Math.floor(
+            (e.clientY - rect.top + area.scrollTop) / TRACK_H,
+          );
+          const line = dropLineRef.current;
+          if (line && fila >= 0 && fila <= hablantesRef.current.length) {
+            line.style.display = "block";
+            line.style.top = `${fila * TRACK_H}px`;
+          } else if (line) {
+            line.style.display = "none";
+          }
         }
         return;
       }
@@ -1729,6 +1755,8 @@ function App() {
       if (bodyDragRef.current) {
         const bd = bodyDragRef.current;
         bodyDragRef.current = null;
+        const line = dropLineRef.current;
+        if (line) line.style.display = "none";
         if (bd.moved) {
           let nuevoHablanteId: string | null | undefined = undefined;
           const area = trackAreaRef.current;
@@ -2282,6 +2310,20 @@ function App() {
     [setHablantes],
   );
 
+  const cambiarColorHablante = useCallback(
+    (id: string, color: string) => {
+      pushHistorial();
+      setHablantes((prev) => {
+        const newHablantes = prev.map((h) =>
+          h.id === id ? { ...h, color } : h,
+        );
+        hablantesRef.current = newHablantes;
+        return newHablantes;
+      });
+    },
+    [pushHistorial, setHablantes],
+  );
+
   const eliminarHablante = useCallback((id: string) => {
     pushHistorial();
     setHablantes((prev) => prev.filter((h) => h.id !== id));
@@ -2351,6 +2393,12 @@ function App() {
         startTimes,
         moved: false,
       };
+      const line = dropLineRef.current;
+      if (line) {
+        const fila = captionRowIndex(cap.hablante_id, hablantesRef.current);
+        line.style.display = "block";
+        line.style.top = `${fila * TRACK_H}px`;
+      }
       e.preventDefault();
       return;
     }
@@ -2744,6 +2792,7 @@ function App() {
             </div>
             <div className="playheadLine" ref={playheadLineRef} />
             <div ref={marqueeOverlayRef} className="marqueeOverlay" style={{ display: "none" }} />
+            <div ref={dropLineRef} className="dropLine" style={{ display: "none" }} />
             <div
               className="trackHandle"
               ref={trackHandleRef}
@@ -2853,6 +2902,7 @@ function App() {
             onTogglePanel={togglePanelHablantes}
             onAgregar={agregarHablante}
             onActualizar={actualizarHablante}
+            onCambiarColor={cambiarColorHablante}
             onEliminar={eliminarHablante}
             onCommit={pushHistorial}
           />
