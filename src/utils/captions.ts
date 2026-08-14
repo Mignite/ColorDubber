@@ -45,13 +45,15 @@ export function FormatOverlapReport(entries: OverlapEntry[]): string {
 
 export function findSnapTime(
   time: number,
-  excludeId: string,
+  excludeIds: string | string[],
   caps: Caption[],
 ): number | null {
+  const exclude =
+    typeof excludeIds === "string" ? new Set([excludeIds]) : new Set(excludeIds);
   let best: number | null = null;
   let bestDist = SNAP_THRESHOLD;
   for (const cap of caps) {
-    if (cap.id === excludeId) continue;
+    if (exclude.has(cap.id)) continue;
     for (const t of [cap.inicio, cap.fin]) {
       const dist = Math.abs(time - t);
       if (dist < bestDist) {

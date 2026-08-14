@@ -1628,7 +1628,7 @@ function App() {
               const leadNuevo = lead.inicio + deltaT;
               const snap = findSnapTime(
                 leadNuevo,
-                lead.id,
+                bd.ids,
                 captionsRef.current,
               );
               if (snap !== null) deltaT = snap - lead.inicio;

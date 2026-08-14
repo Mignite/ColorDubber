@@ -25,6 +25,16 @@ describe("findSnapTime", () => {
     const snap = findSnapTime(10.05, "c1", caps);
     expect(snap).toBe(10);
   });
+
+  it("ignores multiple excluded caption ids (block drag)", () => {
+    const caps = [makeCap("c1", 0, 5), makeCap("c2", 10, 15), makeCap("c3", 10.05, 20)];
+    // Excluyendo c1 y c2, debe snapear a c3.inicio (10.05).
+    const snap = findSnapTime(10.05, ["c1", "c2"], caps);
+    expect(snap).toBe(10.05);
+    // Excluyendo todos, no hay target.
+    const snap2 = findSnapTime(10.05, ["c1", "c2", "c3"], caps);
+    expect(snap2).toBeNull();
+  });
 });
 
 describe("BuildOverlapReport", () => {
