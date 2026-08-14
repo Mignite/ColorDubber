@@ -35,6 +35,7 @@ import {
   FormatOverlapReport,
   findSnapTime,
 } from "./utils/captions";
+import { filtrarPorMarquee } from "./utils/selection";
 
 import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
@@ -67,9 +68,10 @@ function App() {
   const [panelModelosAbierto, setPanelModelosAbierto] =
     useState<boolean>(false);
   const [videoSrc, setVideoSrc] = useState<string>("");
-  const [selectedCaptionId, setSelectedCaptionId] = useState<string | null>(
-    null,
-  );
+  const [selectedCaptionIds, setSelectedCaptionIds] = useState<string[]>([]);
+  const selectedCaptionId = selectedCaptionIds.length
+    ? selectedCaptionIds[selectedCaptionIds.length - 1]
+    : null;
   const [videoPath, setVideoPath] = useState<string>("");
   const [rutaProyecto, setRutaProyecto] = useState<string>("");
   const [videoNoEncontrado, setVideoNoEncontrado] = useState<boolean>(false);
@@ -172,7 +174,22 @@ function App() {
   const videoPathRef = useRef("");
   const volumenRef = useRef<number[]>([]);
   const analisisVolumenRequestRef = useRef(0);
-  const selectedCaptionIdRef = useRef<string | null>(null);
+  const selectedCaptionIdsRef = useRef<string[]>([]);
+  const bodyDragRef = useRef<{
+    ids: string[];
+    startX: number;
+    deltaT: number;
+    startTimes: Map<string, number>;
+    moved: boolean;
+  } | null>(null);
+  const justFinishedBodyDragRef = useRef(false);
+  const marqueeStateRef = useRef<{
+    startX: number;
+    startY: number;
+    active: boolean;
+    modo: "replace" | "add" | "toggle";
+  } | null>(null);
+  const marqueeOverlayRef = useRef<HTMLDivElement | null>(null);
   const [exportMensaje, setExportMensaje] = useState<string>("");
   const [showHelp, setShowHelp] = useState(false);
   const { pushHistorial, deshacer, rehacer } = useHistory(
@@ -194,15 +211,6 @@ function App() {
   const [tracksSeleccionados, setTracksSeleccionados] = useState<number[]>([]);
   const tracksSeleccionadosRef = useRef<number[]>([]);
   const modeloSeleccionadoRef = useRef("");
-
-  const seekTo = useCallback((segundos: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(
-      0,
-      Math.min(video.duration || Infinity, segundos),
-    );
-  }, []);
 
   // ===== FUNCIONES WHISPER =====
   const cargarModelos = useCallback(async () => {
@@ -365,7 +373,7 @@ function App() {
   }
 
   useEffect(() => {
-    selectedCaptionIdRef.current = selectedCaptionId;
+    selectedCaptionIdsRef.current = selectedCaptionIds;
     volumenRef.current = volumen;
     windowSecondsRef.current = windowSeconds;
     captionsRef.current = captions;
@@ -680,7 +688,7 @@ function App() {
       setTracks([]);
       setTrackSeleccionado(null);
       setAudioSrc(null);
-      setSelectedCaptionId(null);
+      setSelectedCaptionIds([]);
       // Descartar waveform/duración del proyecto anterior
       analisisVolumenRequestRef.current++;
       setVolumen([]);
@@ -722,7 +730,7 @@ function App() {
     setTracks([]);
     setTrackSeleccionado(null);
     setAudioSrc(null);
-    setSelectedCaptionId(null);
+    setSelectedCaptionIds([]);
     // Descartar análisis en vuelo, waveform y duración del proyecto anterior
     analisisVolumenRequestRef.current++;
     setAnalizando(false);
@@ -1203,6 +1211,18 @@ function App() {
   }
 
   function asignarHablante(hablanteId: string) {
+    const sel = selectedCaptionIdsRef.current;
+    if (sel.length > 0) {
+      pushHistorial();
+      setCaptions((prev) => {
+        const copy = prev.map((c) =>
+          sel.includes(c.id) ? { ...c, hablante_id: hablanteId } : c,
+        );
+        captionsRef.current = copy;
+        return copy;
+      });
+      return;
+    }
     const idx = currentCaptionIdxRef.current;
     if (idx === -1) return;
     pushHistorial();
@@ -1255,6 +1275,85 @@ function App() {
     });
   }, [pushHistorial, setCaptions]);
 
+  const eliminarSeleccion = useCallback(() => {
+    const sel = selectedCaptionIdsRef.current;
+    if (sel.length === 0) return;
+    pushHistorial();
+    setCaptions((prev) => {
+      const copy = prev.filter((c) => !sel.includes(c.id));
+      captionsRef.current = copy;
+      return copy;
+    });
+    setSelectedCaptionIds([]);
+  }, [pushHistorial, setCaptions]);
+
+  // ==== Selección múltiple ====
+  const seleccionSola = useCallback((id: string) => {
+    setSelectedCaptionIds([id]);
+  }, []);
+
+  const toggleSeleccion = useCallback((id: string) => {
+    setSelectedCaptionIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  // Shift+click: rango desde el último seleccionado hasta el clickeado.
+  // porTiempo=true usa el orden temporal (track); false usa el orden del array
+  // (lista derecha).
+  const seleccionRango = useCallback((id: string, porTiempo: boolean) => {
+    setSelectedCaptionIds((prev) => {
+      const anchor = prev[prev.length - 1];
+      const caps = porTiempo ? sortedByStartRef.current : captionsRef.current;
+      const iA = anchor ? caps.findIndex((c) => c.id === anchor) : -1;
+      const iB = caps.findIndex((c) => c.id === id);
+      if (iA === -1 || iB === -1) return [id];
+      const [lo, hi] = iA < iB ? [iA, iB] : [iB, iA];
+      return caps.slice(lo, hi + 1).map((c) => c.id);
+    });
+  }, []);
+
+  const handleSelectCaption = useCallback(
+    (id: string, shift: boolean, ctrl: boolean) => {
+      if (shift) {
+        seleccionRango(id, false);
+        return;
+      }
+      if (ctrl) {
+        toggleSeleccion(id);
+        return;
+      }
+      seleccionSola(id);
+      const cap = captionsRef.current.find((c) => c.id === id);
+      const video = videoRef.current;
+      const audio = audioRef.current;
+      if (cap && video) {
+        video.currentTime = cap.inicio;
+        if (audio) audio.currentTime = cap.inicio;
+      }
+    },
+    [seleccionRango, toggleSeleccion, seleccionSola],
+  );
+
+  // Mueve una selección de captions un deltaT (manteniendo cada duración).
+  // pushHistorial UNA vez: Ctrl+Z deshace todo el bloque.
+  const moverCaptions = useCallback((ids: string[], deltaT: number) => {
+    if (ids.length === 0 || deltaT === 0) return;
+    pushHistorial();
+    setCaptions((prev) => {
+      const copy = prev.map((c) => {
+        if (ids.includes(c.id)) {
+          const dur = c.fin - c.inicio;
+          const nuevoInicio = Math.max(0, c.inicio + deltaT);
+          return { ...c, inicio: nuevoInicio, fin: nuevoInicio + dur };
+        }
+        return c;
+      });
+      captionsRef.current = copy;
+      return copy;
+    });
+  }, [pushHistorial, setCaptions]);
+
   function dividirCaptionEnPlayhead() {
     const video = videoRef.current;
     if (!video) return;
@@ -1281,7 +1380,7 @@ function App() {
       captionsRef.current = copy;
       return copy;
     });
-    setSelectedCaptionId(derecha.id);
+    setSelectedCaptionIds([derecha.id]);
   }
 
   function actualizarTiempoCaption(
@@ -1385,6 +1484,10 @@ function App() {
     const video = videoRef.current;
     if (!canvas || !video) return;
 
+    if (justFinishedBodyDragRef.current) {
+      justFinishedBodyDragRef.current = false;
+      return;
+    }
     // Click sin arrastre en el borde de un caption: el mousedown/mouseup del
     // edge ya manejó todo; el seek del click pausaría el video de nuevo.
     if (justFinishedEdgeDragRef.current) {
@@ -1452,7 +1555,13 @@ function App() {
       const drag = isDraggingCaptionEdgeRef.current;
       let s = cap.inicio;
       let e = cap.fin;
-      if (drag && drag.captionId === captionId) {
+      const bd = bodyDragRef.current;
+      if (bd && bd.ids.includes(captionId)) {
+        const dur = cap.fin - cap.inicio;
+        const t = bd.startTimes.get(captionId) ?? cap.inicio;
+        s = t + bd.deltaT;
+        e = s + dur;
+      } else if (drag && drag.captionId === captionId) {
         const t = dragCurrentTimeRef.current;
         if (drag.edge === "start") s = t;
         else e = t;
@@ -1476,6 +1585,34 @@ function App() {
               Math.max(2 * TRACK_H, h),
             )}px`;
           }
+        }
+        return;
+      }
+
+      if (marqueeStateRef.current?.active) {
+        const ms = marqueeStateRef.current;
+        const ov = marqueeOverlayRef.current;
+        if (ov) {
+          const x = Math.min(ms.startX, e.clientX);
+          const y = Math.min(ms.startY, e.clientY);
+          ov.style.left = `${x}px`;
+          ov.style.top = `${y}px`;
+          ov.style.width = `${Math.abs(e.clientX - ms.startX)}px`;
+          ov.style.height = `${Math.abs(e.clientY - ms.startY)}px`;
+        }
+        return;
+      }
+
+      if (bodyDragRef.current) {
+        const area = trackAreaRef.current;
+        if (area) {
+          const areaWidth = Math.max(1, area.clientWidth - TRACK_LABEL_W);
+          const wSec = windowSecondsRef.current;
+          const deltaT =
+            ((e.clientX - bodyDragRef.current.startX) / areaWidth) * wSec;
+          bodyDragRef.current.deltaT = deltaT;
+          if (Math.abs(deltaT) > 0.002) bodyDragRef.current.moved = true;
+          for (const id of bodyDragRef.current.ids) updateClipDiv(id);
         }
         return;
       }
@@ -1533,6 +1670,59 @@ function App() {
     function onMouseUp(_e: MouseEvent) {
       if (trackHandleDraggingRef.current) {
         trackHandleDraggingRef.current = false;
+        return;
+      }
+
+      if (marqueeStateRef.current?.active) {
+        const ms = marqueeStateRef.current;
+        marqueeStateRef.current = null;
+        const ov = marqueeOverlayRef.current;
+        if (ov) ov.style.display = "none";
+        const area = trackAreaRef.current;
+        if (area) {
+          const rect = area.getBoundingClientRect();
+          const areaWidth = Math.max(1, rect.width - TRACK_LABEL_W);
+          const wSec = windowSecondsRef.current;
+          const ws = windowStartRef.current;
+          const toT = (clientX: number) =>
+            ws + ((clientX - rect.left) / areaWidth) * wSec;
+          const toFila = (clientY: number) =>
+            (clientY - rect.top + area.scrollTop) / TRACK_H;
+          const ids = filtrarPorMarquee(
+            captionsRef.current,
+            hablantesRef.current,
+            {
+              t1: toT(ms.startX),
+              t2: toT(_e.clientX),
+              fila1: Math.max(0, Math.floor(toFila(ms.startY))),
+              fila2: Math.max(0, Math.floor(toFila(_e.clientY))),
+            },
+          );
+          setSelectedCaptionIds((prev) => {
+            if (ms.modo === "add") {
+              return Array.from(new Set([...prev, ...ids]));
+            }
+            if (ms.modo === "toggle") {
+              const set = new Set(prev);
+              for (const id of ids) {
+                if (set.has(id)) set.delete(id);
+                else set.add(id);
+              }
+              return Array.from(set);
+            }
+            return ids;
+          });
+        }
+        return;
+      }
+
+      if (bodyDragRef.current) {
+        const bd = bodyDragRef.current;
+        bodyDragRef.current = null;
+        if (bd.moved) {
+          moverCaptions(bd.ids, bd.deltaT);
+          justFinishedBodyDragRef.current = true;
+        }
         return;
       }
 
@@ -1642,6 +1832,7 @@ function App() {
       }
       if (e.key.toLowerCase() === "e") {
         e.preventDefault();
+        if (selectedCaptionIdsRef.current.length > 1) return;
         textEditorRef.current?.focus();
         return;
       }
@@ -1662,6 +1853,11 @@ function App() {
       }
       if (e.key === "Delete") {
         e.preventDefault();
+        const sel = selectedCaptionIdsRef.current;
+        if (sel.length > 0) {
+          eliminarSeleccion();
+          return;
+        }
         const idx = currentCaptionIdxRef.current;
         const cap = captionsRef.current[idx];
         if (cap) {
@@ -1711,7 +1907,7 @@ function App() {
             captionsRef.current = copy;
             return copy;
           });
-          setSelectedCaptionId(nuevo.id);
+          setSelectedCaptionIds([nuevo.id]);
         }
         return;
       }
@@ -2007,10 +2203,15 @@ function App() {
   useEffect(() => {
     currentCaptionIdxRef.current = currentCaptionIdx;
     matchingCaptionsRef.current = matchingCaptions;
+    // No pisar una selección múltiple con el seguimiento del playhead
     if (currentCaption && currentCaption.id !== selectedCaptionId) {
-      setSelectedCaptionId(currentCaption.id);
+      if (selectedCaptionIds.length <= 1) {
+        setSelectedCaptionIds([currentCaption.id]);
+      }
     } else if (!currentCaption && selectedCaptionId !== null) {
-      setSelectedCaptionId(null);
+      if (selectedCaptionIds.length <= 1) {
+        setSelectedCaptionIds([]);
+      }
     }
   });
 
@@ -2066,12 +2267,14 @@ function App() {
     const actual = matchingCaptionsRef.current;
     if (actual.length <= 1) return;
 
+    const sel = selectedCaptionIdsRef.current;
+    const currentId = sel.length > 0 ? sel[sel.length - 1] : "";
     const idxActual = actual.findIndex(
-      (c) => c.id === selectedCaptionIdRef.current,
+      (c) => c.id === currentId,
     );
     const siguienteIdx =
       (idxActual + direccion + actual.length) % actual.length;
-    setSelectedCaptionId(actual[siguienteIdx].id);
+    setSelectedCaptionIds([actual[siguienteIdx].id]);
   }
 
   // Carriles por hablante: uno por cada hablante + el carril "—" (sin asignar)
@@ -2095,7 +2298,30 @@ function App() {
   ) {
     if (e.button !== 0) return;
     e.stopPropagation();
-    if (!edge) return;
+    if (!edge) {
+      // Drag del cuerpo: mover la selección (o este clip) en bloque
+      let ids: string[];
+      if (selectedCaptionIdsRef.current.includes(cap.id)) {
+        ids = [...selectedCaptionIdsRef.current];
+      } else {
+        ids = [cap.id];
+        setSelectedCaptionIds([cap.id]);
+      }
+      const startTimes = new Map<string, number>();
+      for (const id of ids) {
+        const c = captionsRef.current.find((x) => x.id === id);
+        if (c) startTimes.set(id, c.inicio);
+      }
+      bodyDragRef.current = {
+        ids,
+        startX: e.clientX,
+        deltaT: 0,
+        startTimes,
+        moved: false,
+      };
+      e.preventDefault();
+      return;
+    }
     isDraggingCaptionEdgeRef.current = { captionId: cap.id, edge };
     dragStartXRef.current = e.clientX;
     dragStartTimeRef.current = edge === "start" ? cap.inicio : cap.fin;
@@ -2106,9 +2332,21 @@ function App() {
   }
 
   function handleClipClick(e: React.MouseEvent, cap: Caption) {
+    if (justFinishedBodyDragRef.current) {
+      justFinishedBodyDragRef.current = false;
+      return;
+    }
     if (justFinishedEdgeDragRef.current) justFinishedEdgeDragRef.current = false;
     e.stopPropagation();
-    setSelectedCaptionId(cap.id);
+    if (e.shiftKey) {
+      seleccionRango(cap.id, true);
+      return;
+    }
+    if (e.ctrlKey || e.metaKey) {
+      toggleSeleccion(cap.id);
+      return;
+    }
+    setSelectedCaptionIds([cap.id]);
     const video = videoRef.current;
     if (video) {
       const wrap = (e.currentTarget as HTMLElement).closest(".timelineWrap");
@@ -2298,36 +2536,48 @@ function App() {
           )}
 
           <div className="captionEditorBox">
-            {currentCaption && (
+            {selectedCaptionIds.length > 1 ? (
               <div className="editingWhichTag">
-                <span>Editando</span>
-                {(() => {
-                  const sp = currentCaption.hablante_id
-                    ? hablantes.find(
-                        (h) => h.id === currentCaption.hablante_id,
-                      )
-                    : undefined;
-                  return (
-                    <span className="speakerChip">
-                      <span
-                        className="dot"
-                        style={{
-                          backgroundColor: sp ? sp.color : "#4a4853",
-                        }}
-                      />
-                      {sp
-                        ? sp.nombre || sp.tecla
-                        : "sin hablante asignado"}
-                    </span>
-                  );
-                })()}
+                <span>{selectedCaptionIds.length} seleccionados</span>
+                <span className="speakerChip muted">
+                  <span className="dot" />
+                  E deshabilitado con varios
+                </span>
               </div>
+            ) : (
+              currentCaption && (
+                <div className="editingWhichTag">
+                  <span>Editando</span>
+                  {(() => {
+                    const sp = currentCaption.hablante_id
+                      ? hablantes.find(
+                          (h) => h.id === currentCaption.hablante_id,
+                        )
+                      : undefined;
+                    return (
+                      <span className="speakerChip">
+                        <span
+                          className="dot"
+                          style={{
+                            backgroundColor: sp ? sp.color : "#4a4853",
+                          }}
+                        />
+                        {sp
+                          ? sp.nombre || sp.tecla
+                          : "sin hablante asignado"}
+                      </span>
+                    );
+                  })()}
+                </div>
+              )
             )}
             <textarea
               ref={textEditorRef}
               className="captionEditor"
               value={currentCaption ? currentCaption.texto : ""}
-              disabled={!currentCaption}
+              disabled={
+                !currentCaption || selectedCaptionIds.length > 1
+              }
               placeholder={
                 currentCaption ? "" : "Sin subtítulo en este punto del video"
               }
@@ -2360,6 +2610,34 @@ function App() {
               className="trackArea"
               ref={trackAreaRef}
               style={{ maxHeight: TRACK_VISIBLE * TRACK_H }}
+              onMouseDown={(e) => {
+                if (e.button !== 0) return;
+                const target = e.target as HTMLElement;
+                if (target.closest(".clip") || target.closest(".trackLabel")) return;
+                const modo: "replace" | "add" | "toggle" = e.shiftKey
+                  ? "add"
+                  : e.ctrlKey || e.metaKey
+                    ? "toggle"
+                    : "replace";
+                marqueeStateRef.current = {
+                  startX: e.clientX,
+                  startY: e.clientY,
+                  active: true,
+                  modo,
+                };
+                const ov = marqueeOverlayRef.current;
+                if (ov) {
+                  ov.style.left = `${e.clientX}px`;
+                  ov.style.top = `${e.clientY}px`;
+                  ov.style.width = "0px";
+                  ov.style.height = "0px";
+                  ov.style.display = "block";
+                }
+                if (modo === "replace") {
+                  setSelectedCaptionIds([]);
+                }
+                e.preventDefault();
+              }}
             >
               {trackRows.map((row, i) => (
                 <div className="track" key={i} style={{ height: TRACK_H }}>
@@ -2375,9 +2653,15 @@ function App() {
                       const ws = windowStart;
                       const wSec = windowSecondsRef.current;
                       const drag = isDraggingCaptionEdgeRef.current;
+                      const bd = bodyDragRef.current;
                       let s = cap.inicio;
                       let e = cap.fin;
-                      if (drag && drag.captionId === cap.id) {
+                      if (bd && bd.ids.includes(cap.id)) {
+                        const dur = cap.fin - cap.inicio;
+                        const t = bd.startTimes.get(cap.id) ?? cap.inicio;
+                        s = t + bd.deltaT;
+                        e = s + dur;
+                      } else if (drag && drag.captionId === cap.id) {
                         const t = dragCurrentTimeRef.current;
                         if (drag.edge === "start") s = t;
                         else e = t;
@@ -2393,7 +2677,9 @@ function App() {
                           data-caption-id={cap.id}
                           className={
                             "clip" +
-                            (cap.id === selectedCaptionId ? " selected" : "")
+                            (selectedCaptionIds.includes(cap.id)
+                              ? " selected"
+                              : "")
                           }
                           style={{
                             left: `${left}%`,
@@ -2425,6 +2711,7 @@ function App() {
               ))}
             </div>
             <div className="playheadLine" ref={playheadLineRef} />
+            <div ref={marqueeOverlayRef} className="marqueeOverlay" style={{ display: "none" }} />
             <div
               className="trackHandle"
               ref={trackHandleRef}
@@ -2577,9 +2864,9 @@ function App() {
           <CaptionList
             captions={captions}
             currentCaptionIdx={currentCaptionIdx}
-            onSelectCaption={setSelectedCaptionId}
+            selectedCaptionIds={selectedCaptionIds}
+            onSelectCaption={handleSelectCaption}
             onEliminarCaption={eliminarCaption}
-            onSeekTo={seekTo}
             rowRefs={rowRefs}
             speakerMap={speakerMap}
           />

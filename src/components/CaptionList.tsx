@@ -10,14 +10,22 @@ const BUFFER = 8;
 interface Props {
   captions: Caption[];
   currentCaptionIdx: number;
-  onSelectCaption: (id: string) => void;
+  selectedCaptionIds?: string[];
+  onSelectCaption: (id: string, shift: boolean, ctrl: boolean) => void;
   onEliminarCaption: (id: string) => void;
-  onSeekTo: (time: number) => void;
   rowRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   speakerMap: Map<string, Hablante>;
 }
 
-function CaptionList({ captions, currentCaptionIdx, onSelectCaption, onEliminarCaption, onSeekTo, rowRefs, speakerMap }: Props) {
+function CaptionList({
+  captions,
+  currentCaptionIdx,
+  selectedCaptionIds = [],
+  onSelectCaption,
+  onEliminarCaption,
+  rowRefs,
+  speakerMap,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -75,21 +83,21 @@ function CaptionList({ captions, currentCaptionIdx, onSelectCaption, onEliminarC
             {visibleCaptions.map((c, i) => {
               const idx = startIdx + i;
               const sp = speakerMap.get(c.hablante_id ?? "");
+              const isSelected = selectedCaptionIds.includes(c.id);
               return (
                 <div
                   key={c.id}
                   ref={(el) => {
                     if (rowRefs?.current) rowRefs.current[c.id] = el;
                   }}
-                  className={`captionRow ${idx === currentCaptionIdx ? "active" : ""}`}
+                  className={`captionRow ${idx === currentCaptionIdx ? "active" : ""} ${isSelected ? "selected" : ""}`}
                   style={{
                     borderLeftColor: sp ? sp.color : "transparent",
                     height: ROW_HEIGHT,
                     marginBottom: ROW_MARGIN,
                   }}
-                  onClick={() => {
-                    onSelectCaption(c.id);
-                    onSeekTo(c.inicio);
+                  onClick={(e) => {
+                    onSelectCaption(c.id, e.shiftKey, e.ctrlKey || e.metaKey);
                   }}
                 >
                   <div className="captionTime">

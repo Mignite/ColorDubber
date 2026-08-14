@@ -764,6 +764,19 @@ body {
   border-left-color: var(--accent);
 }
 
+.captionRow.selected {
+  background: var(--surface3);
+  outline: 1px solid var(--borderStrong);
+}
+
+.marqueeOverlay {
+  position: fixed;
+  pointer-events: none;
+  background: rgba(232, 93, 78, 0.15);
+  border: 1px dashed var(--accent);
+  z-index: 1000;
+}
+
 .captionTime {
   font-family: var(--font-mono);
   font-size: 11px;
