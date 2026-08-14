@@ -404,6 +404,7 @@ body {
   background: var(--bg);
   overflow-y: auto;
   border-top: 1px solid var(--border);
+  position: relative;
 }
 
 .trackArea::-webkit-scrollbar {

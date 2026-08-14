@@ -2789,10 +2789,10 @@ function App() {
                   </div>
                 </div>
               ))}
+              <div ref={dropLineRef} className="dropLine" style={{ display: "none" }} />
             </div>
             <div className="playheadLine" ref={playheadLineRef} />
             <div ref={marqueeOverlayRef} className="marqueeOverlay" style={{ display: "none" }} />
-            <div ref={dropLineRef} className="dropLine" style={{ display: "none" }} />
             <div
               className="trackHandle"
               ref={trackHandleRef}
