@@ -40,11 +40,6 @@ export interface TrackInfo {
   canales: number;
 }
 
-export interface LaneInfo {
-  lane: number;
-  totalLanes: number;
-}
-
 export interface OverlapEntry {
   inicio: number;
   fin: number;

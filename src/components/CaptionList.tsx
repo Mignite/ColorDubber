@@ -105,8 +105,18 @@ function CaptionList({ captions, currentCaptionIdx, onSelectCaption, onEliminarC
                         e.stopPropagation();
                         onEliminarCaption(c.id);
                       }}
+                      title="Eliminar subtítulo"
                     >
-                      ✕
+                      <svg
+                        className="icon xs"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.6}
+                        strokeLinecap="round"
+                      >
+                        <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+                      </svg>
                     </button>
                   </div>
                   <div className="captionText">{c.texto}</div>

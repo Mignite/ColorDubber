@@ -1,57 +1,6 @@
-import type { Caption, LaneInfo, OverlapEntry, Hablante } from "../types";
+import type { Caption, OverlapEntry, Hablante } from "../types";
 import { SNAP_THRESHOLD } from "./constants";
 import { formatTime } from "./time";
-
-export function computeCaptionLanes(caps: Caption[]): Map<string, LaneInfo> {
-  const result = new Map<string, LaneInfo>();
-  if (caps.length === 0) return result;
-
-  const ordenados = [...caps].sort((a, b) => a.inicio - b.inicio);
-
-  function resolverCluster(cluster: Caption[]) {
-    const laneEndTimes: number[] = [];
-    const laneAsignado = new Map<string, number>();
-
-    for (const cap of cluster) {
-      let laneEncontrado = -1;
-      for (let i = 0; i < laneEndTimes.length; i++) {
-        if (laneEndTimes[i] <= cap.inicio) {
-          laneEncontrado = i;
-          break;
-        }
-      }
-      if (laneEncontrado === -1) {
-        laneEncontrado = laneEndTimes.length;
-        laneEndTimes.push(cap.fin);
-      } else {
-        laneEndTimes[laneEncontrado] = cap.fin;
-      }
-      laneAsignado.set(cap.id, laneEncontrado);
-    }
-
-    const totalLanes = laneEndTimes.length;
-    for (const cap of cluster) {
-      result.set(cap.id, { lane: laneAsignado.get(cap.id)!, totalLanes });
-    }
-  }
-
-  let clusterCaps: Caption[] = [];
-  let clusterMaxFin = -Infinity;
-
-  for (const cap of ordenados) {
-    if (clusterCaps.length === 0 || cap.inicio < clusterMaxFin) {
-      clusterCaps.push(cap);
-      clusterMaxFin = Math.max(clusterMaxFin, cap.fin);
-    } else {
-      resolverCluster(clusterCaps);
-      clusterCaps = [cap];
-      clusterMaxFin = cap.fin;
-    }
-  }
-  resolverCluster(clusterCaps);
-
-  return result;
-}
 
 export function BuildOverlapReport(
   caps: Caption[],

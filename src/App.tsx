@@ -17,7 +17,6 @@ import type {
   ModeloInfo,
   SegmentoTranscrito,
   TrackInfo,
-  LaneInfo,
   TranscripcionProgreso,
   ModeloDescargaEvent,
 } from "./types";
@@ -32,7 +31,6 @@ import {
 import { formatTime, parseTimeInput } from "./utils/time";
 import { parseSrt, buildSrt, formatSrtTimestamp } from "./utils/srt";
 import {
-  computeCaptionLanes,
   BuildOverlapReport,
   FormatOverlapReport,
   findSnapTime,
@@ -44,11 +42,14 @@ import WhisperPanel from "./components/WhisperPanel";
 import CaptionList from "./components/CaptionList";
 import "./App.css";
 
-const DEFAULT_LANE: LaneInfo = { lane: 0, totalLanes: 1 };
-const COLOR_SELECTED_BG = "rgba(160, 160, 175, 0.55)";
-const COLOR_DEFAULT_BG = "rgba(100, 100, 110, 0.3)";
-const COLOR_SELECTED_BORDER = "rgba(255, 255, 255, 0.5)";
-const COLOR_LANE_DIVIDER = "rgba(21, 21, 26, 0.9)";
+// Carriles por hablante en el timeline: altura fija por carril y tope de
+// carriles visibles antes de activar el scroll interno (el handle inferior
+// permite expandir hasta el doble).
+const TRACK_H = 14;
+const TRACK_VISIBLE = 4;
+const TRACK_MAX = 8;
+const WAVEFORM_H = 56;
+const TRACK_LABEL_W = 42;
 
 function App() {
   const [modelos, setModelos] = useState<ModeloInfo[]>([]);
@@ -154,8 +155,11 @@ function App() {
   const windowTargetRef = useRef(0);
   const windowSecondsRef = useRef(windowSeconds);
   const captionsRef = useRef<Caption[]>([]);
-  const captionLanesRef = useRef<Map<string, LaneInfo>>(new Map());
   const sortedByStartRef = useRef<Caption[]>([]);
+  const trackAreaRef = useRef<HTMLDivElement | null>(null);
+  const trackHandleRef = useRef<HTMLDivElement | null>(null);
+  const trackHandleDraggingRef = useRef(false);
+  const playheadLineRef = useRef<HTMLDivElement | null>(null);
 
   const hablantesRef = useRef<Hablante[]>([]);
   const speakerMapRef = useRef<Map<string, Hablante>>(new Map());
@@ -387,7 +391,6 @@ function App() {
   }, [videoDuration, windowSeconds]);
 
   useEffect(() => {
-    captionLanesRef.current = computeCaptionLanes(captions);
     sortedByStartRef.current = [...captions].sort((a, b) => a.inicio - b.inicio);
   }, [captions]);
 
@@ -777,14 +780,14 @@ function App() {
         setExportMensaje(
           `${archivosCreados} archivo(s) exportados. ${sinAsignar} subtítulo(s) sin hablante quedaron afuera.` +
             (solapes.length > 0
-              ? ` ⚠️ ${solapes.length} solape(s) — revisa solapes.txt.`
+              ? ` — ${solapes.length} solape(s), revisa solapes.txt.`
               : ""),
         );
       } else {
         setExportMensaje(
           `${archivosCreados} archivo(s) exportados correctamente.` +
             (solapes.length > 0
-              ? ` ⚠️ ${solapes.length} solape(s) — revisa solapes.txt.`
+              ? ` — ${solapes.length} solape(s), revisa solapes.txt.`
               : ""),
         );
       }
@@ -1351,24 +1354,7 @@ function App() {
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const canvasHeight = canvas.clientHeight;
     const t = windowStartRef.current + (x / rect.width) * windowSecondsRef.current;
-
-    for (const cap of captions) {
-      if (t >= cap.inicio && t <= cap.fin) {
-        const laneInfo = captionLanesRef.current.get(cap.id) || {
-          lane: 0,
-          totalLanes: 1,
-        };
-        const laneHeight = canvasHeight / laneInfo.totalLanes;
-        const laneY = laneInfo.lane * laneHeight;
-        if (y >= laneY && y <= laneY + laneHeight) {
-          setSelectedCaptionId(cap.id);
-          break;
-        }
-      }
-    }
 
     // El mousedown ya pausó el video (y el mouseup ya restauró la reproducción
     // si correspondía): aquí solo se busca, sin tocar el estado de reproducción.
@@ -1393,54 +1379,8 @@ function App() {
     }
 
     function onMouseDown(e: MouseEvent) {
-      const rect = canvas!.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const time = getTimeFromMouse(e);
-
-      const caps = captionsRef.current;
-      const pixelPerSecond = rect.width / windowSecondsRef.current;
-      const canvasHeight = canvas!.clientHeight;
-
-      for (const cap of caps) {
-        if (time >= cap.inicio - 0.2 && time <= cap.fin + 0.2) {
-          const laneInfo = captionLanesRef.current.get(cap.id) || {
-            lane: 0,
-            totalLanes: 1,
-          };
-          const laneHeight = canvasHeight / laneInfo.totalLanes;
-          const laneY = laneInfo.lane * laneHeight;
-          if (y < laneY || y > laneY + laneHeight) continue;
-
-          const startX = (cap.inicio - windowStartRef.current) * pixelPerSecond;
-          const endX = (cap.fin - windowStartRef.current) * pixelPerSecond;
-
-          if (Math.abs(x - startX) < 8) {
-            isDraggingCaptionEdgeRef.current = {
-              captionId: cap.id,
-              edge: "start",
-            };
-            dragStartXRef.current = x;
-            dragStartTimeRef.current = cap.inicio;
-            dragCurrentTimeRef.current = cap.inicio;
-            e.preventDefault();
-            return;
-          }
-          if (Math.abs(x - endX) < 8) {
-            isDraggingCaptionEdgeRef.current = {
-              captionId: cap.id,
-              edge: "end",
-            };
-            dragStartXRef.current = x;
-            dragStartTimeRef.current = cap.fin;
-            dragCurrentTimeRef.current = cap.fin;
-            e.preventDefault();
-            return;
-          }
-        }
-      }
-
-      // Si no se detectó un borde, iniciar drag del playhead
+      // El mousedown en el canvas (waveform) siempre arrastra el playhead;
+      // los bordes de caption los manejan los clips del trackArea (HTML).
       isDraggingPlayheadRef.current = true;
       const video = videoRef.current;
       if (video) {
@@ -1450,7 +1390,8 @@ function App() {
         if (!video.paused) {
           video.pause();
         }
-        // Use unclamped time to match drag behavior
+        const rect = canvas!.getBoundingClientRect();
+        const x = e.clientX - rect.left;
         const wSec = windowSecondsRef.current;
         const ws = windowStartRef.current;
         const rawTime = ws + (x / rect.width) * wSec;
@@ -1458,47 +1399,57 @@ function App() {
       }
     }
 
+    function updateClipDiv(captionId: string) {
+      const area = trackAreaRef.current;
+      if (!area) return;
+      const el = area.querySelector<HTMLElement>(
+        `[data-caption-id="${captionId}"]`,
+      );
+      const cap = captionsRef.current.find((c) => c.id === captionId);
+      if (!el || !cap) return;
+      const ws = windowStartRef.current;
+      const wSec = windowSecondsRef.current;
+      const drag = isDraggingCaptionEdgeRef.current;
+      let s = cap.inicio;
+      let e = cap.fin;
+      if (drag && drag.captionId === captionId) {
+        const t = dragCurrentTimeRef.current;
+        if (drag.edge === "start") s = t;
+        else e = t;
+      }
+      el.style.left = `${Math.max(0, ((s - ws) / wSec) * 100)}%`;
+      el.style.width = `${Math.max(0.3, ((e - s) / wSec) * 100)}%`;
+    }
+
     function onMouseMove(e: MouseEvent) {
+      // Drag del handle inferior: expandir/contraer la vista de carriles
+      if (trackHandleDraggingRef.current) {
+        const area = trackAreaRef.current;
+        const handle = trackHandleRef.current;
+        if (area && handle) {
+          const wrap = handle.parentElement;
+          if (wrap) {
+            const wrapRect = wrap.getBoundingClientRect();
+            const h = e.clientY - wrapRect.top - WAVEFORM_H - 10;
+            area.style.maxHeight = `${Math.min(
+              TRACK_MAX * TRACK_H,
+              Math.max(2 * TRACK_H, h),
+            )}px`;
+          }
+        }
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const time = getTimeFromMouse(e);
-      const caps = captionsRef.current;
-      const pixelPerSecond = rect.width / windowSecondsRef.current;
-      let cursor = "default";
-
-      if (!isDraggingPlayheadRef.current && !isDraggingCaptionEdgeRef.current) {
-        const y = e.clientY - rect.top;
-        const canvasHeight = canvas.clientHeight;
-        for (const cap of caps) {
-          if (time >= cap.inicio - 0.2 && time <= cap.fin + 0.2) {
-            const laneInfo = captionLanesRef.current.get(cap.id) || {
-              lane: 0,
-              totalLanes: 1,
-            };
-            const laneHeight = canvasHeight / laneInfo.totalLanes;
-            const laneY = laneInfo.lane * laneHeight;
-            if (y < laneY || y > laneY + laneHeight) continue;
-
-            const startX =
-              (cap.inicio - windowStartRef.current) * pixelPerSecond;
-            const endX = (cap.fin - windowStartRef.current) * pixelPerSecond;
-            if (Math.abs(x - startX) < 8 || Math.abs(x - endX) < 8) {
-              cursor = "ew-resize";
-              break;
-            }
-          }
-        }
-        canvas.style.cursor = cursor;
-      }
 
       if (isDraggingPlayheadRef.current) {
-        const rect = canvas!.getBoundingClientRect();
         const wSec = windowSecondsRef.current;
         const ws = windowStartRef.current;
-        const x = e.clientX - rect.left;
 
         const newTime = Math.max(0, ws + (x / rect.width) * wSec);
 
@@ -1534,11 +1485,17 @@ function App() {
           } else {
             dragCurrentTimeRef.current = Math.max(newTime, cap.inicio + 0.1);
           }
+          updateClipDiv(captionId);
         }
       }
     }
 
     function onMouseUp(_e: MouseEvent) {
+      if (trackHandleDraggingRef.current) {
+        trackHandleDraggingRef.current = false;
+        return;
+      }
+
       if (isDraggingPlayheadRef.current) {
         isDraggingPlayheadRef.current = false;
         dragScrollVelocityRef.current = 0;
@@ -1575,6 +1532,11 @@ function App() {
             }
           }
         }
+
+        const el = trackAreaRef.current?.querySelector<HTMLElement>(
+          `[data-caption-id="${captionId}"]`,
+        );
+        if (el) el.classList.remove("dragging");
 
         isDraggingCaptionEdgeRef.current = null;
         dragCurrentTimeRef.current = 0;
@@ -1869,7 +1831,7 @@ function App() {
 
     const dpr = window.devicePixelRatio || 1;
     const clientWidth = canvas.clientWidth || 600;
-    const logicalHeight = 90;
+    const logicalHeight = WAVEFORM_H;
     if (canvas.width !== clientWidth * dpr) canvas.width = clientWidth * dpr;
     if (canvas.height !== logicalHeight * dpr)
       canvas.height = logicalHeight * dpr;
@@ -1879,14 +1841,37 @@ function App() {
     const width = clientWidth;
     const height = logicalHeight;
 
-    ctx.fillStyle = "#1a1a20";
+    ctx.fillStyle = "#1b1a20";
     ctx.fillRect(0, 0, width, height);
+
+    const ws = windowStartRef.current;
+    const wSec = windowSecondsRef.current;
+
+    // Rejilla de tiempo (alineada con el área de carriles, que empieza en
+    // TRACK_LABEL_W)
+    ctx.font = '9px "JetBrains Mono", monospace';
+    const tickEvery = Math.max(1, Math.round((45 / width) * wSec * 100) / 100);
+    const tickStep = tickEvery <= 0.1 ? 0.1 : tickEvery <= 1 ? 0.5 : tickEvery <= 10 ? 5 : 10;
+    const firstTick = Math.ceil(ws / tickStep) * tickStep;
+    ctx.textBaseline = "top";
+    for (let t = firstTick; t <= ws + wSec; t += tickStep) {
+      const x = TRACK_LABEL_W + ((t - ws) / wSec) * (width - TRACK_LABEL_W);
+      if (x < TRACK_LABEL_W || x > width) continue;
+      ctx.strokeStyle = "#24232b";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, height);
+      ctx.stroke();
+      ctx.fillStyle = "#706e7b";
+      const m = Math.floor(t / 60);
+      const s = Math.floor(t % 60);
+      ctx.fillText(`${m}:${String(s).padStart(2, "0")}`, x + 3, 3);
+    }
 
     const vol = volumenRef.current;
     if (vol.length > 0 && waveformPreRenderRef.current) {
       const wfCanvas = waveformPreRenderRef.current;
-      const ws = windowStartRef.current;
-      const wSec = windowSecondsRef.current;
       const sxFloat = ws * VENTANAS_POR_SEGUNDO;
       const sx = Math.max(0, Math.floor(sxFloat));
       const frac = sxFloat - sx;
@@ -1898,99 +1883,38 @@ function App() {
         ctx.imageSmoothingEnabled = false;
         ctx.save();
         ctx.translate(-frac * (width / sw), 0);
-        ctx.drawImage(wfCanvas, sx, 0, sw, 90, 0, 0, width, 90);
+        ctx.drawImage(wfCanvas, sx, 0, sw, 90, 0, 0, width, height);
         ctx.restore();
         ctx.imageSmoothingEnabled = true;
       }
     }
 
-    {
-      const drag = isDraggingCaptionEdgeRef.current;
-      const selId = selectedCaptionIdRef.current;
-      const ws = windowStartRef.current;
-      const wSec = windowSecondsRef.current;
-      const dragT = dragCurrentTimeRef.current;
-      const lanes = captionLanesRef.current;
-      const spMap = speakerMapRef.current;
-
-      for (const cap of captionsRef.current) {
-        let startX = ((cap.inicio - ws) / wSec) * width;
-        let endX = ((cap.fin - ws) / wSec) * width;
-
-        if (drag && drag.captionId === cap.id) {
-          if (drag.edge === "start") {
-            startX = ((dragT - ws) / wSec) * width;
-          } else {
-            endX = ((dragT - ws) / wSec) * width;
-          }
-        }
-
-        if (endX > 0 && startX < width) {
-          const drawStart = Math.max(0, startX);
-          const drawEnd = Math.min(width, endX);
-
-          const laneInfo = lanes.get(cap.id) || DEFAULT_LANE;
-          const laneHeight = height / laneInfo.totalLanes;
-          const laneY = laneInfo.lane * laneHeight;
-
-          let color = "#6a6a74";
-          if (cap.hablante_id) {
-            const speaker = spMap.get(cap.hablante_id);
-            if (speaker) color = speaker.color;
-          }
-
-          const isSelected = cap.id === selId;
-          ctx.fillStyle = isSelected ? COLOR_SELECTED_BG : COLOR_DEFAULT_BG;
-          ctx.fillRect(drawStart, laneY, drawEnd - drawStart, laneHeight);
-
-          if (isSelected) {
-            ctx.strokeStyle = COLOR_SELECTED_BORDER;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(
-              drawStart + 0.5,
-              laneY + 0.5,
-              drawEnd - drawStart - 1,
-              laneHeight - 1,
-            );
-          }
-
-          if (laneInfo.totalLanes > 1) {
-            ctx.strokeStyle = COLOR_LANE_DIVIDER;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(
-              drawStart,
-              laneY + 0.5,
-              drawEnd - drawStart,
-              laneHeight - 1,
-            );
-          }
-
-          if (startX >= 0 && startX <= width) {
-            ctx.fillStyle = color;
-            ctx.fillRect(startX, laneY, 2, laneHeight);
-          }
-          if (endX >= 0 && endX <= width) {
-            ctx.fillStyle = color;
-            ctx.fillRect(endX - 2, laneY, 2, laneHeight);
-          }
-        }
-      }
+    // Playhead (firma): línea coral con halo
+    const playheadX =
+      ((currentTime - ws) / wSec) * width;
+    if (playheadX >= 0 && playheadX <= width) {
+      ctx.strokeStyle = "rgba(232, 93, 78, 0.25)";
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(playheadX, 0);
+      ctx.lineTo(playheadX, height);
+      ctx.stroke();
+      ctx.strokeStyle = "#e85d4e";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(playheadX, 0);
+      ctx.lineTo(playheadX, height);
+      ctx.stroke();
     }
 
-    {
-      const playheadX =
-        ((currentTime - windowStartRef.current) / windowSecondsRef.current) *
-        width;
+    // Línea del playhead sobre el área de carriles (mismo tiempo)
+    const phEl = playheadLineRef.current;
+    if (phEl) {
       if (playheadX >= 0 && playheadX <= width) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(playheadX - 1, 0, 2, height);
-        ctx.beginPath();
-        ctx.arc(playheadX, 6, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.strokeStyle = "#1a1a20";
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        phEl.style.display = "block";
+        phEl.style.left = `${TRACK_LABEL_W + (playheadX / width) * (width - TRACK_LABEL_W)}px`;
+      } else {
+        phEl.style.display = "none";
       }
     }
   }
@@ -2097,8 +2021,75 @@ function App() {
       (idxActual + direccion + actual.length) % actual.length;
     setSelectedCaptionId(actual[siguienteIdx].id);
   }
+
+  // Carriles por hablante: uno por cada hablante + el carril "—" (sin asignar)
+  const trackRows = [
+    {
+      label: "—",
+      color: "#4a4853",
+      caps: captions.filter((c) => !c.hablante_id),
+    },
+    ...hablantes.map((h) => ({
+      label: h.nombre || h.tecla,
+      color: h.color,
+      caps: captions.filter((c) => c.hablante_id === h.id),
+    })),
+  ];
+
+  function handleClipMouseDown(
+    e: React.MouseEvent,
+    cap: Caption,
+    edge: "start" | "end" | null,
+  ) {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    if (!edge) return;
+    isDraggingCaptionEdgeRef.current = { captionId: cap.id, edge };
+    dragStartXRef.current = e.clientX;
+    dragStartTimeRef.current = edge === "start" ? cap.inicio : cap.fin;
+    dragCurrentTimeRef.current = dragStartTimeRef.current;
+    const clipEl = (e.currentTarget as HTMLElement).closest(".clip");
+    if (clipEl) clipEl.classList.add("dragging");
+    e.preventDefault();
+  }
+
+  function handleClipClick(e: React.MouseEvent, cap: Caption) {
+    if (justFinishedEdgeDragRef.current) justFinishedEdgeDragRef.current = false;
+    e.stopPropagation();
+    setSelectedCaptionId(cap.id);
+    const video = videoRef.current;
+    if (video) {
+      const wrap = (e.currentTarget as HTMLElement).closest(".timelineWrap");
+      if (wrap) {
+        const rect = wrap.getBoundingClientRect();
+        const wSec = windowSecondsRef.current;
+        const ws = windowStartRef.current;
+        const x = e.clientX - rect.left - TRACK_LABEL_W;
+        const t = ws + (x / Math.max(1, rect.width - TRACK_LABEL_W)) * wSec;
+        video.currentTime = Math.max(
+          0,
+          Math.min(video.duration || Infinity, t),
+        );
+      }
+    }
+  }
+
   return (
     <main className="app">
+      <header className="appHeader">
+        <span className="appWordmark">
+          <span className="rec" />
+          COLOR<strong>DUBBER</strong>
+        </span>
+        <span className="appHeaderHint">
+          {rutaProyecto ? (
+            <span className="appProjectPath">{rutaProyecto}</span>
+          ) : (
+            <span className="muted">Proyecto sin guardar</span>
+          )}
+          <span className="appHeaderKeyHint">¿ para ayuda · Shift+scroll zoom</span>
+        </span>
+      </header>
       {arrastrando && (
         <div className="dropOverlay">
           <p>Soltá el video o el .srt acá</p>
@@ -2108,7 +2099,21 @@ function App() {
         <div className="leftCol">
           {videoNoEncontrado ? (
             <div className="videoMissing">
-              <p>⚠️ No se encontró el video en:</p>
+              <p className="videoMissingTitle">
+                <svg
+                  className="icon sm"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.4}
+                  strokeLinejoin="round"
+                >
+                  <path d="M8 1.8 14.6 13H1.4z" />
+                  <path d="M8 6v3.2" />
+                  <circle cx="8" cy="11.4" r="0.6" fill="currentColor" stroke="none" />
+                </svg>
+                No se encontró el video en:
+              </p>
               <p className="missingPath">{rutaFaltante}</p>
               <div className="missingActions">
                 <button onClick={handleAbrirVideo}>Buscar video</button>
@@ -2136,21 +2141,49 @@ function App() {
                     onClick={() => saltar(-5)}
                     title="Retroceder 5s"
                   >
-                    ⏮
+                    <svg
+                      className="icon"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path d="M2.4 2.8h2.8v10.4H2.4zM8 2.8l5.6 5.2-5.6 5.2z" />
+                    </svg>
                   </button>
                   <button
                     className="iconBtn playBtn"
                     onClick={togglePlay}
                     title="Pausa / Reproducir"
                   >
-                    {reproduciendo ? "⏸" : "▶"}
+                    {reproduciendo ? (
+                      <svg
+                        className="icon"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                      >
+                        <path d="M4.4 2.6h2.8v10.8H4.4zM8.8 2.6h2.8v10.8H8.8z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="icon"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                      >
+                        <path d="M4.6 2.4v11.2L13.4 8z" />
+                      </svg>
+                    )}
                   </button>
                   <button
                     className="iconBtn"
                     onClick={() => saltar(5)}
                     title="Adelantar 5s"
                   >
-                    ⏭
+                    <svg
+                      className="icon"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path d="M2.4 2.8l5.6 5.2-5.6 5.2v-2.6L7.6 8 2.4 5.4zM10.8 2.8h2.8v10.4h-2.8z" />
+                    </svg>
                   </button>
                 </div>
                 <input
@@ -2188,7 +2221,17 @@ function App() {
                     </select>
                     {extrayendo && (
                       <span className="extractingIndicator">
-                        ⏳ extrayendo audio...
+                        <svg
+                          className="icon sm spin"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.6}
+                          strokeLinecap="round"
+                        >
+                          <path d="M8 1.8a6.2 6.2 0 1 1-6.2 6.2" />
+                        </svg>
+                        extrayendo audio...
                       </span>
                     )}
                   </div>
@@ -2203,14 +2246,28 @@ function App() {
           )}
 
           <div className="captionEditorBox">
-            {currentCaption && matchingCaptions.length > 1 && (
+            {currentCaption && (
               <div className="editingWhichTag">
-                Editando:{" "}
+                <span>Editando</span>
                 {(() => {
-                  const sp = hablantes.find(
-                    (h) => h.id === currentCaption.hablante_id,
+                  const sp = currentCaption.hablante_id
+                    ? hablantes.find(
+                        (h) => h.id === currentCaption.hablante_id,
+                      )
+                    : undefined;
+                  return (
+                    <span className="speakerChip">
+                      <span
+                        className="dot"
+                        style={{
+                          backgroundColor: sp ? sp.color : "#4a4853",
+                        }}
+                      />
+                      {sp
+                        ? sp.nombre || sp.tecla
+                        : "sin hablante asignado"}
+                    </span>
                   );
-                  return sp ? sp.nombre || sp.tecla : "sin hablante asignado";
                 })()}
               </div>
             )}
@@ -2247,6 +2304,90 @@ function App() {
             onClick={handleClickTimeline}
           >
             <canvas ref={canvasRef} className="timelineCanvas" />
+            <div
+              className="trackArea"
+              ref={trackAreaRef}
+              style={{ maxHeight: TRACK_VISIBLE * TRACK_H }}
+            >
+              {trackRows.map((row, i) => (
+                <div className="track" key={i} style={{ height: TRACK_H }}>
+                  <span
+                    className="trackLabel"
+                    style={{ color: row.color }}
+                    title={row.label}
+                  >
+                    {row.label}
+                  </span>
+                  <div className="trackClips">
+                    {row.caps.map((cap) => {
+                      const ws = windowStartRef.current;
+                      const wSec = windowSecondsRef.current;
+                      const s = Math.max(cap.inicio, ws);
+                      const e = Math.min(cap.fin, ws + wSec);
+                      if (e <= s) return null;
+                      const left = ((s - ws) / wSec) * 100;
+                      const width = ((e - s) / wSec) * 100;
+                      return (
+                        <div
+                          key={cap.id}
+                          data-caption-id={cap.id}
+                          className={
+                            "clip" +
+                            (cap.id === selectedCaptionId ? " selected" : "")
+                          }
+                          style={{
+                            left: `${left}%`,
+                            width: `${width}%`,
+                            background: row.color,
+                          }}
+                          onMouseDown={(ev) => handleClipMouseDown(ev, cap, null)}
+                          onClick={(ev) => handleClipClick(ev, cap)}
+                          title={cap.texto}
+                        >
+                          <span className="clipText">{cap.texto}</span>
+                          <span
+                            className="clipEdge left"
+                            onMouseDown={(ev) =>
+                              handleClipMouseDown(ev, cap, "start")
+                            }
+                          />
+                          <span
+                            className="clipEdge right"
+                            onMouseDown={(ev) =>
+                              handleClipMouseDown(ev, cap, "end")
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="playheadLine" ref={playheadLineRef} />
+            <div
+              className="trackHandle"
+              ref={trackHandleRef}
+              onMouseDown={(e) => {
+                if (e.button !== 0) return;
+                trackHandleDraggingRef.current = true;
+                e.preventDefault();
+              }}
+              onClick={(e) => e.stopPropagation()}
+              title="Arrastrar para expandir la vista de carriles"
+            >
+              <svg
+                className="icon xs"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.3}
+                strokeLinecap="round"
+              >
+                <path d="M8 2.2v11.6M5.2 5.2 8 2.4l2.8 2.8M5.2 10.8 8 13.6l2.8-2.8" />
+              </svg>
+              <span>arrastrar para expandir</span>
+            </div>
           </div>
           {videoDuration > 0 && (
             <div
@@ -2300,7 +2441,17 @@ function App() {
               }}
               title="Seguir playhead automáticamente"
             >
-              {autoFollowing ? "◎ Seguir" : "⊙ Manual"}
+              <svg
+                className="icon sm"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <circle cx="8" cy="8" r="2.6" />
+                <path d="M8 1.6v2.4M8 12v2.4M1.6 8h2.4M12 8h2.4" />
+              </svg>
+              {autoFollowing ? "Seguir" : "Manual"}
             </button>
           </div>
 

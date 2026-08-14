@@ -12,11 +12,53 @@ interface Props {
 }
 
 function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onActualizar, onEliminar, onCommit }: Props) {
+  const usersSvg = (
+    <svg
+      className="icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.4}
+      strokeLinecap="round"
+    >
+      <circle cx="6" cy="5.5" r="2.6" />
+      <path d="M1.8 13.5c0-2.5 1.9-4 4.2-4s4.2 1.5 4.2 4" />
+      <circle cx="11.5" cy="6" r="2.2" />
+      <path d="M11 9.7c2.1.2 3.4 1.6 3.4 3.8" />
+    </svg>
+  );
+
+  const chevronSvg = (
+    <svg
+      className={"icon xs chevron" + (panelAbierto ? " up" : "")}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    >
+      <path d="M3 6l5 5 5-5" />
+    </svg>
+  );
+
+  const xSvg = (
+    <svg
+      className="icon xs"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    >
+      <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+    </svg>
+  );
+
   return (
     <div className="speakersAccordion">
       <button className="speakersAccordionHeader" onClick={onTogglePanel}>
-        <span>👥 Hablantes ({hablantes.length})</span>
-        <span>{panelAbierto ? "▲" : "▼"}</span>
+        <span>{usersSvg} Hablantes ({hablantes.length})</span>
+        {chevronSvg}
       </button>
       {panelAbierto && (
         <div className="speakersPanel">
@@ -38,8 +80,8 @@ function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onAc
                 onChange={(e) => onActualizar(h.id, "tecla", e.target.value)}
                 title="Tecla rápida para asignar"
               />
-              <button className="iconBtnSmall" onClick={() => onEliminar(h.id)}>
-                ✕
+              <button className="iconBtnSmall" onClick={() => onEliminar(h.id)} title="Eliminar hablante">
+                {xSvg}
               </button>
             </div>
           ))}

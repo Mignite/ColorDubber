@@ -42,11 +42,66 @@ function WhisperPanel({
   onTranscribir, onToggleTrack, onGlosarioGlobalChange, onGlosarioChange,
   onIdiomaChange, onModoMuestreoChange,
 }: Props) {
+  const chevronSvg = (
+    <svg
+      className={"icon xs chevron" + (panelAbierto ? " up" : "")}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    >
+      <path d="M3 6l5 5 5-5" />
+    </svg>
+  );
+
+  const chipSvg = (
+    <svg
+      className="icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.4}
+    >
+      <rect x="4.5" y="4.5" width="7" height="7" rx="1.2" />
+      <path d="M6.2 1.8v2.7M9.8 1.8v2.7M6.2 11.5v2.7M9.8 11.5v2.7M1.8 6.2h2.7M1.8 9.8h2.7M11.5 6.2h2.7M11.5 9.8h2.7" />
+    </svg>
+  );
+
+  const checkSvg = (
+    <svg
+      className="icon xs"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.5 8.5l3.5 3.5L13.5 4.5" />
+    </svg>
+  );
+
+  const warnSvg = (
+    <svg
+      className="icon sm"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.4}
+      strokeLinejoin="round"
+    >
+      <path d="M8 1.8 14.6 13H1.4z" />
+      <path d="M8 6v3.2" />
+      <circle cx="8" cy="11.4" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+
   return (
     <div className="speakersAccordion">
       <button className="speakersAccordionHeader" onClick={onTogglePanel}>
-        <span>&#x1F9E0; Modelos Whisper</span>
-        <span>{panelAbierto ? "\u25B2" : "\u25BC"}</span>
+        <span>{chipSvg} Modelos Whisper</span>
+        {chevronSvg}
       </button>
       {panelAbierto && (
         <div className="speakersPanel">
@@ -62,7 +117,7 @@ function WhisperPanel({
                 </div>
                 {m.descargado ? (
                   <>
-                    {modeloSeleccionado === m.id && <span className="modeloActivo">{"\u2713"} activo</span>}
+                    {modeloSeleccionado === m.id && <span className="modeloActivo">{checkSvg} activo</span>}
                     <button className="iconBtnSmall" onClick={() => onEliminarModelo(m.id)}>Borrar</button>
                   </>
                 ) : descargandoModelo === m.id ? (
@@ -81,9 +136,41 @@ function WhisperPanel({
                   </div>
                   <div className="downloadInfoRow">
                     <span>
-                      {estadoDescarga === "conectando" && "\u23F3 Conectando..."}
-                      {estadoDescarga === "descargando" && "\u2B07 " + (bytesDescargados / 1024 / 1024).toFixed(1) + " / " + (bytesTotal / 1024 / 1024).toFixed(0) + " MB"}
-                      {estadoDescarga === "completo" && "\u2705 Completado"}
+                      {estadoDescarga === "conectando" && (
+                        <span className="connectingState">
+                          <svg
+                            className="icon sm spin"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.6}
+                            strokeLinecap="round"
+                          >
+                            <path d="M8 1.8a6.2 6.2 0 1 1-6.2 6.2" />
+                          </svg>
+                          Conectando...
+                        </span>
+                      )}
+                      {estadoDescarga === "descargando" && (
+                        <span className="connectingState">
+                          <svg
+                            className="icon sm"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M8 2v8.5M4.5 7.5 8 11l3.5-3.5" />
+                            <path d="M2.5 13.5h11" />
+                          </svg>
+                          {(bytesDescargados / 1024 / 1024).toFixed(1) + " / " + (bytesTotal / 1024 / 1024).toFixed(0) + " MB"}
+                        </span>
+                      )}
+                      {estadoDescarga === "completo" && (
+                        <span className="connectingState">{checkSvg} Completado</span>
+                      )}
                     </span>
                     <span>{(progresoDescarga * 100).toFixed(0)}%</span>
                   </div>
@@ -92,13 +179,13 @@ function WhisperPanel({
 
               {errorDescarga && !descargandoModelo && (
                 <div className="downloadErrorBox">
-                  {"\u26A0"} {errorDescarga}
+                  {warnSvg} {errorDescarga}
                 </div>
               )}
 
               {errorTranscripcion && !transcribiendo && (
                 <div className="downloadErrorBox">
-                  {"\u26A0"} Error de transcripción: {errorTranscripcion}
+                  {warnSvg} Error de transcripción: {errorTranscripcion}
                 </div>
               )}
             </div>
@@ -122,7 +209,7 @@ function WhisperPanel({
             </div>
             {tracksSeleccionados.length === 0 && (
               <div className="trackWarning">
-                {"\u26A0\uFE0F"} Selecciona al menos una pista
+                {warnSvg} Selecciona al menos una pista
               </div>
             )}
           </div>
@@ -177,8 +264,8 @@ function WhisperPanel({
                 onChange={(e) => onModoMuestreoChange(e.target.value)}
                 disabled={transcribiendo}
               >
-                <option value="beam5">🎯 Alta Precisión (Beam 5)</option>
-                <option value="greedy">⚡ Rápido (Greedy)</option>
+                <option value="beam5">Alta Precisión (Beam 5)</option>
+                <option value="greedy">Rápido (Greedy)</option>
               </select>
             </div>
           </div>

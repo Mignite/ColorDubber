@@ -3,28 +3,30 @@
 Tauri v2 + React 19 + Rust. AI subtitle editing with Whisper diarization.
 
 ## Files
-- `src/types.ts` — All interfaces: `Caption`, `Hablante`, `Proyecto`, `TrackInfo`, `LaneInfo`, `OverlapEntry`
+- `src/types.ts` — All interfaces: `Caption`, `Hablante`, `Proyecto`, `TrackInfo`, `OverlapEntry`
 - `src/App.tsx` — Layout, canvas loop, keybindings, IPC orchestration
-- `src/App.css` — All styles (camelCase classes)
+- `src/App.css` — All styles (camelCase classes) + design tokens (`:root`), local fonts, SVG icon helpers
+- `src/assets/fonts/` — Local woff2: SpaceGrotesk (500/600/700), JetBrainsMono (400/500/600/700)
 - `src/components/CaptionList.tsx` — Virtualized rows with time+color
 - `src/components/SpeakersPanel.tsx` — Accordion, name/key/color per speaker. Prop `onCommit` (undo snapshot on input focus)
 - `src/components/WhisperPanel.tsx` — Model download, track selection, transcribe button, language + sampling mode (beam5/greedy) selectors
 - `src/utils/constants.ts` — `VENTANAS_POR_SEGUNDO`, `PALETA`, `SNAP_THRESHOLD`, `HISTORY_LIMIT`
 - `src/utils/srt.ts` — `parseSrt()`, `buildSrt()`, `formatSrtTimestamp()`
-- `src/utils/captions.ts` — `computeCaptionLanes()`, `findSnapTime()`, `BuildOverlapReport()`
+- `src/utils/captions.ts` — `findSnapTime()`, `BuildOverlapReport()` (no `computeCaptionLanes` — carriles ahora por hablante, ver session log)
 - `src/utils/time.ts` — `formatTime()`, `parseTimeInput()`
 - `src/hooks/useHistory.ts` — `pushHistorial`/`deshacer`/`rehacer` snapshot undo
-- `src/utils/__tests__/` — vitest suites for srt, time, captions
+- `src/utils/__tests__/` — vitest suites for srt, time, captions (28 tests)
 - `src-tauri/src/lib.rs` — All Rust commands + menu
 - `src-tauri/src/postprocess.rs` — Word-level subtitle formatter
 - `src-tauri/Cargo.toml` — Dependencies: tauri 2, symphonia, whisper-rs, polyvoice
+- `design/mockup.html` — Approved design study (tokens, typography, track-per-speaker timeline)
 
 ## Commands
 - `npm run build` — tsc + vite build (typecheck gate; run before finishing)
-- `npm test` — vitest run (34 tests: srt/time/captions)
+- `npm test` — vitest run (28 tests: srt/time/captions)
 - `npm run dev` — browser-only Vite
 - `npm run tauri` — desktop dev
-- `npm run tauri:build:release` — release build (needs `CMAKE_ARGS=-DGGML_VULKAN_SHADERS_GEN_EXTERNAL=OFF`)
+- `npm run tauri:build:release` — release build (needs `CMAKE_ARGS=-DGGML_VULKAN_SHADERS_GEN_EXTERNAL=OFF`; user runs it in admin terminal, installer lands in `C:\t\release\bundle\nsis`)
 - Rust has no linter configured; `cargo check` requires a long fresh compile (whisper-rs/polyvoice)
 
 ## Windows build prerequisites (after a fresh install/format)
@@ -34,13 +36,13 @@ Tauri v2 + React 19 + Rust. AI subtitle editing with Whisper diarization.
 
 ## Critical Patterns
 1. **Dual ref+state** — `useRef` synced via a bare `useEffect` (no deps, App.tsx ~line 300) for every value read in rAF or event listeners. Ref is source of truth in callbacks.
-2. **Canvas** — `requestAnimationFrame` loop; `drawCanvasFrame()` at App.tsx. Scaled by `devicePixelRatio` via `ctx.setTransform()`. Waveform, captions and playhead are drawn unconditionally (waveform only when prerendered).
+2. **Canvas** — `requestAnimationFrame` loop; `drawCanvasFrame()` at App.tsx. Scaled by `devicePixelRatio` via `ctx.setTransform()`. Solo dibuja waveform, grid y playhead; los captions viven en el trackArea HTML (ver #8).
 3. **Undo** — Call `pushHistorial()` before any mutation (add/delete/split/assign/commit of edits). Snapshot uses `captionsRef` + `hablantesRef`. Text inputs snapshot on **focus** (see `handleEditorFocus`, SpeakersPanel `onCommit`) so keystrokes don't flood history.
 4. **IPC** — `invoke("cmd", {args})` to call Rust; `listen("evt", cb)` for events.
 5. **Language** — Spanish naming. PascalCase types, camelCase funcs, UPPER_SNAKE constants.
 6. **Keyboard** — window `keydown` listener registered **once** (empty deps) — handlers must read refs, never state.
 7. **Speaker colors** — `PALETA` in constants.ts, max 9. Hotkey `tecla`, name, color. Used in canvas, list borders, dots.
-8. **Caption lanes** — `computeCaptionLanes()` returns `Map<id, LaneInfo>`; overlapping caps render in separate horizontal bands.
+8. **Caption lanes** — No más `computeCaptionLanes`. Un carril por hablante: `trackRows` en App.tsx (carril "—" gris `#4a4853` para sin asignar, luego uno por hablante). Los clips son `<div>` HTML dentro de `.trackArea` (React, `data-caption-id`, `onClick`/`onMouseDown` propios); los refs del drag de bordes (`isDraggingCaptionEdgeRef`, `dragCurrentTimeRef`, `justFinishedEdgeDragRef`) los comparten con los listeners window del timeline. El `.trackHandle` arrastra `max-height` (28–112px) con `trackHandleDraggingRef`. Los subtítulos solapados se superponen en el mismo carril (DOM z-index natural). El mousedown del canvas SIEMPRE arrastra el playhead (los bordes ya no viven en el canvas).
 9. **Timeline** — Shift+scroll zoom (2–60s), scroll pan, edge-drag auto-scrolls, snap with Ctrl override.
 10. **Menu events** — Menu items emit app events (`abrir_proyecto`, `guardar_proyecto`, …) consumed by a single `useEffect` with empty deps in App.tsx.
 11. **Downloads** — Model downloads stream to a `.part` file and rename on success (never leave a corrupt model marked downloaded).
@@ -61,6 +63,16 @@ Tauri v2 + React 19 + Rust. AI subtitle editing with Whisper diarization.
 - **Waveform prerender**: rebuilt in a `useEffect` on `[volumen, analizando]` — the `analizando` guard avoids regenerating on every `volumen_chunk` (quadratic cost on long videos). Keep `setVolumen` + `setAnalizando(false)` in the same sync block so they batch into one render.
 - **Keyboard guard**: the global `keydown` returns early for `INPUT`/`TEXTAREA`/`SELECT` — arrow keys or space in the track `<select>` won't seek/play.
 - **Undo**: call `pushHistorial()` *after* validating (e.g., check `currentCaptionIdxRef` before pushing in `asignarHablante`) to avoid empty undo steps.
+- **Tauri en navegador**: `npm run dev` (vite puro) no tiene `window.__TAURI__` — `listen`/`invoke` lanzan "Cannot read properties of undefined (reading 'metadata')" en consola. Esperado; la UI igual renderiza.
+- **Canvas vs HTML timeline**: canvas 56px (`WAVEFORM_H`) + `.trackArea` (max-height `TRACK_VISIBLE*TRACK_H` = 56px, scroll desde 5 carriles) + `.trackHandle` 10px. Grid y playhead del canvas empiezan en `TRACK_LABEL_W` (42px) para alinearse con los labels de carril; `playheadLine` (div) replica el playhead sobre los carriles desde `drawCanvasFrame`.
+
+## Session log (2026-08-14) — diseño aprobado (mockup) e implementado
+- **Diseño**: iterado en `design/mockup.html` (skill frontend-design) y aprobado por el usuario antes de programar. App.css reescrito con tokens (`:root`): neutros cálidos (#121114/#1b1a20/#24232b/#2c2b34/#2e2d37/#3b3946/#ecebf0/#a9a7b4/#706e7b), UN acento `--accent #e85d4e`, `--info #4ea8e8`, `--success #7ed957`, `--warn #e8c34e`, `--danger #f87171`; radios `--r-sm/md/lg/xl` (6/8/10/12); tipografía: Space Grotesk (títulos/wordmark), Inter (cuerpo), JetBrains Mono (datos técnicos). Fuentes locales en `src/assets/fonts/` (woff2, @font-face con `font-display: swap`) — NUNCA Google Fonts CDN (app offline).
+- **Timeline**: carriles por hablante implementados (ver patrón #8). Los clips muestran el TEXTO del subtítulo (ellipsis por zoom); el nombre del hablante solo en el label del carril. Playhead coral con halo (canvas + `.playheadLine`). Grid de tiempo cada ~45px en mono 9px.
+- **Iconos**: emojis reemplazados por SVGs inline `currentColor` (`.icon` 14 / `.sm` 12 / `.xs` 10px; `.spin` para spinners; `.chevron.up` rota 180°). No usar emojis en la UI.
+- **Header**: `.appHeader` con wordmark "COLORDUBBER" + `.rec` coral parpadeante (`recBlink` 2.2s) + ruta del proyecto en mono.
+- **Verificado**: `npm run build` OK, `npm test` 28/28 OK (se eliminaron los 6 tests de `computeCaptionLanes`), render verificado con Playwright headless contra el dev server (wordmark/fuentes/canvas 56px/trackArea/handle OK; errores de consola solo del IPC de Tauri en navegador puro).
+- **Traps del diseño**: `modeloSeleccionado` es `string` (no nullable) — limpiar con `""`; el click de React corre DESPUÉS del mouseup nativo — cualquier pausa/restauración de reproducción debe vivir en mousedown/mouseup, nunca en el handler `click`; los `<option>` no aceptan SVG (texto plano en "Alta Precisión"/"Rápido").
 
 ## Session log (2026-08-14) — frontend pass (approved 1-17)
 - **Bugs de interacción**: `handleClickTimeline` ya no pausa/restaura (el par mousedown/mouseup del canvas lo maneja — antes cada click con video reproduciéndose terminaba pausado); click sin arrastre en borde de caption no commitea undo vacío ni hace seek (`dragStartTimeRef` comparado + `justFinishedEdgeDragRef` consumido por el click); `agregarFragmento` marca `skipEditorHistoryRef` para que el focus automático no duplique el push (Ctrl+Z tras nuevo fragmento ahora deshace en UNA pulsación); `handleEditorFocus` solo pushea si cambió el estado real (refs `editorPushedCaptionsRef/HablantesRef`); transcripción descarta el resultado si `videoPathRef` cambió en vuelo; abrir video/proyecto/nuevo resetea `volumen`/`analizando`/`videoDuration`/request-id y limpia `waveformCacheRef`; borrar el modelo seleccionado limpia la selección (`""`); `saltarCaption` Alt+← retrocede uno más si el playhead está dentro del candidato (va al anterior, no reinicia el actual); `cargarTracks` valida `videoPathRef` al resolver.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeCaptionLanes, findSnapTime, BuildOverlapReport } from "../captions";
+import { findSnapTime, BuildOverlapReport } from "../captions";
 import type { Caption, Hablante } from "../../types";
 
 function makeCap(id: string, inicio: number, fin: number, hablante_id: string | null = null): Caption {
@@ -7,58 +7,6 @@ function makeCap(id: string, inicio: number, fin: number, hablante_id: string | 
 }
 
 const emptyHablantes: Hablante[] = [];
-
-describe("computeCaptionLanes", () => {
-  it("returns empty map for empty input", () => {
-    const result = computeCaptionLanes([]);
-    expect(result.size).toBe(0);
-  });
-
-  it("assigns lane 0 to a single caption", () => {
-    const caps = [makeCap("c1", 0, 5)];
-    const result = computeCaptionLanes(caps);
-    expect(result.get("c1")).toEqual({ lane: 0, totalLanes: 1 });
-  });
-
-  it("assigns same lane to non-overlapping captions", () => {
-    const caps = [makeCap("c1", 0, 2), makeCap("c2", 3, 5)];
-    const result = computeCaptionLanes(caps);
-    expect(result.get("c1")?.lane).toBe(0);
-    expect(result.get("c2")?.lane).toBe(0);
-  });
-
-  it("assigns different lanes to overlapping captions", () => {
-    const caps = [makeCap("c1", 0, 5), makeCap("c2", 2, 7)];
-    const result = computeCaptionLanes(caps);
-    expect(result.get("c1")?.lane).not.toBe(result.get("c2")?.lane);
-    expect(result.get("c1")?.totalLanes).toBe(2);
-    expect(result.get("c2")?.totalLanes).toBe(2);
-  });
-
-  it("handles three overlapping captions", () => {
-    const caps = [
-      makeCap("c1", 0, 10),
-      makeCap("c2", 2, 8),
-      makeCap("c3", 4, 6),
-    ];
-    const result = computeCaptionLanes(caps);
-    expect(result.get("c1")?.totalLanes).toBe(3);
-    expect(result.get("c2")?.totalLanes).toBe(3);
-    expect(result.get("c3")?.totalLanes).toBe(3);
-  });
-
-  it("reuses lanes after caption ends", () => {
-    const caps = [
-      makeCap("c1", 0, 3),
-      makeCap("c2", 2, 5),
-      makeCap("c3", 4, 7),
-    ];
-    const result = computeCaptionLanes(caps);
-    expect(result.get("c1")?.lane).toBe(0);
-    expect(result.get("c2")?.lane).toBe(1);
-    expect(result.get("c3")?.lane).toBe(0);
-  });
-});
 
 describe("findSnapTime", () => {
   it("returns null when no match within threshold", () => {
