@@ -1,0 +1,71 @@
+[33mcommit e54b1f7b20b8e10c0875ca88d2f4a7f3f12003ae[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;33mtag: [m[1;33mv0.10-guardado-rapido[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Sat Jul 18 16:22:15 2026 -0500
+
+    Ctrl+S guarda directo si hay ruta conocida, Ctrl+Shift+S siempre pregunta ubicacion
+
+[33mcommit 928cc1e73faa350157ca7924a43659699b43f187[m[33m ([m[1;33mtag: [m[1;33mv0.62-PreDeepSeek[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Sat Jul 18 12:33:27 2026 -0500
+
+    PreDeepSeek
+
+[33mcommit 4eedb9a09c559e2c634ff6113f57fb69286341d1[m[33m ([m[1;33mtag: [m[1;33mv0.61-waveform-visual[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Fri Jul 17 20:13:38 2026 -0500
+
+    Milestone 6: UI custom de video, drag&drop, atajos de teclado, timeline paginada tipo Premiere con lerp
+
+[33mcommit 8d863d3722952f0baa48f8f5d98ac08dc3a35838[m[33m ([m[1;33mtag: [m[1;33mv0.6-waveform-visual[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Fri Jul 17 19:24:44 2026 -0500
+
+    Milestone 6: grafico de volumen con zoom Shift+scroll, analisis automatico al cargar
+
+[33mcommit 4a3be12abeaa5f2b8145898d753f19a1776c2758[m[33m ([m[1;33mtag: [m[1;33mv0.5-analisis-volumen[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 20:31:43 2026 -0500
+
+    Milestone 5: analisis de volumen RMS via symphonia streaming (fix canales estereo)
+
+[33mcommit 1ec6507d28ad797cdcb8d226026b52c76867c1c9[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 17:17:09 2026 -0500
+
+    Milestone 4: Symphonia detecta el audio
+
+[33mcommit cfc9a565d47e9af4a23d4fce4983510c8114adb5[m[33m ([m[1;33mtag: [m[1;33mv0.3.5-sistema-proyectos[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 17:06:32 2026 -0500
+
+    Milestone 3.5: sistema de proyectos con serde, menu nativo, manejo de video no encontrado
+
+[33mcommit b4397237ec3a0a6dea586ae65e40dfd84b612bbf[m[33m ([m[1;33mtag: [m[1;33mv0.3video[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 16:39:08 2026 -0500
+
+    v0.2: video visible
+
+[33mcommit cdd333b17f2df8501e72dc43472a3a8051591b42[m[33m ([m[1;33mtag: [m[1;33mv0.2-primer-comando`[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 16:16:59 2026 -0500
+
+    Comando Rust-React Funcional
+
+[33mcommit 0f774e8514f3358575c9707c5231dbec872c5727[m[33m ([m[1;33mtag: [m[1;33mv0.2-Estructura-Real[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 15:19:32 2026 -0500
+
+    Estructura General
+
+[33mcommit aaa59de9881991182fdf15dae8abe61a7b0471e9[m[33m ([m[1;33mtag: [m[1;33mv0.1-Estructura[m[33m)[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 15:16:40 2026 -0500
+
+    Estructura General
+
+[33mcommit 18994bed2888df2ceaec8990d10bbff698cde423[m
+Author: Mignite <miguelangelecheverriisaza@gmail.com>
+Date:   Mon Jul 13 12:47:42 2026 -0500
+
+    Scaffold inicial de Tauri con React + TypeScript

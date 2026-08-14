@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estudio de diseño — ColorDubber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ===== NEUTROS (carbón cálido) ===== */
+    --bg: #121114;
+    --surface: #1B1A20;
+    --surface2: #24232B;
+    --surface3: #2C2B34;
+    --border: #2E2D37;
+    --borderStrong: #3B3946;
+    --text: #ECEBF0;
+    --textDim: #A9A7B4;
+    --textFaint: #706E7B;
+
+    /* ===== ACENTOS (1 acción + 2 semánticos + 1 aviso) ===== */
+    --accent: #E85D4E;        /* acción primaria: reproducir, activo, hover */
+    --accentSoft: rgba(232, 93, 78, 0.14);
+    --info: #4EA8E8;          /* en curso: extracción, transcripción */
+    --success: #7ED957;       /* éxito: exportado, modelo activo */
+    --warn: #E8C34E;          /* aviso: ruta faltante */
+    --danger: #F87171;
+
+    /* ===== RADIOS (sistema) ===== */
+    --r-sm: 6px;   /* inputs, selects, chips */
+    --r-md: 8px;   /* botones, rows, editor */
+    --r-lg: 10px;  /* paneles, video */
+    --r-xl: 12px;  /* modales */
+
+    /* ===== TIPOS ===== */
+    --font-display: 'Space Grotesk', 'Inter', sans-serif;
+    --font-body: 'Inter', 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 32px 40px 64px;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--borderStrong); border-radius: 4px; }
+
+  .studyHeader {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .studyHeader h1 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .studyHeader .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--textFaint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .sectionTitle {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--textFaint);
+    margin: 34px 0 14px;
+  }
+  .sectionTitle .n {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  /* ===== SWATCHES ===== */
+  .swatchGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+  .swatch {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .swatch .chip { height: 52px; }
+  .swatch .meta { padding: 8px 10px; }
+  .swatch .name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .swatch .hex {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--textFaint);
+  }
+  .swatch .use {
+    font-size: 10.5px;
+    color: var(--textDim);
+    margin-top: 2px;
+  }
+  .swatch.removed { opacity: 0.42; }
+  .swatch.removed .chip {
+    background: repeating-linear-gradient(45deg, var(--surface3) 0 6px, var(--surface) 6px 12px);
+  }
+  .swatch.removed .name::after { content: " — retirado"; color: var(--danger); font-size: 10px; }
+
+  /* ===== TYPE SPECIMEN ===== */
+  .typeSpecimen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .typeCard {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 16px;
+    background: var(--surface);
+  }
+  .typeCard .role {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--textFaint);
+    margin-bottom: 10px;
+  }
+  .typeCard .demo { font-size: 20px; margin-bottom: 8px; }
+  .typeCard .desc { font-size: 11.5px; color: var(--textDim); }
+  .displayFace { font-family: var(--font-display); font-weight: 700; color: var(--text); }
+  .bodyFace { font-family: var(--font-body); font-weight: 400; }
+  .monoFace { font-family: var(--font-mono); font-weight: 500; color: var(--textDim); }
+
+  /* ===== MOCKUP APP ===== */
+  .mockShell {
+    border: 1px solid var(--borderStrong);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: var(--bg);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  }
+
+  /* Barra de ventana del mockup */
+  .winbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .winbar .dots { display: flex; gap: 6px; }
+  .winbar .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--borderStrong); }
+  .winbar .wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+  .winbar .wordmark .rec {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 7px;
+    animation: blink 2.2s infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .winbar .menus { display: flex; gap: 14px; font-size: 12px; color: var(--textDim); }
+  .winbar .menus span { cursor: default; }
+  .winbar .menus span:hover { color: var(--text); }
+  .winbar .projPath {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--textFaint);
+  }
+
+  .mockGrid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .leftCol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .rightCol {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Video */
+  .videoBox {
+    border-radius: var(--r-lg);
+    background: #000;
+    aspect-ratio: 16 / 9;
+    max-height: 30vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .videoBox::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(232,93,78,0) 60%, rgba(232,93,78,0.06));
+    pointer-events: none;
+  }
+  .videoBox .frameLabel {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #3d3c46;
+    letter-spacing: 0.1em;
+  }
+
+  .icon { width: 14px; height: 14px; vertical-align: -2.5px; flex-shrink: 0; }
+  .icon.sm { width: 10px; height: 10px; vertical-align: -1px; }
+  .icon.xs { width: 9px; height: 9px; vertical-align: -1px; }
+
+  /* Transport */
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .tBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    padding: 8px 13px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .tBtn:hover { border-color: var(--accent); }
+  .tBtn.primary { border-color: var(--accent); }
+  .tBtn.primary:hover { background: var(--accentSoft); }
+  .timeInput {
+    width: 108px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 7px 6px;
+  }
+  .trackSel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 7px 8px;
+    font-size: 12px;
+    max-width: 260px;
+  }
+  .extractNote { font-size: 11px; font-style: italic; color: var(--info); white-space: nowrap; }
+
+  /* Editor */
+  .editorBox {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+  .editorBox:focus-within { border-color: var(--borderStrong); }
+  .editTag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--textDim);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 1px 8px 1px 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .editorText {
+    font-size: 15px;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+    line-height: 1.5;
+    min-height: 44px;
+  }
+  .editorHint { font-size: 10.5px; color: var(--textFaint); margin-top: 6px; font-family: var(--font-mono); }
+  .addBtn {
+    margin-top: 8px;
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--borderStrong);
+    font-size: 12px;
+    color: var(--textDim);
+    padding: 6px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .addBtn:hover { border-color: var(--info); color: var(--text); }
+
+  /* Timeline */
+  .timelineWrap { position: relative; border-radius: var(--r-md); overflow: hidden; flex-shrink: 0; }
+  .timelineWrap canvas { display: block; width: 100%; height: 64px; }
+  .trackArea {
+    background: var(--bg);
+    max-height: 64px; /* 4 carriles × 16px → scroll desde 5 */
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
+  .trackArea::-webkit-scrollbar { width: 4px; }
+  .track {
+    display: flex;
+    height: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .track:last-child { border-bottom: none; }
+  .trackLabel {
+    width: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: var(--surface2);
+    border-right: 1px solid var(--border);
+  }
+  .trackClips { position: relative; flex: 1; min-width: 0; }
+  .clip {
+    position: absolute;
+    top: 1px; bottom: 1px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding-left: 5px;
+    font-family: var(--font-body);
+    font-size: 8.5px;
+    font-weight: 500;
+    color: #121114;
+    cursor: grab;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .clip .clipText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .clip:hover { filter: brightness(1.15); }
+  .playheadLine {
+    position: absolute;
+    top: 0; bottom: 10px; /* hasta el handle */
+    left: calc(42px + (100% - 42px) * 0.42);
+    width: 1.6px;
+    background: var(--accent);
+    box-shadow: 0 0 6px 2px rgba(232, 93, 78, 0.3);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .trackHandle {
+    height: 10px;
+    cursor: ns-resize;
+    background: var(--surface2);
+    border-top: 1px solid var(--borderStrong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--textFaint);
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .trackHandle:hover { color: var(--textDim); }
+  .tlFooter { display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-shrink: 0; }
+  .zoomLabel { font-family: var(--font-mono); font-size: 10.5px; color: var(--textFaint); }
+  .tlScrollbar {
+    position: relative;
+    flex: 1;
+    height: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .tlThumb {
+    position: absolute; top: 0; bottom: 0;
+    width: 30%;
+    background: var(--borderStrong);
+    border-radius: 4px;
+  }
+  .followBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--textFaint);
+    cursor: pointer;
+    font-family: var(--font-mono);
+  }
+  .followBtn.active { color: var(--info); border-color: var(--info); }
+  .demoBtn {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--textDim);
+    cursor: pointer;
+    font-family: var(--font-mono);
+  }
+  .demoBtn:hover { border-color: var(--info); color: var(--text); }
+  .trackCount { font-family: var(--font-mono); font-size: 10px; color: var(--textFaint); }
+
+  /* Status */
+  .statusBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--textDim);
+    flex-shrink: 0;
+  }
+  .statusBar .ok { color: var(--success); }
+
+  /* ===== RIGHT COL ===== */
+  .acc {
+    background: var(--surface2);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .accHead {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border: none;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .accHead:hover { background: var(--surface3); }
+  .accHead .chev {
+    color: var(--textFaint);
+    display: inline-flex;
+    transition: transform 0.2s;
+  }
+  .acc.open .accHead .chev { transform: rotate(90deg); }
+  .accBody {
+    border-top: 1px solid var(--border);
+    padding: 10px 12px 12px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .acc.open .accBody { display: flex; }
+
+  /* Hablantes */
+  .spRow { display: flex; align-items: center; gap: 8px; }
+  .spDot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .spInput {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 5px 8px;
+    color: var(--text);
+    font-size: 12.5px;
+    font-family: var(--font-body);
+  }
+  .spKey {
+    width: 34px;
+    text-align: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 5px 4px;
+    color: var(--text);
+    font-size: 12.5px;
+    font-family: var(--font-mono);
+  }
+
+  /* Modelos */
+  .mRow { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+  .mInfo {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--textDim);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--r-sm);
+  }
+  .mInfo:hover { background: var(--surface3); }
+  .mInfo.selected { background: var(--accentSoft); color: var(--text); }
+  .mName { font-weight: 500; }
+  .mSize { font-family: var(--font-mono); font-size: 10.5px; color: var(--textFaint); }
+  .mActivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    color: var(--success);
+  }
+  .mDel {
+    background: transparent; border: none; color: var(--textFaint);
+    font-size: 10.5px; cursor: pointer; font-family: var(--font-body);
+  }
+  .mDel:hover { color: var(--danger); }
+
+  .progressTrack {
+    background: var(--surface3);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .progressFill {
+    height: 100%;
+    width: 62%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .progressRow { display: flex; justify-content: space-between; font-size: 10px; color: var(--textFaint); font-family: var(--font-mono); }
+
+  .errBox {
+    font-size: 10.5px;
+    color: var(--danger);
+    background: rgba(248, 113, 113, 0.09);
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    padding: 5px 7px;
+    border-radius: var(--r-sm);
+  }
+
+  .sec { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; }
+  .secTitle { font-size: 11px; font-weight: 600; color: var(--textDim); margin-bottom: 5px; letter-spacing: 0.05em; }
+  .trackList { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; }
+  .trackList label { display: flex; align-items: center; gap: 4px; color: var(--text); cursor: pointer; }
+  .glossaryLabel { font-size: 10.5px; color: var(--textFaint); margin-bottom: 2px; }
+  .glossaryInput {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 4px 6px;
+    font-size: 11px;
+    font-family: var(--font-body);
+  }
+  .cfgRow { display: flex; gap: 8px; border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; }
+  .cfgItem { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .cfgLabel { font-size: 10.5px; color: var(--textFaint); margin-bottom: 3px; }
+  .cfgSel {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 4px 6px;
+    font-size: 11px;
+    font-family: var(--font-body);
+  }
+  .transcribeBtn {
+    margin-top: 8px;
+    width: 100%;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--r-md);
+    color: #fff;
+    font-weight: 600;
+    font-size: 12.5px;
+    font-family: var(--font-display);
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+  .transcribeBtn:hover { background: #d14e40; }
+  .transcribeBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* Captions list */
+  .listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .listTitle { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .listCount { font-family: var(--font-mono); font-size: 10.5px; color: var(--textFaint); }
+  .captionList { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 340px; padding-right: 4px; }
+  .cRow {
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    background: transparent;
+    transition: background-color 0.12s;
+  }
+  .cRow:hover { background: var(--surface2); }
+  .cRow.active { background: var(--surface2); border-left-color: var(--accent); }
+  .cTime { font-family: var(--font-mono); font-size: 10.5px; color: var(--textFaint); margin-bottom: 1px; display: flex; gap: 6px; align-items: center; }
+  .cTime .who { font-weight: 600; font-size: 10px; letter-spacing: 0.03em; }
+  .cText { font-size: 13px; color: var(--textDim); }
+  .cRow.active .cText { color: var(--text); }
+  .cDel {
+    display: inline-flex;
+    align-items: center;
+    float: right;
+    opacity: 0;
+    padding: 0 4px;
+    background: transparent;
+    border: none;
+    color: var(--textFaint);
+    cursor: pointer;
+  }
+  .cRow:hover .cDel { opacity: 0.7; }
+  .cDel:hover { color: var(--danger); opacity: 1 !important; }
+
+  /* ===== NOTAS ===== */
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+  .note {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    background: var(--surface);
+  }
+  .note h4 { font-family: var(--font-display); font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+  .note h4 .k { color: var(--accent); margin-right: 6px; }
+  .note p { font-size: 12px; color: var(--textDim); }
+  .note code { font-family: var(--font-mono); font-size: 10.5px; background: var(--surface3); border-radius: 3px; padding: 1px 5px; color: var(--text); }
+
+  @media (max-width: 900px) {
+    .mockGrid { grid-template-columns: 1fr; }
+    body { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="studyHeader">
+  <h1>ColorDubber — estudio de diseño</h1>
+  <span class="tag">iteración 01 · sin tocar la app</span>
+</header>
+
+<!-- ============ 01 · COLOR ============ -->
+<div class="sectionTitle"><span class="n">01</span>Color — tokens</div>
+<div class="swatchGrid">
+  <div class="swatch"><div class="chip" style="background:#121114"></div><div class="meta"><div class="name">--bg</div><div class="hex">#121114</div><div class="use">Fondo app</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#1B1A20"></div><div class="meta"><div class="name">--surface</div><div class="hex">#1B1A20</div><div class="use">Paneles, editor, lista</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#24232B"></div><div class="meta"><div class="name">--surface2</div><div class="hex">#24232B</div><div class="use">Inputs, hover, accordions</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#2C2B34"></div><div class="meta"><div class="name">--surface3</div><div class="hex">#2C2B34</div><div class="use">Hover acordeón, tracks</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#2E2D37"></div><div class="meta"><div class="name">--border</div><div class="hex">#2E2D37</div><div class="use">Bordes</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#3B3946"></div><div class="meta"><div class="name">--borderStrong</div><div class="hex">#3B3946</div><div class="use">Bordes hover/focus</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#ECEBF0"></div><div class="meta"><div class="name">--text</div><div class="hex">#ECEBF0</div><div class="use">Texto primario</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#A9A7B4"></div><div class="meta"><div class="name">--textDim</div><div class="hex">#A9A7B4</div><div class="use">Texto secundario</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#706E7B"></div><div class="meta"><div class="name">--textFaint</div><div class="hex">#706E7B</div><div class="use">Metadatos, hints</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#E85D4E"></div><div class="meta"><div class="name">--accent</div><div class="hex">#E85D4E</div><div class="use">ÚNICA acción: play, activo, hover, progreso de descarga</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#4EA8E8"></div><div class="meta"><div class="name">--info</div><div class="hex">#4EA8E8</div><div class="use">En curso: extrayendo, follow</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#7ED957"></div><div class="meta"><div class="name">--success</div><div class="hex">#7ED957</div><div class="use">Éxito: exportado, modelo activo</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#E8C34E"></div><div class="meta"><div class="name">--warn</div><div class="hex">#E8C34E</div><div class="use">Aviso: ruta faltante</div></div></div>
+  <div class="swatch removed"><div class="chip" style="background:#7C6FCD"></div><div class="meta"><div class="name">--violet</div><div class="hex">#7C6FCD→#A78BFA</div><div class="use">Gradiente de descarga</div></div></div>
+  <div class="swatch removed"><div class="chip" style="background:#888"></div><div class="meta"><div class="name">#888 / #333</div><div class="hex">huérfanos</div><div class="use">Fuera de la escala → tokens</div></div></div>
+</div>
+
+<!-- ============ 02 · TIPOGRAFÍA ============ -->
+<div class="sectionTitle"><span class="n">02</span>Tipografía</div>
+<div class="typeSpecimen">
+  <div class="typeCard">
+    <div class="role">Display — Space Grotesk · títulos de panel, wordmark, botón primario</div>
+    <div class="demo displayFace">Subtítulos 0123456789</div>
+    <div class="desc">Carácter técnico-moderno, geometría ligeramente industrial. Usado con restricción: títulos, wordmark, botón primario. Nada más.</div>
+  </div>
+  <div class="typeCard">
+    <div class="role">Body — Inter · cuerpo y controles (se conserva)</div>
+    <div class="demo bodyFace">El color es el 80% de la percepción de una película.</div>
+    <div class="desc">Ya es la cara de la app; no re-educar al usuario. 400/500/600.</div>
+  </div>
+  <div class="typeCard">
+    <div class="role">Mono — JetBrains Mono · tiempos, kbds, metadatos, progreso</div>
+    <div class="demo monoFace">00:01:23.45 · 34 líneas · 62%</div>
+    <div class="desc">Todo dato técnico lee en mono: timestamps, zoom, contadores, rutas. Refuerza el ADN de sala de edición.</div>
+  </div>
+</div>
+
+<!-- ============ 03 · MOCKUP ============ -->
+<div class="sectionTitle"><span class="n">03</span>Mockup — el editor con los tokens aplicados</div>
+<div class="mockShell">
+  <div class="winbar">
+    <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="wordmark"><span class="rec"></span>COLORDUBBER</div>
+    <div class="menus"><span>Archivo</span><span>Edición</span><span>Ver</span><span>Ayuda</span></div>
+    <div class="projPath">C:\videos\entrevista.mp4 · 00:01:23.45 / 00:12:04</div>
+  </div>
+
+  <div class="mockGrid">
+    <!-- ===== LEFT ===== -->
+    <div class="leftCol">
+      <div class="videoBox">
+        <span class="frameLabel">FRAME · 00:01:23.45</span>
+      </div>
+
+      <div class="transport">
+        <button class="tBtn" title="Retroceder al inicio del caption">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2.8" y="3" width="2.4" height="10" rx="0.8"/><path d="M13.2 3.6v8.8L7.4 8z"/></svg>
+        </button>
+        <button class="tBtn primary" title="Pausar (Espacio)">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="3.2" y="3" width="3.2" height="10" rx="1"/><rect x="9.6" y="3" width="3.2" height="10" rx="1"/></svg>
+        </button>
+        <button class="tBtn" title="Saltar al siguiente caption">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="10.8" y="3" width="2.4" height="10" rx="0.8"/><path d="M2.8 3.6v8.8l5.8-4.4z"/></svg>
+        </button>
+        <input class="timeInput" value="00:01:23.45" readonly>
+        <select class="trackSel">
+          <option>Pista 1 · Estéreo — análisis de volumen ✓</option>
+        </select>
+      </div>
+
+      <div class="editorBox">
+        <div class="editTag">
+          <span class="chip" style="background:rgba(46,196,182,0.14); color:#2EC4B6;"><span class="dot" style="background:#2EC4B6"></span>Ana</span>
+          <span style="color:var(--textFaint)">· 00:01:23.45 → 00:01:26.10</span>
+        </div>
+        <div class="editorText">Bueno, el color es el 80% de la percepción de una película.</div>
+        <div class="editorHint">tecla ← → · borde del caption arrastra · edición con Ctrl+Z ilimitado</div>
+      </div>
+
+      <div class="timelineWrap">
+        <canvas id="tl" width="900" height="64"></canvas>
+        <div class="trackArea" id="trackArea"></div>
+        <div class="playheadLine"></div>
+        <div class="trackHandle" id="trackHandle">
+          <svg class="icon xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M8 1.6v12.8M5 5l3-3.4L11 5M5 11l3 3.4L11 11"/></svg>
+          arrastrar para expandir
+        </div>
+      </div>
+      <div class="tlFooter">
+        <span class="zoomLabel" id="zoomLabel">zoom 30s</span>
+        <div class="tlScrollbar"><div class="tlThumb" style="left:8%; width:34%"></div></div>
+        <button class="followBtn active" id="followBtn">
+          <svg class="icon xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="2.6"/><circle cx="8" cy="8" r="5.8" opacity="0.45"/></svg>
+          seguir
+        </button>
+        <span style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+          <button class="demoBtn" id="btnZoomOut">zoom −</button>
+          <button class="demoBtn" id="btnZoomIn">zoom +</button>
+          <button class="demoBtn" id="btnMinus">− hablante</button>
+          <button class="demoBtn" id="btnPlus">+ hablante</button>
+          <span class="trackCount" id="trackCount"></span>
+        </span>
+      </div>
+
+      <div class="statusBar">
+        <span class="ok"><svg class="icon xs" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="currentColor"/></svg> Listo</span>
+        <span>Proyecto sin guardar</span>
+        <span style="margin-left:auto" class="extractNote">—</span>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT ===== -->
+    <div class="rightCol">
+      <div class="acc open">
+        <button class="accHead">Hablantes <span class="chev"><svg class="icon xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span></button>
+        <div class="accBody">
+          <div class="spRow">
+            <span class="spDot" style="background:#2EC4B6"></span>
+            <input class="spInput" value="Ana" readonly>
+            <input class="spKey" value="A" readonly>
+            <button class="mDel">Borrar</button>
+          </div>
+          <div class="spRow">
+            <span class="spDot" style="background:#F5A623"></span>
+            <input class="spInput" value="Luis" readonly>
+            <input class="spKey" value="L" readonly>
+            <button class="mDel">Borrar</button>
+          </div>
+          <button class="addBtn">+ Añadir hablante</button>
+        </div>
+      </div>
+
+      <div class="acc open">
+        <button class="accHead">Transcripción <span class="chev"><svg class="icon xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg></span></button>
+        <div class="accBody">
+          <div class="mRow">
+            <div class="mInfo selected">
+              <span class="mName">whisper large-v3</span>
+              <span class="mSize">3100 MB</span>
+            </div>
+            <span class="mActivo"><svg class="icon xs" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 5"/></svg>activo</span>
+            <button class="mDel">Borrar</button>
+          </div>
+          <div class="mRow">
+            <div class="mInfo">
+              <span class="mName">whisper base</span>
+              <span class="mSize">145 MB</span>
+            </div>
+            <button class="mDel">Borrar</button>
+          </div>
+
+          <div class="progressRow" style="margin-top:4px">
+            <span>whisper large-v3 · descargando</span>
+            <span>1.9 / 3.1 GB · 62%</span>
+          </div>
+          <div class="progressTrack"><div class="progressFill"></div></div>
+
+          <div class="sec">
+            <div class="secTitle">Pistas de audio</div>
+            <div class="trackList">
+              <label><input type="checkbox" checked> 1 · Estéreo</label>
+              <label><input type="checkbox"> 2 · Música</label>
+              <label><input type="checkbox"> 3 · Ambiente</label>
+            </div>
+          </div>
+
+          <div class="sec">
+            <div class="glossaryLabel">Glosario global (persiste entre proyectos)</div>
+            <input class="glossaryInput" value="ColorDubber; HDR; bitrate" readonly>
+            <div class="glossaryLabel" style="margin-top:6px">Glosario del proyecto</div>
+            <input class="glossaryInput" value="entrevista" readonly>
+          </div>
+
+          <div class="cfgRow">
+            <div class="cfgItem">
+              <label class="cfgLabel">Idioma</label>
+              <select class="cfgSel"><option selected>es</option><option>en</option><option>auto</option></select>
+            </div>
+            <div class="cfgItem">
+              <label class="cfgLabel">Modo</label>
+              <select class="cfgSel"><option selected>beam 5</option><option>greedy</option></select>
+            </div>
+          </div>
+
+          <button class="transcribeBtn">Transcribir</button>
+        </div>
+      </div>
+
+      <div class="listHeader">
+        <span class="listTitle">Subtítulos</span>
+        <span class="listCount">34 líneas</span>
+      </div>
+      <div class="captionList">
+        <div class="cRow">
+          <div class="cTime"><span class="who" style="color:#2EC4B6">ANA</span>00:01:20.10 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">Venga, siéntate, que empezamos.</div>
+        </div>
+        <div class="cRow">
+          <div class="cTime"><span class="who" style="color:#F5A623">LUIS</span>00:01:22.02 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">¿Grabamos ya o esperamos al resto?</div>
+        </div>
+        <div class="cRow active">
+          <div class="cTime"><span class="who" style="color:#2EC4B6">ANA</span>00:01:23.45 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">Bueno, el color es el 80% de la percepción de una película.</div>
+        </div>
+        <div class="cRow">
+          <div class="cTime"><span class="who" style="color:#2EC4B6">ANA</span>00:01:26.10 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">La cámara lo graba todo, pero el ojo solo recuerda lo que se ilumina bien.</div>
+        </div>
+        <div class="cRow">
+          <div class="cTime"><span class="who" style="color:#F5A623">LUIS</span>00:01:29.87 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">¿Y si el director quiere más sombra en el rostro?</button></div>
+        </div>
+        <div class="cRow">
+          <div class="cTime"><span class="who" style="color:#2EC4B6">ANA</span>00:01:32.04 <button class="cDel"><svg class="icon sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+          <div class="cText">Entonces las sombras se tiran, y el color hace el resto del trabajo.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 04 · NOTAS ============ -->
+<div class="sectionTitle"><span class="n">04</span>Decisiones — qué cambia y por qué</div>
+<div class="notes">
+  <div class="note"><h4><span class="k">1</span>Un solo acento de acción</h4><p>El coral <code>#E85D4E</code> es el único color de acción (play, fila activa, hover, progreso de descarga). El azul queda para "en curso", el verde para "éxito". El gradiente violeta de descarga se retira — competía con el resto sin significado.</p></div>
+  <div class="note"><h4><span class="k">2</span>Escala neutra única</h4><p>Se retiran los huérfanos <code>#888</code>, <code>#333</code>, <code>#4CAF50</code>, <code>#4A4A54</code>… Todo gris sale de los 9 tokens neutros. Los fondos se calientan un grado (<code>#15151a</code>→<code>#121114</code>) para que el coral respire mejor.</p></div>
+  <div class="note"><h4><span class="k">3</span>Tipografía con dos caras</h4><p>Space Grotesk solo para títulos de panel, wordmark y el botón primario. JetBrains Mono para TODO dato técnico (tiempos, zoom, contadores, rutas, teclas). Inter se queda como cuerpo.</p></div>
+  <div class="note"><h4><span class="k">4</span>Firma: el color como lenguaje</h4><p>El punto coral parpadeante del wordmark (luz de grabación), el chip de hablante sobre el subtítulo activo, y el playhead con halo coral en el timeline. El producto se llama ColorDubber — el color es el sistema, no decoración.</p></div>
+  <div class="note"><h4><span class="k">5</span>Radios sistematizados</h4><p>6px inputs · 8px botones/rows · 10px paneles · 12px modales. Hoy hay 4/6/8/10/12 mezclados arbitrariamente. Transiciones: 0.15s hover, 0.3s progreso.</p></div>
+  <div class="note"><h4><span class="k">6</span>Carril por hablante, no por solapamiento</h4><p>Los captions dejan de repartirse en lanes computados (<code>laneHeight = canvasHeight / totalLanes</code> — reflow total al mover un caption) y pasan a un carril FIJO por hablante, creados dinámicamente: el clip de Ana vive SIEMPRE en el carril de Ana, pase lo que pase. Los captions sin hablante caen en un carril "—" gris. Cada clip es 100% independiente.</p></div>
+  <div class="note"><h4><span class="k">7</span>Scroll y expansión desde 4 carriles</h4><p>Con 4+ hablantes, el área de carriles hace scroll interno; además se puede agarrar el borde inferior del timeline y arrastrar para expandir la vista (hasta 8 carriles). El timeline gana altura vertical — la app está cargada a la derecha (subtítulos + whisper + hablantes) y esta columna izquierda lo compensa.</p></div>
+</div>
+
+<script>
+// ===== Waveform del timeline (mock determinista) =====
+  (function () {
+    const c = document.getElementById('tl');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    const OFF = 42; // alineado con el label de carriles
+
+    ctx.fillStyle = '#121114';
+    ctx.fillRect(0, 0, W, H);
+
+    // rejilla de tiempo (desde OFF, alineada con el área de clips)
+    ctx.strokeStyle = '#24232B';
+    ctx.lineWidth = 1;
+    for (let x = OFF; x <= W; x += 45) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    ctx.fillStyle = '#706E7B';
+    ctx.font = '10px "JetBrains Mono", monospace';
+    for (let i = 0; i < 12; i++) {
+      const secs = i * 3;
+      const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+      const ss = String(secs % 60).padStart(2, '0');
+      ctx.fillText(`00:${mm}:${ss}`, OFF + i * 75 + 4, 12);
+    }
+
+    // waveform
+    const mid = 26;
+    let seed = 42;
+    const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    ctx.fillStyle = '#3B3946';
+    for (let x = OFF; x < W; x += 2) {
+      const env = 1 - Math.abs(x / W - 0.5) * 1.1;
+      const v = (Math.sin(x * 0.11) * 0.5 + rand() * 0.6) * env;
+      const barH = Math.max(2, Math.abs(v) * 24);
+      ctx.fillRect(x, v > 0 ? mid - barH : mid, 1.4, Math.max(2, barH));
+    }
+  })();
+
+  // ===== CARRILES POR HABLANTE (dinámicos) =====
+  const HABLANTES_DEMO = [
+    { who: 'ANA', color: '#2EC4B6' },
+    { who: 'LUIS', color: '#F5A623' },
+  ];
+  const NOMBRES_EXTRA = [
+    { who: 'CARMEN', color: '#4EA8E8' },
+    { who: 'PEPE', color: '#A3D13D' },
+    { who: 'MARÍA', color: '#E06BB0' },
+    { who: 'JUAN', color: '#B8B8C2' },
+  ];
+  // Los clips viven en el carril de SU hablante, siempre; nada los mueve.
+  // Un clip sin hablante (who '') cae en el carril "—" (sin asignar, gris).
+  // El texto del clip es el del SUBTÍTULO (el nombre ya está en el label del
+  // carril); se corta con elipsis si no cabe, cosa que depende del zoom.
+  let CLIPS_DEMO = [
+    { who: 'ANA', s: 12, e: 35, texto: 'Bueno, el color es el 80% de la percepción de una película.' },
+    { who: 'LUIS', s: 33, e: 60, texto: '¿Grabamos ya o esperamos al resto?' },
+    { who: 'ANA', s: 58, e: 77, texto: 'La cámara lo graba todo, pero el ojo solo recuerda lo que se ilumina bien.' },
+    { who: 'LUIS', s: 80, e: 93, texto: '¿Y si el director quiere más sombra en el rostro?' },
+  ];
+  let hablantes = [...HABLANTES_DEMO];
+
+  // Ventana temporal visible en % del video, centrada en el playhead (42%).
+  // El zoom la estrecha/alarga; los clips se recortan a la ventana.
+  const DURACION_S = 724; // 12:04
+  const PLAYHEAD = 42;
+  let win = { s: 0, e: 100 };
+
+  const trackArea = document.getElementById('trackArea');
+  const trackCount = document.getElementById('trackCount');
+  const zoomLabel = document.getElementById('zoomLabel');
+
+  function aplicarZoom(w) {
+    win.s = Math.max(0, PLAYHEAD - w / 2);
+    win.e = Math.min(100, PLAYHEAD + w / 2);
+    if (win.s === 0 || win.e === 100) {
+      // recortado contra el borde: re-centrar manteniendo el ancho
+      win.s = Math.max(0, Math.min(PLAYHEAD - w / 2, 100 - w));
+      win.e = win.s + w;
+    }
+    zoomLabel.textContent = `zoom ${Math.round((DURACION_S * (win.e - win.s)) / 100)}s`;
+  }
+  aplicarZoom(100);
+
+  function renderTracks() {
+    trackArea.innerHTML = '';
+    const span = win.e - win.s;
+    const todos = [...hablantes, { who: '—', color: '#4A4853' }];
+    for (const h of todos) {
+      const clips = CLIPS_DEMO.filter((c) => (c.who === h.who) || (h.who === '—' && c.who === ''));
+      const tr = document.createElement('div');
+      tr.className = 'track';
+      const lab = document.createElement('span');
+      lab.className = 'trackLabel';
+      lab.style.color = h.color;
+      lab.textContent = h.who;
+      tr.appendChild(lab);
+      const cl = document.createElement('div');
+      cl.className = 'trackClips';
+      for (const c of clips) {
+        // intersección con la ventana visible
+        const x0 = Math.max(c.s, win.s);
+        const x1 = Math.min(c.e, win.e);
+        if (x1 <= x0) continue;
+        const el = document.createElement('div');
+        el.className = 'clip';
+        el.style.left = ((x0 - win.s) / span) * 100 + '%';
+        el.style.width = Math.max(0.4, ((x1 - x0) / span) * 100) + '%';
+        el.style.background = h.color;
+        el.title = c.texto;
+        const t = document.createElement('span');
+        t.className = 'clipText';
+        t.textContent = h.who === '—' ? 'sin asignar' : c.texto;
+        el.appendChild(t);
+        cl.appendChild(el);
+      }
+      tr.appendChild(cl);
+      trackArea.appendChild(tr);
+    }
+    trackCount.textContent = `${todos.length} carriles · scroll desde 4`;
+  }
+
+  document.getElementById('btnPlus').addEventListener('click', () => {
+    if (hablantes.length >= 2 + NOMBRES_EXTRA.length) return;
+    hablantes.push(NOMBRES_EXTRA[hablantes.length - HABLANTES_DEMO.length]);
+    renderTracks();
+  });
+  document.getElementById('btnMinus').addEventListener('click', () => {
+    if (hablantes.length <= 1) return;
+    const salido = hablantes.pop();
+    // sus clips quedan sin hablante → carril "—"
+    for (const c of CLIPS_DEMO) if (c.who === salido.who) c.who = '';
+    renderTracks();
+  });
+  document.getElementById('btnZoomIn').addEventListener('click', () => {
+    const w = Math.max(30, (win.e - win.s) - 25);
+    aplicarZoom(w);
+    renderTracks();
+  });
+  document.getElementById('btnZoomOut').addEventListener('click', () => {
+    const w = Math.min(100, (win.e - win.s) + 25);
+    aplicarZoom(w);
+    renderTracks();
+  });
+
+  // ===== Handle inferior: arrastrar para expandir la vista de carriles =====
+  const handle = document.getElementById('trackHandle');
+  let dragging = false;
+  handle.addEventListener('mousedown', (e) => { dragging = true; e.preventDefault(); });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const rect = handle.parentElement.getBoundingClientRect();
+    // alto del trackArea = ratón − top del timeline − canvas(64) − handle(10)
+    const h = e.clientY - rect.top - 64 - 10;
+    trackArea.style.maxHeight = Math.min(144, Math.max(32, h)) + 'px';
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  renderTracks();
+
+  // ===== Accordions funcionales =====
+  document.querySelectorAll('.accHead').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>

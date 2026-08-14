@@ -1,0 +1,98 @@
+[
+  {
+    "inicio": "00:00:00,280",
+    "fin": "00:00:01,280",
+    "texto": "¡Noooo!",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:02,510",
+    "fin": "00:00:05,640",
+    "texto": "Mi Ignite me hiciste fallar\nla granada ¿Cómo así?",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:05,650",
+    "fin": "00:00:06,710",
+    "texto": "¡Esperen, esperen!",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:15,260",
+    "fin": "00:00:16,260",
+    "texto": "Lo ciego, lo ciego, lo ciego.",
+    "hablante": "Hablante 2"
+  },
+  {
+    "inicio": "00:00:17,090",
+    "fin": "00:00:18,980",
+    "texto": "Excelente, excelente, excelente,\nnos salvaste, nos salvaste.",
+    "hablante": "Hablante 3"
+  },
+  {
+    "inicio": "00:00:19,010",
+    "fin": "00:00:20,560",
+    "texto": "Vamos, Eli, ahí se cae otra vez.",
+    "hablante": "Hablante 3"
+  },
+  {
+    "inicio": "00:00:22,070",
+    "fin": "00:00:23,070",
+    "texto": "Las que diste por ahí también.",
+    "hablante": "Hablante 2"
+  },
+  {
+    "inicio": "00:00:27,960",
+    "fin": "00:00:30,840",
+    "texto": "Estoy ya relajados, relajados",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:31,370",
+    "fin": "00:00:32,390",
+    "texto": "Sí, plantanme, plantanme",
+    "hablante": "Hablante 2"
+  },
+  {
+    "inicio": "00:00:40,550",
+    "fin": "00:00:41,150",
+    "texto": "Tiro",
+    "hablante": "Hablante 4"
+  },
+  {
+    "inicio": "00:00:41,150",
+    "fin": "00:00:42,150",
+    "texto": "vuelto, tiro vuelto, tiro vuelto.",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:43,590",
+    "fin": "00:00:44,590",
+    "texto": "¡Pero este!",
+    "hablante": "Hablante 5"
+  },
+  {
+    "inicio": "00:00:46,890",
+    "fin": "00:00:47,890",
+    "texto": "No res, no res, no res.",
+    "hablante": "Hablante 2"
+  },
+  {
+    "inicio": "00:00:50,640",
+    "fin": "00:00:53,980",
+    "texto": "Me encanta que nos lleva al compañero.",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:55,340",
+    "fin": "00:00:58,710",
+    "texto": "Me encanta que fue tipo, oh,\nno se encontraron, no se encontraron.",
+    "hablante": "Hablante 1"
+  },
+  {
+    "inicio": "00:00:59,330",
+    "fin": "00:01:00,330",
+    "texto": "No.",
+    "hablante": "Hablante 6"
+  }
+]

@@ -1,0 +1,927 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0 !important;
+}
+
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #e8e8ec;
+  background-color: #15151a;
+}
+
+/* ===== SCROLLBAR PERSONALIZADO ===== */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #33333d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #55555f;
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+.app {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+  height: 100%;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* ===== COLUMNA IZQUIERDA ===== */
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* ===== COLUMNA DERECHA ===== */
+.rightCol {
+  background: #1a1a20;
+  border-radius: 10px;
+  padding: 16px;
+  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rightCol::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rightCol::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rightCol::-webkit-scrollbar-thumb {
+  background: #33333d;
+  border-radius: 4px;
+}
+
+.rightCol::-webkit-scrollbar-thumb:hover {
+  background: #55555f;
+}
+
+.rightColHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #26262f;
+  flex-shrink: 0;
+}
+
+.rightColTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b0b0b8;
+}
+
+.captionCount {
+  font-size: 11px;
+  color: #6a6a74;
+}
+
+/* ===== VIDEO PLAYER ===== */
+.videoPlayer {
+  width: 100%;
+  border-radius: 10px;
+  background: #000;
+  max-height: 45vh;
+  min-height: 120px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.videoEmpty,
+.videoMissing {
+  background: #1a1a20;
+  border: 1px dashed #33333d;
+  border-radius: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: #b0b0b8;
+}
+
+.missingPath {
+  font-family: monospace;
+  font-size: 12px;
+  color: #E8C34E;
+  word-break: break-all;
+  margin: 8px 0 16px;
+}
+
+.missingActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* ===== CONTROLES DE REPRODUCCIÓN ===== */
+.playbackControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.transportBtnGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.trackSelectorWrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.trackSelector {
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 6px;
+  color: #e8e8ec;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.trackSelector:hover {
+  border-color: #E85D4E;
+}
+
+.trackSelector:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.extractingIndicator {
+  font-size: 12px;
+  color: #4EA8E8;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.iconBtn {
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+.playBtn {
+  font-size: 18px;
+  padding: 8px 20px;
+  border-color: #E85D4E;
+}
+
+.timeInput {
+  width: 110px;
+  text-align: center;
+  font-family: monospace;
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 8px;
+  padding: 8px 6px;
+  color: #e8e8ec;
+  font-size: 13px;
+}
+
+.playbackControls select {
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 8px;
+  color: #e8e8ec;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  max-width: 280px;
+}
+
+.playbackControls select:hover {
+  border-color: #E85D4E;
+}
+
+.playbackControls select:focus {
+  outline: none;
+  border-color: #E85D4E;
+  box-shadow: 0 0 8px rgba(232, 93, 78, 0.2);
+}
+
+/* ===== TIMELINE ===== */
+.timelineWrap {
+  position: relative;
+  width: 100%;
+  min-height: 70px;
+  height: 90px;
+  max-height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.timelineCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: default;
+}
+
+.zoomLabel {
+  font-size: 11px;
+  color: #6a6a74;
+  flex-shrink: 0;
+  padding: 2px 4px;
+}
+
+.timelineScrollbar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: #1a1a20;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1px solid #26262f;
+}
+
+.timelineScrollbarThumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #4a4a54;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background 0.15s;
+  min-width: 10px;
+}
+
+.timelineScrollbarThumb:hover {
+  background: #6a6a74;
+}
+
+.timelineToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.followBtn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid #33333d;
+  color: #6a6a74;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.followBtn:hover {
+  border-color: #4EA8E8;
+  color: #b0b0b8;
+}
+
+.followBtn.active {
+  color: #4EA8E8;
+  border-color: #4EA8E8;
+}
+
+/* ===== EDITOR DE SUBTÍTULOS ===== */
+.captionEditorBox {
+  background: #1a1a20;
+  border-radius: 8px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.captionEditor {
+  width: 100%;
+  min-height: 50px;
+  background: transparent;
+  border: none;
+  color: #e8e8ec;
+  font-size: 15px;
+  resize: vertical;
+  font-family: inherit;
+  outline: none;
+}
+
+.captionEditor::placeholder {
+  color: #55555f;
+}
+
+.captionEditor:disabled {
+  color: #55555f;
+}
+
+.captionEditorHint {
+  font-size: 11px;
+  color: #55555f;
+  margin-top: 4px;
+}
+
+.addFragmentBtn {
+  margin-top: 8px;
+  width: 100%;
+  background: transparent;
+  border: 1px dashed #33333d;
+  font-size: 12px;
+  color: #8a8a94;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.addFragmentBtn:hover {
+  border-color: #4EA8E8;
+  color: #e8e8ec;
+}
+
+/* ===== LISTA DE SUBTÍTULOS ===== */
+.captionListVirtual {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  min-height: 0;
+}
+
+.captionRow {
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  margin-bottom: 4px;
+}
+
+.captionRow:hover {
+  background: #22222a;
+}
+
+.captionRow.active {
+  background: #26262f;
+  border-left-color: #E85D4E;
+}
+
+.captionTime {
+  font-family: monospace;
+  font-size: 11px;
+  color: #8a8a94;
+  margin-bottom: 2px;
+}
+
+.captionText {
+  font-size: 14px;
+  color: #d0d0d6;
+}
+
+.captionSpeakerTag {
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.captionDeleteBtn {
+  float: right;
+  margin-left: 8px;
+  opacity: 0.3;
+  font-size: 11px;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  color: #8a8a94;
+  cursor: pointer;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.captionDeleteBtn:hover {
+  opacity: 1;
+  color: #E85D4E;
+}
+
+/* ===== HABLANTES ===== */
+.speakersAccordion {
+  background: #1f1f26;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.speakersAccordionHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #b0b0b8;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.speakersAccordionHeader:hover {
+  background: #26262f;
+}
+
+.speakersPanel {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #33333d;
+}
+
+.speakerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speakerDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.speakerInput {
+  flex: 1;
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #e8e8ec;
+  font-size: 13px;
+}
+
+.speakerKeyInput {
+  width: 34px;
+  text-align: center;
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 6px;
+  padding: 6px 4px;
+  color: #e8e8ec;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.addSpeakerBtn {
+  background: transparent;
+  border: 1px dashed #33333d;
+  font-size: 12px;
+  color: #8a8a94;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.addSpeakerBtn:hover {
+  border-color: #4EA8E8;
+  color: #e8e8ec;
+}
+
+/* ===== BOTONES GENERALES ===== */
+button {
+  border-radius: 8px;
+  border: 1px solid #33333d;
+  padding: 0.55em 1.1em;
+  font-size: 0.95em;
+  font-weight: 500;
+  font-family: inherit;
+  color: #e8e8ec;
+  background-color: #1f1f26;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+button:hover {
+  border-color: #E85D4E;
+}
+
+button:active {
+  background-color: #26262f;
+}
+
+button.secondary {
+  background: transparent;
+}
+
+.iconBtnSmall {
+  background: transparent;
+  border: none;
+  color: #6a6a74;
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.iconBtnSmall:hover {
+  color: #E85D4E;
+}
+
+/* ===== ESTADOS ===== */
+.statusBar {
+  font-size: 12px;
+  color: #8a8a94;
+  padding: 4px 2px;
+  flex-shrink: 0;
+}
+
+.muted {
+  color: #55555f;
+}
+
+.placeholder {
+  color: #6a6a74;
+  font-size: 13px;
+}
+
+/* ===== HELP MODAL ===== */
+.helpOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.helpModal {
+  background: #1a1a20;
+  border: 1px solid #33333d;
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.helpModal h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  color: #e8e8ec;
+}
+
+.helpTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.helpTable td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #26262f;
+  color: #b0b0b8;
+}
+
+.helpTable td:first-child {
+  white-space: nowrap;
+  padding-right: 16px;
+  color: #e8e8ec;
+}
+
+.helpTable kbd {
+  background: #26262f;
+  border: 1px solid #33333d;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: #d0d0d6;
+  font-family: inherit;
+}
+
+/* ===== DROP OVERLAY ===== */
+.dropOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(232, 93, 78, 0.15);
+  border: 3px dashed #E85D4E;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dropOverlay p {
+  background: #15151a;
+  padding: 16px 24px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .rightCol {
+    max-height: 50vh;
+    height: auto;
+  }
+
+  .videoPlayer {
+    max-height: 35vh;
+  }
+  
+  .app {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .mainGrid {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .timelineWrap {
+    height: 60px;
+    min-height: 50px;
+  }
+
+  .playbackControls {
+    gap: 6px;
+  }
+
+  .iconBtn {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  .timeInput {
+    width: 90px;
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+}
+
+.editingWhichTag {
+  font-size: 11px;
+  color: #8a8a94;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.exportMensaje {
+  font-size: 12px;
+  color: #7ED957;
+  padding: 4px 2px;
+}
+
+.modeloRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.modeloInfo {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #b0b0b8;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.modeloInfo.selected {
+  background: rgba(232, 93, 78, 0.15);
+  color: #e8e8ec;
+}
+
+.modeloSize {
+  color: #6a6a74;
+}
+
+.modeloActivo {
+  font-size: 11px;
+  color: #7ED957;
+}
+
+.modeloProgreso {
+  font-size: 11px;
+  color: #4EA8E8;
+  font-family: monospace;
+}
+
+/* ===== WHISPER PANEL ===== */
+.modeloRowInner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.modeloRowFlex {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modeloInfoFlex {
+  flex: 1;
+}
+
+.modeloActivoCheck {
+  font-size: 11px;
+  color: #7ED957;
+}
+
+.downloadProgressContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.downloadProgressTrack {
+  background: #23232d;
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.downloadProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c6fcd, #a78bfa);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.downloadInfoRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #888;
+}
+
+.downloadErrorBox {
+  font-size: 11px;
+  color: #f87171;
+  background: #3d1a1a;
+  padding: 4px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+.trackSection {
+  margin-top: 8px;
+  border-top: 1px solid #33333d;
+  padding-top: 8px;
+}
+
+.trackSectionTitle {
+  font-size: 12px;
+  color: #b0b0b8;
+  margin-bottom: 4px;
+}
+
+.trackList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trackLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #e8e8ec;
+}
+
+.trackWarning {
+  font-size: 11px;
+  color: #E85D4E;
+  margin-top: 4px;
+}
+
+.glossarySection {
+  padding: 4px 0;
+}
+
+.glossaryLabel {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.glossaryInput {
+  width: 100%;
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 4px;
+  color: #e8e8ec;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+
+.transcriptionProgressTrack {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.transcriptionProgressFill {
+  height: 100%;
+  background: #4CAF50;
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.whisperConfigRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #33333d;
+  padding-top: 8px;
+}
+
+.whisperConfigItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.whisperConfigLabel {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+.whisperSelect {
+  width: 100%;
+  background: #1f1f26;
+  border: 1px solid #33333d;
+  border-radius: 4px;
+  color: #e8e8ec;
+  padding: 4px 6px;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+
+.whisperSelect:hover {
+  border-color: #4a4a58;
+}
+
+.whisperSelect:focus {
+  border-color: #6c7086;
+}

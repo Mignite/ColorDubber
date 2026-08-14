@@ -1,0 +1,4 @@
+[build]
+# Target dir corto: el build de whisper-rs-sys con la ruta larga del SDK de
+# Vulkan supera el límite de longitud de ruta de Windows (error "path too long").
+target-dir = "C:/t/debug"

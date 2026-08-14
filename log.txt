@@ -1,0 +1,1009 @@
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_SOT_]
+whisper_full_with_state: prompt[120] = [_LANG_es]
+whisper_full_with_state: prompt[121] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    883, p =  0.212, ts =        [?],  0.000, result_len =    0 ' No'
+whisper_full_with_state: id =   2, decoder = 0, token =   7910, p =  0.354, ts =        [?],  0.089, result_len =    0 ' sé'
+whisper_full_with_state: id =   3, decoder = 0, token =     11, p =  0.821, ts =        [?],  0.011, result_len =    0 ','
+whisper_full_with_state: id =   4, decoder = 0, token =  13768, p =  0.904, ts =        [?],  0.007, result_len =    0 ' nunca'
+whisper_full_with_state: id =   5, decoder = 0, token =  21003, p =  0.528, ts =        [?],  0.025, result_len =    0 ' aprend'
+whisper_full_with_state: id =   6, decoder = 0, token =    590, p =  0.593, ts =        [?],  0.017, result_len =    0 'iz'
+whisper_full_with_state: id =   7, decoder = 0, token =    329, p =  0.186, ts =        [?],  0.014, result_len =    0 'os'
+whisper_full_with_state: id =   8, decoder = 0, token =    288, p =  0.524, ts =        [?],  0.021, result_len =    0 ' y'
+whisper_full_with_state: id =   9, decoder = 0, token =    535, p =  0.154, ts =        [?],  0.022, result_len =    0 ' te'
+whisper_full_with_state: id =  10, decoder = 0, token =   9211, p =  0.629, ts =        [?],  0.040, result_len =    0 ' piano'
+whisper_full_with_state: id =  11, decoder = 0, token =   1690, p =  0.934, ts =        [?],  0.014, result_len =    0 ' para'
+whisper_full_with_state: id =  12, decoder = 0, token =   8755, p =  0.951, ts =        [?],  0.022, result_len =    0 ' estar'
+whisper_full_with_state: id =  13, decoder = 0, token =  31424, p =  0.950, ts =    [_BEG_],  0.115, result_len =    0 ' seguro'
+whisper_full_with_state: id =  14, decoder = 0, token =     13, p =  0.806, ts =        [?],  0.014, result_len =    0 '.'
+whisper_full_with_state: id =  15, decoder = 0, token =  51114, p =  0.017, ts =        [?],  0.017, result_len =   16 '[_TT_750]'
+whisper_full_with_state: id =  16, decoder = 0, token =  51114, p =  0.959, ts =  [_TT_750],  0.959, result_len =   17 '[_TT_750]'
+whisper_full_with_state: id =  17, decoder = 0, token =  50257, p =  0.467, ts =        [?],  0.000, result_len =   17 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.77776, result_len =  17, avg_logprobs = -0.77776, entropy =  2.75167
+whisper_full_with_state: best decoder = 0
+seek = 11336, seek_delta = 1500
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_PREV_]
+whisper_full_with_state: prompt[1] = [_BEG_]
+whisper_full_with_state: prompt[2] =  el
+whisper_full_with_state: prompt[3] =  amor
+whisper_full_with_state: prompt[4] = ,
+whisper_full_with_state: prompt[5] =  a
+whisper_full_with_state: prompt[6] =  cal
+whisper_full_with_state: prompt[7] = er
+whisper_full_with_state: prompt[8] =  para
+whisper_full_with_state: prompt[9] =  que
+whisper_full_with_state: prompt[10] =  se
+whisper_full_with_state: prompt[11] =  And
+whisper_full_with_state: prompt[12] = rones
+whisper_full_with_state: prompt[13] = ,
+whisper_full_with_state: prompt[14] =  a
+whisper_full_with_state: prompt[15] =  ver
+whisper_full_with_state: prompt[16] =  como
+whisper_full_with_state: prompt[17] =  tocar
+whisper_full_with_state: prompt[18] =  este
+whisper_full_with_state: prompt[19] =  piano
+whisper_full_with_state: prompt[20] = ,
+whisper_full_with_state: prompt[21] =  y
+whisper_full_with_state: prompt[22] =  eso
+whisper_full_with_state: prompt[23] =  me
+whisper_full_with_state: prompt[24] =  hizo
+whisper_full_with_state: prompt[25] =  pensar
+whisper_full_with_state: prompt[26] =  que
+whisper_full_with_state: prompt[27] =  pasa
+whisper_full_with_state: prompt[28] =  si
+whisper_full_with_state: prompt[29] =  me
+whisper_full_with_state: prompt[30] =  pong
+whisper_full_with_state: prompt[31] = as
+whisper_full_with_state: prompt[32] =  And
+whisper_full_with_state: prompt[33] = rones
+whisper_full_with_state: prompt[34] = [_TT_638]
+whisper_full_with_state: prompt[35] = [_TT_638]
+whisper_full_with_state: prompt[36] = [_BEG_]
+whisper_full_with_state: prompt[37] =  Ot
+whisper_full_with_state: prompt[38] = ras
+whisper_full_with_state: prompt[39] = ,
+whisper_full_with_state: prompt[40] =  o
+whisper_full_with_state: prompt[41] =  por
+whisper_full_with_state: prompt[42] =  Dios
+whisper_full_with_state: prompt[43] =  sí
+whisper_full_with_state: prompt[44] = ,
+whisper_full_with_state: prompt[45] =  el
+whisper_full_with_state: prompt[46] =  juego
+whisper_full_with_state: prompt[47] =  nunca
+whisper_full_with_state: prompt[48] =  he
+whisper_full_with_state: prompt[49] =  hecho
+whisper_full_with_state: prompt[50] =  esto
+whisper_full_with_state: prompt[51] = .
+whisper_full_with_state: prompt[52] = [_TT_1024]
+whisper_full_with_state: prompt[53] = [_BEG_]
+whisper_full_with_state: prompt[54] =  En
+whisper_full_with_state: prompt[55] =  parte
+whisper_full_with_state: prompt[56] =  está
+whisper_full_with_state: prompt[57] =  mal
+whisper_full_with_state: prompt[58] = ,
+whisper_full_with_state: prompt[59] =  porque
+whisper_full_with_state: prompt[60] =  este
+whisper_full_with_state: prompt[61] =  personaje
+whisper_full_with_state: prompt[62] =  es
+whisper_full_with_state: prompt[63] =  un
+whisper_full_with_state: prompt[64] =  hor
+whisper_full_with_state: prompt[65] = rado
+whisper_full_with_state: prompt[66] = ,
+whisper_full_with_state: prompt[67] =  puede
+whisper_full_with_state: prompt[68] =  ser
+whisper_full_with_state: prompt[69] =  cost
+whisper_full_with_state: prompt[70] = oso
+whisper_full_with_state: prompt[71] =  de
+whisper_full_with_state: prompt[72] =  conseguir
+whisper_full_with_state: prompt[73] = .
+whisper_full_with_state: prompt[74] = [_TT_1230]
+whisper_full_with_state: prompt[75] = [_TT_1230]
+whisper_full_with_state: prompt[76] = [_BEG_]
+whisper_full_with_state: prompt[77] =  Pero
+whisper_full_with_state: prompt[78] =  por
+whisper_full_with_state: prompt[79] =  otro
+whisper_full_with_state: prompt[80] =  lado
+whisper_full_with_state: prompt[81] = ,
+whisper_full_with_state: prompt[82] =  que
+whisper_full_with_state: prompt[83] =  acá
+whisper_full_with_state: prompt[84] =  no
+whisper_full_with_state: prompt[85] =  que
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_BEG_]
+whisper_full_with_state: prompt[120] =  No
+whisper_full_with_state: prompt[121] =  sé
+whisper_full_with_state: prompt[122] = ,
+whisper_full_with_state: prompt[123] =  nunca
+whisper_full_with_state: prompt[124] =  aprend
+whisper_full_with_state: prompt[125] = iz
+whisper_full_with_state: prompt[126] = os
+whisper_full_with_state: prompt[127] =  y
+whisper_full_with_state: prompt[128] =  te
+whisper_full_with_state: prompt[129] =  piano
+whisper_full_with_state: prompt[130] =  para
+whisper_full_with_state: prompt[131] =  estar
+whisper_full_with_state: prompt[132] =  seguro
+whisper_full_with_state: prompt[133] = .
+whisper_full_with_state: prompt[134] = [_TT_750]
+whisper_full_with_state: prompt[135] = [_TT_750]
+whisper_full_with_state: prompt[136] = [_SOT_]
+whisper_full_with_state: prompt[137] = [_LANG_es]
+whisper_full_with_state: prompt[138] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =   4548, p =  0.111, ts =        [?],  0.000, result_len =    0 ' Super'
+whisper_full_with_state: id =   2, decoder = 0, token =   9079, p =  0.159, ts =        [?],  0.032, result_len =    0 'aste'
+whisper_full_with_state: id =   3, decoder = 0, token =  38244, p =  0.220, ts =        [?],  0.013, result_len =    0 ' espect'
+whisper_full_with_state: id =   4, decoder = 0, token =    267, p =  0.602, ts =        [?],  0.013, result_len =    0 'at'
+whisper_full_with_state: id =   5, decoder = 0, token =  10025, p =  0.862, ts =        [?],  0.008, result_len =    0 'ías'
+whisper_full_with_state: id =   6, decoder = 0, token =   1103, p =  0.641, ts =        [?],  0.082, result_len =    0 ' del'
+whisper_full_with_state: id =   7, decoder = 0, token =    290, p =  0.274, ts =        [?],  0.036, result_len =    0 ' g'
+whisper_full_with_state: id =   8, decoder = 0, token =    621, p =  0.156, ts =        [?],  0.017, result_len =    0 'ire'
+whisper_full_with_state: id =   9, decoder = 0, token =   2455, p =  0.267, ts =        [?],  0.010, result_len =    0 'mp'
+whisper_full_with_state: id =  10, decoder = 0, token =    578, p =  0.866, ts =        [?],  0.022, result_len =    0 'act'
+whisper_full_with_state: id =  11, decoder = 0, token =     78, p =  0.780, ts =        [?],  0.064, result_len =    0 'o'
+whisper_full_with_state: id =  12, decoder = 0, token =     13, p =  0.727, ts =  [_TT_800],  0.166, result_len =    0 '.'
+whisper_full_with_state: id =  13, decoder = 0, token =  51214, p =  0.079, ts =        [?],  0.079, result_len =   14 '[_TT_850]'
+whisper_full_with_state: id =  14, decoder = 0, token =  51214, p =  0.975, ts =  [_TT_850],  0.975, result_len =   15 '[_TT_850]'
+whisper_full_with_state: id =  15, decoder = 0, token =  50257, p =  0.363, ts =        [?],  0.000, result_len =   15 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.96032, result_len =  15, avg_logprobs = -0.96032, entropy =  2.61563
+whisper_full_with_state: best decoder = 0
+seek = 13036, seek_delta = 1700
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_PREV_]
+whisper_full_with_state: prompt[1] = [_BEG_]
+whisper_full_with_state: prompt[2] =  el
+whisper_full_with_state: prompt[3] =  amor
+whisper_full_with_state: prompt[4] = ,
+whisper_full_with_state: prompt[5] =  a
+whisper_full_with_state: prompt[6] =  cal
+whisper_full_with_state: prompt[7] = er
+whisper_full_with_state: prompt[8] =  para
+whisper_full_with_state: prompt[9] =  que
+whisper_full_with_state: prompt[10] =  se
+whisper_full_with_state: prompt[11] =  And
+whisper_full_with_state: prompt[12] = rones
+whisper_full_with_state: prompt[13] = ,
+whisper_full_with_state: prompt[14] =  a
+whisper_full_with_state: prompt[15] =  ver
+whisper_full_with_state: prompt[16] =  como
+whisper_full_with_state: prompt[17] =  tocar
+whisper_full_with_state: prompt[18] =  este
+whisper_full_with_state: prompt[19] =  piano
+whisper_full_with_state: prompt[20] = ,
+whisper_full_with_state: prompt[21] =  y
+whisper_full_with_state: prompt[22] =  eso
+whisper_full_with_state: prompt[23] =  me
+whisper_full_with_state: prompt[24] =  hizo
+whisper_full_with_state: prompt[25] =  pensar
+whisper_full_with_state: prompt[26] =  que
+whisper_full_with_state: prompt[27] =  pasa
+whisper_full_with_state: prompt[28] =  si
+whisper_full_with_state: prompt[29] =  me
+whisper_full_with_state: prompt[30] =  pong
+whisper_full_with_state: prompt[31] = as
+whisper_full_with_state: prompt[32] =  And
+whisper_full_with_state: prompt[33] = rones
+whisper_full_with_state: prompt[34] = [_TT_638]
+whisper_full_with_state: prompt[35] = [_TT_638]
+whisper_full_with_state: prompt[36] = [_BEG_]
+whisper_full_with_state: prompt[37] =  Ot
+whisper_full_with_state: prompt[38] = ras
+whisper_full_with_state: prompt[39] = ,
+whisper_full_with_state: prompt[40] =  o
+whisper_full_with_state: prompt[41] =  por
+whisper_full_with_state: prompt[42] =  Dios
+whisper_full_with_state: prompt[43] =  sí
+whisper_full_with_state: prompt[44] = ,
+whisper_full_with_state: prompt[45] =  el
+whisper_full_with_state: prompt[46] =  juego
+whisper_full_with_state: prompt[47] =  nunca
+whisper_full_with_state: prompt[48] =  he
+whisper_full_with_state: prompt[49] =  hecho
+whisper_full_with_state: prompt[50] =  esto
+whisper_full_with_state: prompt[51] = .
+whisper_full_with_state: prompt[52] = [_TT_1024]
+whisper_full_with_state: prompt[53] = [_BEG_]
+whisper_full_with_state: prompt[54] =  En
+whisper_full_with_state: prompt[55] =  parte
+whisper_full_with_state: prompt[56] =  está
+whisper_full_with_state: prompt[57] =  mal
+whisper_full_with_state: prompt[58] = ,
+whisper_full_with_state: prompt[59] =  porque
+whisper_full_with_state: prompt[60] =  este
+whisper_full_with_state: prompt[61] =  personaje
+whisper_full_with_state: prompt[62] =  es
+whisper_full_with_state: prompt[63] =  un
+whisper_full_with_state: prompt[64] =  hor
+whisper_full_with_state: prompt[65] = rado
+whisper_full_with_state: prompt[66] = ,
+whisper_full_with_state: prompt[67] =  puede
+whisper_full_with_state: prompt[68] =  ser
+whisper_full_with_state: prompt[69] =  cost
+whisper_full_with_state: prompt[70] = oso
+whisper_full_with_state: prompt[71] =  de
+whisper_full_with_state: prompt[72] =  conseguir
+whisper_full_with_state: prompt[73] = .
+whisper_full_with_state: prompt[74] = [_TT_1230]
+whisper_full_with_state: prompt[75] = [_TT_1230]
+whisper_full_with_state: prompt[76] = [_BEG_]
+whisper_full_with_state: prompt[77] =  Pero
+whisper_full_with_state: prompt[78] =  por
+whisper_full_with_state: prompt[79] =  otro
+whisper_full_with_state: prompt[80] =  lado
+whisper_full_with_state: prompt[81] = ,
+whisper_full_with_state: prompt[82] =  que
+whisper_full_with_state: prompt[83] =  acá
+whisper_full_with_state: prompt[84] =  no
+whisper_full_with_state: prompt[85] =  que
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_BEG_]
+whisper_full_with_state: prompt[120] =  No
+whisper_full_with_state: prompt[121] =  sé
+whisper_full_with_state: prompt[122] = ,
+whisper_full_with_state: prompt[123] =  nunca
+whisper_full_with_state: prompt[124] =  aprend
+whisper_full_with_state: prompt[125] = iz
+whisper_full_with_state: prompt[126] = os
+whisper_full_with_state: prompt[127] =  y
+whisper_full_with_state: prompt[128] =  te
+whisper_full_with_state: prompt[129] =  piano
+whisper_full_with_state: prompt[130] =  para
+whisper_full_with_state: prompt[131] =  estar
+whisper_full_with_state: prompt[132] =  seguro
+whisper_full_with_state: prompt[133] = .
+whisper_full_with_state: prompt[134] = [_TT_750]
+whisper_full_with_state: prompt[135] = [_TT_750]
+whisper_full_with_state: prompt[136] = [_BEG_]
+whisper_full_with_state: prompt[137] =  Super
+whisper_full_with_state: prompt[138] = aste
+whisper_full_with_state: prompt[139] =  espect
+whisper_full_with_state: prompt[140] = at
+whisper_full_with_state: prompt[141] = ías
+whisper_full_with_state: prompt[142] =  del
+whisper_full_with_state: prompt[143] =  g
+whisper_full_with_state: prompt[144] = ire
+whisper_full_with_state: prompt[145] = mp
+whisper_full_with_state: prompt[146] = act
+whisper_full_with_state: prompt[147] = o
+whisper_full_with_state: prompt[148] = .
+whisper_full_with_state: prompt[149] = [_TT_850]
+whisper_full_with_state: prompt[150] = [_TT_850]
+whisper_full_with_state: prompt[151] = [_SOT_]
+whisper_full_with_state: prompt[152] = [_LANG_es]
+whisper_full_with_state: prompt[153] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    883, p =  0.100, ts =        [?],  0.000, result_len =    0 ' No'
+whisper_full_with_state: id =   2, decoder = 0, token =  12234, p =  0.169, ts =        [?],  0.073, result_len =    0 ' podemos'
+whisper_full_with_state: id =   3, decoder = 0, token =   1306, p =  0.687, ts =        [?],  0.050, result_len =    0 ' ver'
+whisper_full_with_state: id =   4, decoder = 0, token =   1511, p =  0.302, ts =        [?],  0.019, result_len =    0 ' si'
+whisper_full_with_state: id =   5, decoder = 0, token =    785, p =  0.143, ts =        [?],  0.028, result_len =    0 ' es'
+whisper_full_with_state: id =   6, decoder = 0, token =    806, p =  0.235, ts =        [?],  0.027, result_len =    0 ' el'
+whisper_full_with_state: id =   7, decoder = 0, token =   1969, p =  0.062, ts =        [?],  0.044, result_len =    0 ' control'
+whisper_full_with_state: id =   8, decoder = 0, token =     13, p =  0.288, ts =        [?],  0.016, result_len =    0 '.'
+whisper_full_with_state: id =   9, decoder = 0, token =  51314, p =  0.051, ts =        [?],  0.051, result_len =   10 '[_TT_950]'
+whisper_full_with_state: id =  10, decoder = 0, token =  51314, p =  0.913, ts =  [_TT_950],  0.913, result_len =   11 '[_TT_950]'
+whisper_full_with_state: id =  11, decoder = 0, token =  50257, p =  0.769, ts =        [?],  0.000, result_len =   11 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -1.46641, result_len =  11, avg_logprobs = -1.46641, entropy =  2.27187
+whisper_full_with_state: best decoder = 0
+whisper_full_with_state: failed due to avg_logprobs -1.46641 < -1.00000 and no_speech_prob  0.00009 <  0.40000
+
+whisper_full_with_state: failed to decode with temperature = 0.00
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.20
+
+
+whisper_full_with_state: prompt[0] = [_PREV_]
+whisper_full_with_state: prompt[1] = [_BEG_]
+whisper_full_with_state: prompt[2] =  el
+whisper_full_with_state: prompt[3] =  amor
+whisper_full_with_state: prompt[4] = ,
+whisper_full_with_state: prompt[5] =  a
+whisper_full_with_state: prompt[6] =  cal
+whisper_full_with_state: prompt[7] = er
+whisper_full_with_state: prompt[8] =  para
+whisper_full_with_state: prompt[9] =  que
+whisper_full_with_state: prompt[10] =  se
+whisper_full_with_state: prompt[11] =  And
+whisper_full_with_state: prompt[12] = rones
+whisper_full_with_state: prompt[13] = ,
+whisper_full_with_state: prompt[14] =  a
+whisper_full_with_state: prompt[15] =  ver
+whisper_full_with_state: prompt[16] =  como
+whisper_full_with_state: prompt[17] =  tocar
+whisper_full_with_state: prompt[18] =  este
+whisper_full_with_state: prompt[19] =  piano
+whisper_full_with_state: prompt[20] = ,
+whisper_full_with_state: prompt[21] =  y
+whisper_full_with_state: prompt[22] =  eso
+whisper_full_with_state: prompt[23] =  me
+whisper_full_with_state: prompt[24] =  hizo
+whisper_full_with_state: prompt[25] =  pensar
+whisper_full_with_state: prompt[26] =  que
+whisper_full_with_state: prompt[27] =  pasa
+whisper_full_with_state: prompt[28] =  si
+whisper_full_with_state: prompt[29] =  me
+whisper_full_with_state: prompt[30] =  pong
+whisper_full_with_state: prompt[31] = as
+whisper_full_with_state: prompt[32] =  And
+whisper_full_with_state: prompt[33] = rones
+whisper_full_with_state: prompt[34] = [_TT_638]
+whisper_full_with_state: prompt[35] = [_TT_638]
+whisper_full_with_state: prompt[36] = [_BEG_]
+whisper_full_with_state: prompt[37] =  Ot
+whisper_full_with_state: prompt[38] = ras
+whisper_full_with_state: prompt[39] = ,
+whisper_full_with_state: prompt[40] =  o
+whisper_full_with_state: prompt[41] =  por
+whisper_full_with_state: prompt[42] =  Dios
+whisper_full_with_state: prompt[43] =  sí
+whisper_full_with_state: prompt[44] = ,
+whisper_full_with_state: prompt[45] =  el
+whisper_full_with_state: prompt[46] =  juego
+whisper_full_with_state: prompt[47] =  nunca
+whisper_full_with_state: prompt[48] =  he
+whisper_full_with_state: prompt[49] =  hecho
+whisper_full_with_state: prompt[50] =  esto
+whisper_full_with_state: prompt[51] = .
+whisper_full_with_state: prompt[52] = [_TT_1024]
+whisper_full_with_state: prompt[53] = [_BEG_]
+whisper_full_with_state: prompt[54] =  En
+whisper_full_with_state: prompt[55] =  parte
+whisper_full_with_state: prompt[56] =  está
+whisper_full_with_state: prompt[57] =  mal
+whisper_full_with_state: prompt[58] = ,
+whisper_full_with_state: prompt[59] =  porque
+whisper_full_with_state: prompt[60] =  este
+whisper_full_with_state: prompt[61] =  personaje
+whisper_full_with_state: prompt[62] =  es
+whisper_full_with_state: prompt[63] =  un
+whisper_full_with_state: prompt[64] =  hor
+whisper_full_with_state: prompt[65] = rado
+whisper_full_with_state: prompt[66] = ,
+whisper_full_with_state: prompt[67] =  puede
+whisper_full_with_state: prompt[68] =  ser
+whisper_full_with_state: prompt[69] =  cost
+whisper_full_with_state: prompt[70] = oso
+whisper_full_with_state: prompt[71] =  de
+whisper_full_with_state: prompt[72] =  conseguir
+whisper_full_with_state: prompt[73] = .
+whisper_full_with_state: prompt[74] = [_TT_1230]
+whisper_full_with_state: prompt[75] = [_TT_1230]
+whisper_full_with_state: prompt[76] = [_BEG_]
+whisper_full_with_state: prompt[77] =  Pero
+whisper_full_with_state: prompt[78] =  por
+whisper_full_with_state: prompt[79] =  otro
+whisper_full_with_state: prompt[80] =  lado
+whisper_full_with_state: prompt[81] = ,
+whisper_full_with_state: prompt[82] =  que
+whisper_full_with_state: prompt[83] =  acá
+whisper_full_with_state: prompt[84] =  no
+whisper_full_with_state: prompt[85] =  que
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_BEG_]
+whisper_full_with_state: prompt[120] =  No
+whisper_full_with_state: prompt[121] =  sé
+whisper_full_with_state: prompt[122] = ,
+whisper_full_with_state: prompt[123] =  nunca
+whisper_full_with_state: prompt[124] =  aprend
+whisper_full_with_state: prompt[125] = iz
+whisper_full_with_state: prompt[126] = os
+whisper_full_with_state: prompt[127] =  y
+whisper_full_with_state: prompt[128] =  te
+whisper_full_with_state: prompt[129] =  piano
+whisper_full_with_state: prompt[130] =  para
+whisper_full_with_state: prompt[131] =  estar
+whisper_full_with_state: prompt[132] =  seguro
+whisper_full_with_state: prompt[133] = .
+whisper_full_with_state: prompt[134] = [_TT_750]
+whisper_full_with_state: prompt[135] = [_TT_750]
+whisper_full_with_state: prompt[136] = [_BEG_]
+whisper_full_with_state: prompt[137] =  Super
+whisper_full_with_state: prompt[138] = aste
+whisper_full_with_state: prompt[139] =  espect
+whisper_full_with_state: prompt[140] = at
+whisper_full_with_state: prompt[141] = ías
+whisper_full_with_state: prompt[142] =  del
+whisper_full_with_state: prompt[143] =  g
+whisper_full_with_state: prompt[144] = ire
+whisper_full_with_state: prompt[145] = mp
+whisper_full_with_state: prompt[146] = act
+whisper_full_with_state: prompt[147] = o
+whisper_full_with_state: prompt[148] = .
+whisper_full_with_state: prompt[149] = [_TT_850]
+whisper_full_with_state: prompt[150] = [_TT_850]
+whisper_full_with_state: prompt[151] = [_SOT_]
+whisper_full_with_state: prompt[152] = [_LANG_es]
+whisper_full_with_state: prompt[153] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    883, p =  0.952, ts =        [?],  0.000, result_len =    0 ' No'
+whisper_full_with_state: id =   2, decoder = 0, token =  12234, p =  0.929, ts =        [?],  0.004, result_len =    0 ' podemos'
+whisper_full_with_state: id =   3, decoder = 0, token =   1306, p =  1.000, ts =        [?],  0.000, result_len =    0 ' ver'
+whisper_full_with_state: id =   4, decoder = 0, token =   1511, p =  0.982, ts =        [?],  0.000, result_len =    0 ' si'
+whisper_full_with_state: id =   5, decoder = 0, token =    785, p =  0.995, ts =        [?],  0.000, result_len =    0 ' es'
+whisper_full_with_state: id =   6, decoder = 0, token =    806, p =  1.000, ts =        [?],  0.000, result_len =    0 ' el'
+whisper_full_with_state: id =   7, decoder = 0, token =    290, p =  0.381, ts =        [?],  0.086, result_len =    0 ' g'
+whisper_full_with_state: id =   8, decoder = 0, token =    621, p =  1.000, ts =        [?],  0.000, result_len =    0 'ire'
+whisper_full_with_state: id =   9, decoder = 0, token =   2455, p =  1.000, ts =        [?],  0.000, result_len =    0 'mp'
+whisper_full_with_state: id =  10, decoder = 0, token =    578, p =  1.000, ts =        [?],  0.000, result_len =    0 'act'
+whisper_full_with_state: id =  11, decoder = 0, token =     78, p =  1.000, ts =        [?],  0.000, result_len =    0 'o'
+whisper_full_with_state: id =  12, decoder = 0, token =     13, p =  0.952, ts =        [?],  0.000, result_len =    0 '.'
+whisper_full_with_state: id =  13, decoder = 0, token =  51314, p =  0.428, ts =  [_TT_950],  0.428, result_len =   14 '[_TT_950]'
+whisper_full_with_state: id =  14, decoder = 0, token =  51314, p =  1.000, ts =  [_TT_950],  1.000, result_len =   15 '[_TT_950]'
+whisper_full_with_state: id =  15, decoder = 0, token =  50257, p =  1.000, ts =        [?],  0.000, result_len =   15 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.13390, result_len =  15, avg_logprobs = -0.13390, entropy =  2.61563
+whisper_full_with_state: best decoder = 0
+seek = 14936, seek_delta = 1900
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_PREV_]
+whisper_full_with_state: prompt[1] = [_BEG_]
+whisper_full_with_state: prompt[2] =  el
+whisper_full_with_state: prompt[3] =  amor
+whisper_full_with_state: prompt[4] = ,
+whisper_full_with_state: prompt[5] =  a
+whisper_full_with_state: prompt[6] =  cal
+whisper_full_with_state: prompt[7] = er
+whisper_full_with_state: prompt[8] =  para
+whisper_full_with_state: prompt[9] =  que
+whisper_full_with_state: prompt[10] =  se
+whisper_full_with_state: prompt[11] =  And
+whisper_full_with_state: prompt[12] = rones
+whisper_full_with_state: prompt[13] = ,
+whisper_full_with_state: prompt[14] =  a
+whisper_full_with_state: prompt[15] =  ver
+whisper_full_with_state: prompt[16] =  como
+whisper_full_with_state: prompt[17] =  tocar
+whisper_full_with_state: prompt[18] =  este
+whisper_full_with_state: prompt[19] =  piano
+whisper_full_with_state: prompt[20] = ,
+whisper_full_with_state: prompt[21] =  y
+whisper_full_with_state: prompt[22] =  eso
+whisper_full_with_state: prompt[23] =  me
+whisper_full_with_state: prompt[24] =  hizo
+whisper_full_with_state: prompt[25] =  pensar
+whisper_full_with_state: prompt[26] =  que
+whisper_full_with_state: prompt[27] =  pasa
+whisper_full_with_state: prompt[28] =  si
+whisper_full_with_state: prompt[29] =  me
+whisper_full_with_state: prompt[30] =  pong
+whisper_full_with_state: prompt[31] = as
+whisper_full_with_state: prompt[32] =  And
+whisper_full_with_state: prompt[33] = rones
+whisper_full_with_state: prompt[34] = [_TT_638]
+whisper_full_with_state: prompt[35] = [_TT_638]
+whisper_full_with_state: prompt[36] = [_BEG_]
+whisper_full_with_state: prompt[37] =  Ot
+whisper_full_with_state: prompt[38] = ras
+whisper_full_with_state: prompt[39] = ,
+whisper_full_with_state: prompt[40] =  o
+whisper_full_with_state: prompt[41] =  por
+whisper_full_with_state: prompt[42] =  Dios
+whisper_full_with_state: prompt[43] =  sí
+whisper_full_with_state: prompt[44] = ,
+whisper_full_with_state: prompt[45] =  el
+whisper_full_with_state: prompt[46] =  juego
+whisper_full_with_state: prompt[47] =  nunca
+whisper_full_with_state: prompt[48] =  he
+whisper_full_with_state: prompt[49] =  hecho
+whisper_full_with_state: prompt[50] =  esto
+whisper_full_with_state: prompt[51] = .
+whisper_full_with_state: prompt[52] = [_TT_1024]
+whisper_full_with_state: prompt[53] = [_BEG_]
+whisper_full_with_state: prompt[54] =  En
+whisper_full_with_state: prompt[55] =  parte
+whisper_full_with_state: prompt[56] =  está
+whisper_full_with_state: prompt[57] =  mal
+whisper_full_with_state: prompt[58] = ,
+whisper_full_with_state: prompt[59] =  porque
+whisper_full_with_state: prompt[60] =  este
+whisper_full_with_state: prompt[61] =  personaje
+whisper_full_with_state: prompt[62] =  es
+whisper_full_with_state: prompt[63] =  un
+whisper_full_with_state: prompt[64] =  hor
+whisper_full_with_state: prompt[65] = rado
+whisper_full_with_state: prompt[66] = ,
+whisper_full_with_state: prompt[67] =  puede
+whisper_full_with_state: prompt[68] =  ser
+whisper_full_with_state: prompt[69] =  cost
+whisper_full_with_state: prompt[70] = oso
+whisper_full_with_state: prompt[71] =  de
+whisper_full_with_state: prompt[72] =  conseguir
+whisper_full_with_state: prompt[73] = .
+whisper_full_with_state: prompt[74] = [_TT_1230]
+whisper_full_with_state: prompt[75] = [_TT_1230]
+whisper_full_with_state: prompt[76] = [_BEG_]
+whisper_full_with_state: prompt[77] =  Pero
+whisper_full_with_state: prompt[78] =  por
+whisper_full_with_state: prompt[79] =  otro
+whisper_full_with_state: prompt[80] =  lado
+whisper_full_with_state: prompt[81] = ,
+whisper_full_with_state: prompt[82] =  que
+whisper_full_with_state: prompt[83] =  acá
+whisper_full_with_state: prompt[84] =  no
+whisper_full_with_state: prompt[85] =  que
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_BEG_]
+whisper_full_with_state: prompt[120] =  No
+whisper_full_with_state: prompt[121] =  sé
+whisper_full_with_state: prompt[122] = ,
+whisper_full_with_state: prompt[123] =  nunca
+whisper_full_with_state: prompt[124] =  aprend
+whisper_full_with_state: prompt[125] = iz
+whisper_full_with_state: prompt[126] = os
+whisper_full_with_state: prompt[127] =  y
+whisper_full_with_state: prompt[128] =  te
+whisper_full_with_state: prompt[129] =  piano
+whisper_full_with_state: prompt[130] =  para
+whisper_full_with_state: prompt[131] =  estar
+whisper_full_with_state: prompt[132] =  seguro
+whisper_full_with_state: prompt[133] = .
+whisper_full_with_state: prompt[134] = [_TT_750]
+whisper_full_with_state: prompt[135] = [_TT_750]
+whisper_full_with_state: prompt[136] = [_BEG_]
+whisper_full_with_state: prompt[137] =  Super
+whisper_full_with_state: prompt[138] = aste
+whisper_full_with_state: prompt[139] =  espect
+whisper_full_with_state: prompt[140] = at
+whisper_full_with_state: prompt[141] = ías
+whisper_full_with_state: prompt[142] =  del
+whisper_full_with_state: prompt[143] =  g
+whisper_full_with_state: prompt[144] = ire
+whisper_full_with_state: prompt[145] = mp
+whisper_full_with_state: prompt[146] = act
+whisper_full_with_state: prompt[147] = o
+whisper_full_with_state: prompt[148] = .
+whisper_full_with_state: prompt[149] = [_TT_850]
+whisper_full_with_state: prompt[150] = [_TT_850]
+whisper_full_with_state: prompt[151] = [_BEG_]
+whisper_full_with_state: prompt[152] =  No
+whisper_full_with_state: prompt[153] =  podemos
+whisper_full_with_state: prompt[154] =  ver
+whisper_full_with_state: prompt[155] =  si
+whisper_full_with_state: prompt[156] =  es
+whisper_full_with_state: prompt[157] =  el
+whisper_full_with_state: prompt[158] =  g
+whisper_full_with_state: prompt[159] = ire
+whisper_full_with_state: prompt[160] = mp
+whisper_full_with_state: prompt[161] = act
+whisper_full_with_state: prompt[162] = o
+whisper_full_with_state: prompt[163] = .
+whisper_full_with_state: prompt[164] = [_TT_950]
+whisper_full_with_state: prompt[165] = [_TT_950]
+whisper_full_with_state: prompt[166] = [_SOT_]
+whisper_full_with_state: prompt[167] = [_LANG_es]
+whisper_full_with_state: prompt[168] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    883, p =  0.109, ts =        [?],  0.000, result_len =    0 ' No'
+whisper_full_with_state: id =   2, decoder = 0, token =  12234, p =  0.133, ts =        [?],  0.048, result_len =    0 ' podemos'
+whisper_full_with_state: id =   3, decoder = 0, token =   1306, p =  0.124, ts =        [?],  0.046, result_len =    0 ' ver'
+whisper_full_with_state: id =   4, decoder = 0, token =   1511, p =  0.200, ts =        [?],  0.011, result_len =    0 ' si'
+whisper_full_with_state: id =   5, decoder = 0, token =    785, p =  0.121, ts =        [?],  0.025, result_len =    0 ' es'
+whisper_full_with_state: id =   6, decoder = 0, token =    806, p =  0.522, ts =        [?],  0.036, result_len =    0 ' el'
+whisper_full_with_state: id =   7, decoder = 0, token =    290, p =  0.202, ts =        [?],  0.036, result_len =    0 ' g'
+whisper_full_with_state: id =   8, decoder = 0, token =    621, p =  0.912, ts =        [?],  0.023, result_len =    0 'ire'
+whisper_full_with_state: id =   9, decoder = 0, token =   2455, p =  0.996, ts =        [?],  0.026, result_len =    0 'mp'
+whisper_full_with_state: id =  10, decoder = 0, token =    578, p =  0.987, ts =        [?],  0.032, result_len =    0 'act'
+whisper_full_with_state: id =  11, decoder = 0, token =     78, p =  0.999, ts =        [?],  0.036, result_len =    0 'o'
+whisper_full_with_state: id =  12, decoder = 0, token =     13, p =  0.504, ts =        [?],  0.019, result_len =    0 '.'
+whisper_full_with_state: id =  13, decoder = 0, token =  50964, p =  0.187, ts =  [_TT_600],  0.187, result_len =   14 '[_TT_600]'
+whisper_full_with_state: id =  14, decoder = 0, token =  50257, p =  0.912, ts =  [_TT_600],  0.962, result_len =   14 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -1.05544, result_len =  14, avg_logprobs = -1.05544, entropy =  2.63906
+whisper_full_with_state: best decoder = 0
+whisper_full_with_state: failed due to avg_logprobs -1.05544 < -1.00000 and no_speech_prob  0.00000 <  0.40000
+
+whisper_full_with_state: failed to decode with temperature = 0.00
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.20
+
+
+whisper_full_with_state: prompt[0] = [_PREV_]
+whisper_full_with_state: prompt[1] = [_BEG_]
+whisper_full_with_state: prompt[2] =  el
+whisper_full_with_state: prompt[3] =  amor
+whisper_full_with_state: prompt[4] = ,
+whisper_full_with_state: prompt[5] =  a
+whisper_full_with_state: prompt[6] =  cal
+whisper_full_with_state: prompt[7] = er
+whisper_full_with_state: prompt[8] =  para
+whisper_full_with_state: prompt[9] =  que
+whisper_full_with_state: prompt[10] =  se
+whisper_full_with_state: prompt[11] =  And
+whisper_full_with_state: prompt[12] = rones
+whisper_full_with_state: prompt[13] = ,
+whisper_full_with_state: prompt[14] =  a
+whisper_full_with_state: prompt[15] =  ver
+whisper_full_with_state: prompt[16] =  como
+whisper_full_with_state: prompt[17] =  tocar
+whisper_full_with_state: prompt[18] =  este
+whisper_full_with_state: prompt[19] =  piano
+whisper_full_with_state: prompt[20] = ,
+whisper_full_with_state: prompt[21] =  y
+whisper_full_with_state: prompt[22] =  eso
+whisper_full_with_state: prompt[23] =  me
+whisper_full_with_state: prompt[24] =  hizo
+whisper_full_with_state: prompt[25] =  pensar
+whisper_full_with_state: prompt[26] =  que
+whisper_full_with_state: prompt[27] =  pasa
+whisper_full_with_state: prompt[28] =  si
+whisper_full_with_state: prompt[29] =  me
+whisper_full_with_state: prompt[30] =  pong
+whisper_full_with_state: prompt[31] = as
+whisper_full_with_state: prompt[32] =  And
+whisper_full_with_state: prompt[33] = rones
+whisper_full_with_state: prompt[34] = [_TT_638]
+whisper_full_with_state: prompt[35] = [_TT_638]
+whisper_full_with_state: prompt[36] = [_BEG_]
+whisper_full_with_state: prompt[37] =  Ot
+whisper_full_with_state: prompt[38] = ras
+whisper_full_with_state: prompt[39] = ,
+whisper_full_with_state: prompt[40] =  o
+whisper_full_with_state: prompt[41] =  por
+whisper_full_with_state: prompt[42] =  Dios
+whisper_full_with_state: prompt[43] =  sí
+whisper_full_with_state: prompt[44] = ,
+whisper_full_with_state: prompt[45] =  el
+whisper_full_with_state: prompt[46] =  juego
+whisper_full_with_state: prompt[47] =  nunca
+whisper_full_with_state: prompt[48] =  he
+whisper_full_with_state: prompt[49] =  hecho
+whisper_full_with_state: prompt[50] =  esto
+whisper_full_with_state: prompt[51] = .
+whisper_full_with_state: prompt[52] = [_TT_1024]
+whisper_full_with_state: prompt[53] = [_BEG_]
+whisper_full_with_state: prompt[54] =  En
+whisper_full_with_state: prompt[55] =  parte
+whisper_full_with_state: prompt[56] =  está
+whisper_full_with_state: prompt[57] =  mal
+whisper_full_with_state: prompt[58] = ,
+whisper_full_with_state: prompt[59] =  porque
+whisper_full_with_state: prompt[60] =  este
+whisper_full_with_state: prompt[61] =  personaje
+whisper_full_with_state: prompt[62] =  es
+whisper_full_with_state: prompt[63] =  un
+whisper_full_with_state: prompt[64] =  hor
+whisper_full_with_state: prompt[65] = rado
+whisper_full_with_state: prompt[66] = ,
+whisper_full_with_state: prompt[67] =  puede
+whisper_full_with_state: prompt[68] =  ser
+whisper_full_with_state: prompt[69] =  cost
+whisper_full_with_state: prompt[70] = oso
+whisper_full_with_state: prompt[71] =  de
+whisper_full_with_state: prompt[72] =  conseguir
+whisper_full_with_state: prompt[73] = .
+whisper_full_with_state: prompt[74] = [_TT_1230]
+whisper_full_with_state: prompt[75] = [_TT_1230]
+whisper_full_with_state: prompt[76] = [_BEG_]
+whisper_full_with_state: prompt[77] =  Pero
+whisper_full_with_state: prompt[78] =  por
+whisper_full_with_state: prompt[79] =  otro
+whisper_full_with_state: prompt[80] =  lado
+whisper_full_with_state: prompt[81] = ,
+whisper_full_with_state: prompt[82] =  que
+whisper_full_with_state: prompt[83] =  acá
+whisper_full_with_state: prompt[84] =  no
+whisper_full_with_state: prompt[85] =  que
+whisper_full_with_state: prompt[86] =  tengan
+whisper_full_with_state: prompt[87] =  cosas
+whisper_full_with_state: prompt[88] =  ú
+whisper_full_with_state: prompt[89] = nicas
+whisper_full_with_state: prompt[90] = ,
+whisper_full_with_state: prompt[91] =  tiene
+whisper_full_with_state: prompt[92] =  los
+whisper_full_with_state: prompt[93] =  h
+whisper_full_with_state: prompt[94] = éro
+whisper_full_with_state: prompt[95] = es
+whisper_full_with_state: prompt[96] =  de
+whisper_full_with_state: prompt[97] =  ac
+whisper_full_with_state: prompt[98] = us
+whisper_full_with_state: prompt[99] = os
+whisper_full_with_state: prompt[100] =  de
+whisper_full_with_state: prompt[101] =  jue
+whisper_full_with_state: prompt[102] = gan
+whisper_full_with_state: prompt[103] = .
+whisper_full_with_state: prompt[104] = [_TT_850]
+whisper_full_with_state: prompt[105] = [_TT_850]
+whisper_full_with_state: prompt[106] = [_BEG_]
+whisper_full_with_state: prompt[107] =  Está
+whisper_full_with_state: prompt[108] =  muy
+whisper_full_with_state: prompt[109] =  bien
+whisper_full_with_state: prompt[110] =  anim
+whisper_full_with_state: prompt[111] = ado
+whisper_full_with_state: prompt[112] = ,
+whisper_full_with_state: prompt[113] =  estar
+whisper_full_with_state: prompt[114] = á
+whisper_full_with_state: prompt[115] =  exactamente
+whisper_full_with_state: prompt[116] = .
+whisper_full_with_state: prompt[117] = [_TT_700]
+whisper_full_with_state: prompt[118] = [_TT_700]
+whisper_full_with_state: prompt[119] = [_BEG_]
+whisper_full_with_state: prompt[120] =  No
+whisper_full_with_state: prompt[121] =  sé
+whisper_full_with_state: prompt[122] = ,
+whisper_full_with_state: prompt[123] =  nunca
+whisper_full_with_state: prompt[124] =  aprend
+whisper_full_with_state: prompt[125] = iz
+whisper_full_with_state: prompt[126] = os
+whisper_full_with_state: prompt[127] =  y
+whisper_full_with_state: prompt[128] =  te
+whisper_full_with_state: prompt[129] =  piano
+whisper_full_with_state: prompt[130] =  para
+whisper_full_with_state: prompt[131] =  estar
+whisper_full_with_state: prompt[132] =  seguro
+whisper_full_with_state: prompt[133] = .
+whisper_full_with_state: prompt[134] = [_TT_750]
+whisper_full_with_state: prompt[135] = [_TT_750]
+whisper_full_with_state: prompt[136] = [_BEG_]
+whisper_full_with_state: prompt[137] =  Super
+whisper_full_with_state: prompt[138] = aste
+whisper_full_with_state: prompt[139] =  espect
+whisper_full_with_state: prompt[140] = at
+whisper_full_with_state: prompt[141] = ías
+whisper_full_with_state: prompt[142] =  del
+whisper_full_with_state: prompt[143] =  g
+whisper_full_with_state: prompt[144] = ire
+whisper_full_with_state: prompt[145] = mp
+whisper_full_with_state: prompt[146] = act
+whisper_full_with_state: prompt[147] = o
+whisper_full_with_state: prompt[148] = .
+whisper_full_with_state: prompt[149] = [_TT_850]
+whisper_full_with_state: prompt[150] = [_TT_850]
+whisper_full_with_state: prompt[151] = [_BEG_]
+whisper_full_with_state: prompt[152] =  No
+whisper_full_with_state: prompt[153] =  podemos
+whisper_full_with_state: prompt[154] =  ver
+whisper_full_with_state: prompt[155] =  si
+whisper_full_with_state: prompt[156] =  es
+whisper_full_with_state: prompt[157] =  el
+whisper_full_with_state: prompt[158] =  g
+whisper_full_with_state: prompt[159] = ire
+whisper_full_with_state: prompt[160] = mp
+whisper_full_with_state: prompt[161] = act
+whisper_full_with_state: prompt[162] = o
+whisper_full_with_state: prompt[163] = .
+whisper_full_with_state: prompt[164] = [_TT_950]
+whisper_full_with_state: prompt[165] = [_TT_950]
+whisper_full_with_state: prompt[166] = [_SOT_]
+whisper_full_with_state: prompt[167] = [_LANG_es]
+whisper_full_with_state: prompt[168] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    883, p =  0.951, ts =        [?],  0.000, result_len =    0 ' No'
+whisper_full_with_state: id =   2, decoder = 0, token =   4842, p =  0.207, ts =        [?],  0.014, result_len =    0 ' hay'
+whisper_full_with_state: id =   3, decoder = 0, token =    631, p =  0.014, ts =        [?],  0.002, result_len =    0 ' que'
+whisper_full_with_state: id =   4, decoder = 0, token =   3418, p =  0.786, ts =    [_BEG_],  0.998, result_len =    0 ' ir'
+whisper_full_with_state: id =   5, decoder = 0, token =    257, p =  0.971, ts =        [?],  0.000, result_len =    0 ' a'
+whisper_full_with_state: id =   6, decoder = 0, token =   1750, p =  0.931, ts =        [?],  0.000, result_len =    0 ' los'
+whisper_full_with_state: id =   7, decoder = 0, token =   6290, p =  1.000, ts =        [?],  0.000, result_len =    0 ' guard'
+whisper_full_with_state: id =   8, decoder = 0, token =    296, p =  0.991, ts =        [?],  0.000, result_len =    0 'as'
+whisper_full_with_state: id =   9, decoder = 0, token =     13, p =  0.998, ts =        [?],  0.000, result_len =    0 '.'
+whisper_full_with_state: id =  10, decoder = 0, token =  50964, p =  0.735, ts =  [_TT_600],  0.735, result_len =   11 '[_TT_600]'
+whisper_full_with_state: id =  11, decoder = 0, token =  50257, p =  1.000, ts =  [_TT_600],  1.000, result_len =   11 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.59635, result_len =  11, avg_logprobs = -0.59635, entropy =  2.39790
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 16345, seek_delta = 1409
+        Info File src-tauri\src\lib.rs changed. Rebuilding application...
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+    Blocking waiting for file lock on artifact directory
+   Compiling colordubber-ai v0.1.0 (C:\Dev\colordubber-ai\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 24.18s
+     Running `C:\t\debug\colordubber-ai.exe`
+[TRACKS] symphonia asigna índice 0 al stream_id=1 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 1 al stream_id=2 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 2 al stream_id=3 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 3 al stream_id=4 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 0 al stream_id=1 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 1 al stream_id=2 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 2 al stream_id=3 (2ch, 48000Hz)
+[TRACKS] symphonia asigna índice 3 al stream_id=4 (2ch, 48000Hz)
+[AUDIO_EXTRACT] ffmpeg -i "C:\Users\migue\Videos\2026-07-14_21-49-37 Replay.mp4" -vn -c:a copy -map 0:a:0 -movflags +faststart -y "C:\Users\migue\AppData\Local\com.migue.colordubberai\audio_v2_2aac653d96695a9_0.m4a"
+[WAVEFORM] track_index recibido=Some(0), idx usado=0
+[WAVEFORM] Decodificando symphonia stream_id=1, track_id=0
+[AUDIO_EXTRACT] ffmpeg -i "C:\Users\migue\Videos\2026-07-14_21-49-37 Replay.mp4" -vn -c:a copy -map 0:a:3 -movflags +faststart -y "C:\Users\migue\AppData\Local\com.migue.colordubberai\audio_v2_2aac653d96695a9_3.m4a"
+[WAVEFORM] track_index recibido=Some(3), idx usado=3
+[WAVEFORM] Decodificando symphonia stream_id=4, track_id=3
+[AUDIO_EXTRACT] ffmpeg -i "C:\Users\migue\Videos\2026-07-14_21-49-37 Replay.mp4" -vn -c:a copy -map 0:a:2 -movflags +faststart -y "C:\Users\migue\AppData\Local\com.migue.colordubberai\audio_v2_2aac653d96695a9_2.m4a"
+[WAVEFORM] track_index recibido=Some(2), idx usado=2
+[WAVEFORM] Decodificando symphonia stream_id=3, track_id=2
+[AUDIO_EXTRACT] Cache HIT para track=0, archivo="C:\\Users\\migue\\AppData\\Local\\com.migue.colordubberai\\audio_v2_2aac653d96695a9_0.m4a"
+[AUDIO_EXTRACT] ffmpeg -i "C:\Users\migue\Videos\2026-07-14_21-49-37 Replay.mp4" -vn -c:a copy -map 0:a:1 -movflags +faststart -y "C:\Users\migue\AppData\Local\com.migue.colordubberai\audio_v2_2aac653d96695a9_1.m4a"
+[WAVEFORM] track_index recibido=Some(1), idx usado=1
+[WAVEFORM] Decodificando symphonia stream_id=2, track_id=1
+[AUDIO_EXTRACT] Cache HIT para track=2, archivo="C:\\Users\\migue\\AppData\\Local\\com.migue.colordubberai\\audio_v2_2aac653d96695a9_2.m4a"
+[AUDIO_EXTRACT] Cache HIT para track=3, archivo="C:\\Users\\migue\\AppData\\Local\\com.migue.colordubberai\\audio_v2_2aac653d96695a9_3.m4a"
+[WHISPER_PCM] Combinando tracks [2, 3] desde C:\Users\migue\Videos\2026-07-14_21-49-37 Replay.mp4
+[WHISPER] ====== DEBUG INFO ======
+[WHISPER] use_gpu: true
+[WHISPER] gpu_device: 0
+[WHISPER] system_info:
+WHISPER : COREML = 0 | OPENVINO = 0 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | REPACK = 1 | 
+[WHISPER] Vulkan devices found: 1
+[WHISPER]   GPU[0] AMD Radeon RX 9060 XT — VRAM: 7.10 GiB free / 7.95 GiB total
+[WHISPER] WhisperContext created successfully
