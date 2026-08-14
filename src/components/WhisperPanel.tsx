@@ -197,7 +197,7 @@ function WhisperPanel({
             </div>
             <div className="trackList">
               {tracks.map((t) => (
-                <label key={t.index} className="trackLabel">
+                <label key={t.index} className="trackCheckLabel">
                   <input
                     type="checkbox"
                     checked={tracksSeleccionados.includes(t.index)}

@@ -48,6 +48,7 @@ import "./App.css";
 const TRACK_H = 14;
 const TRACK_VISIBLE = 4;
 const TRACK_MAX = 8;
+const TRACK_HANDLE_H = 16;
 const WAVEFORM_H = 56;
 const TRACK_LABEL_W = 42;
 
@@ -925,6 +926,10 @@ function App() {
     const audio = audioRef.current;
     if (!video || !audio || !audioSrc) return;
 
+    // El sync escucha "canplay" SIN once: si el audio.play() se intentó antes
+    // de que el elemento estuviera listo (NotSupportedError silenciado por el
+    // catch), el siguiente canplay reintenta. Un sync con { once: true } se
+    // consume mientras el video está pausado y deja el audio mudo para siempre.
     const sync = () => {
       audio.currentTime = video.currentTime;
       if (!video.paused) {
@@ -932,11 +937,29 @@ function App() {
       }
     };
 
+    const onAudioError = () => {
+      console.error(
+        "[AUDIO] error del elemento audio:",
+        audio.error?.code,
+        audio.error?.message,
+        "src:",
+        audio.src,
+      );
+      // Fallback: si el archivo extraído no puede reproducirse, el video
+      // (muteado por diseño) aporta su audio nativo.
+      video.muted = false;
+    };
+
     if (audio.readyState >= HTMLMediaElement.HAVE_METADATA) {
       sync();
     }
-    audio.addEventListener("canplay", sync, { once: true });
-    return () => audio.removeEventListener("canplay", sync);
+    audio.addEventListener("canplay", sync);
+    audio.addEventListener("error", onAudioError);
+    return () => {
+      audio.removeEventListener("canplay", sync);
+      audio.removeEventListener("error", onAudioError);
+      video.muted = true;
+    };
   }, [audioSrc]);
 
   useEffect(() => {
@@ -1430,7 +1453,7 @@ function App() {
           const wrap = handle.parentElement;
           if (wrap) {
             const wrapRect = wrap.getBoundingClientRect();
-            const h = e.clientY - wrapRect.top - WAVEFORM_H - 10;
+            const h = e.clientY - wrapRect.top - WAVEFORM_H - TRACK_HANDLE_H;
             area.style.maxHeight = `${Math.min(
               TRACK_MAX * TRACK_H,
               Math.max(2 * TRACK_H, h),
@@ -1889,10 +1912,12 @@ function App() {
       }
     }
 
-    // Playhead (firma): línea coral con halo
-    const playheadX =
-      ((currentTime - ws) / wSec) * width;
-    if (playheadX >= 0 && playheadX <= width) {
+    // Playhead (firma): línea coral con halo, alineado con grid y carriles
+    const enVentana = currentTime >= ws && currentTime <= ws + wSec;
+    if (enVentana) {
+      const playheadX =
+        TRACK_LABEL_W +
+        ((currentTime - ws) / wSec) * (width - TRACK_LABEL_W);
       ctx.strokeStyle = "rgba(232, 93, 78, 0.25)";
       ctx.lineWidth = 7;
       ctx.beginPath();
@@ -1905,17 +1930,16 @@ function App() {
       ctx.moveTo(playheadX, 0);
       ctx.lineTo(playheadX, height);
       ctx.stroke();
-    }
 
-    // Línea del playhead sobre el área de carriles (mismo tiempo)
-    const phEl = playheadLineRef.current;
-    if (phEl) {
-      if (playheadX >= 0 && playheadX <= width) {
+      // Línea del playhead sobre el área de carriles (mismo tiempo)
+      const phEl = playheadLineRef.current;
+      if (phEl) {
         phEl.style.display = "block";
-        phEl.style.left = `${TRACK_LABEL_W + (playheadX / width) * (width - TRACK_LABEL_W)}px`;
-      } else {
-        phEl.style.display = "none";
+        phEl.style.left = `${playheadX}px`;
       }
+    } else {
+      const phEl = playheadLineRef.current;
+      if (phEl) phEl.style.display = "none";
     }
   }
 
