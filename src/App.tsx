@@ -1337,22 +1337,32 @@ function App() {
 
   // Mueve una selección de captions un deltaT (manteniendo cada duración).
   // pushHistorial UNA vez: Ctrl+Z deshace todo el bloque.
-  const moverCaptions = useCallback((ids: string[], deltaT: number) => {
-    if (ids.length === 0 || deltaT === 0) return;
-    pushHistorial();
-    setCaptions((prev) => {
-      const copy = prev.map((c) => {
-        if (ids.includes(c.id)) {
+  const moverCaptions = useCallback(
+    (ids: string[], deltaT: number, nuevoHablanteId?: string | null) => {
+      if (ids.length === 0) return;
+      if (deltaT === 0 && nuevoHablanteId === undefined) return;
+      pushHistorial();
+      setCaptions((prev) => {
+        const copy = prev.map((c) => {
+          if (!ids.includes(c.id)) return c;
           const dur = c.fin - c.inicio;
           const nuevoInicio = Math.max(0, c.inicio + deltaT);
-          return { ...c, inicio: nuevoInicio, fin: nuevoInicio + dur };
-        }
-        return c;
+          const updated: Caption = {
+            ...c,
+            inicio: nuevoInicio,
+            fin: nuevoInicio + dur,
+          };
+          if (nuevoHablanteId !== undefined) {
+            updated.hablante_id = nuevoHablanteId;
+          }
+          return updated;
+        });
+        captionsRef.current = copy;
+        return copy;
       });
-      captionsRef.current = copy;
-      return copy;
-    });
-  }, [pushHistorial, setCaptions]);
+    },
+    [pushHistorial, setCaptions],
+  );
 
   function dividirCaptionEnPlayhead() {
     const video = videoRef.current;
@@ -1720,7 +1730,29 @@ function App() {
         const bd = bodyDragRef.current;
         bodyDragRef.current = null;
         if (bd.moved) {
-          moverCaptions(bd.ids, bd.deltaT);
+          let nuevoHablanteId: string | null | undefined = undefined;
+          const area = trackAreaRef.current;
+          if (area) {
+            const rect = area.getBoundingClientRect();
+            const fila = Math.floor(
+              (_e.clientY - rect.top + area.scrollTop) / TRACK_H,
+            );
+            const hablantes = hablantesRef.current;
+            if (fila === 0) {
+              nuevoHablanteId = null;
+            } else if (fila > 0 && fila <= hablantes.length) {
+              nuevoHablanteId = hablantes[fila - 1].id;
+            }
+            // Si el destino coincide con el hablante actual de TODOS los
+            // clips seleccionados, no aplicar el cambio (idempotente).
+            const caps = captionsRef.current.filter((c) =>
+              bd.ids.includes(c.id),
+            );
+            if (caps.every((c) => c.hablante_id === nuevoHablanteId)) {
+              nuevoHablanteId = undefined;
+            }
+          }
+          moverCaptions(bd.ids, bd.deltaT, nuevoHablanteId);
           justFinishedBodyDragRef.current = true;
         }
         return;
