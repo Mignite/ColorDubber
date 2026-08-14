@@ -108,6 +108,7 @@ function App() {
   const [modoMuestreoWhisper, setModoMuestreoWhisper] = useState<string>("beam5");
   const modoMuestreoWhisperRef = useRef("beam5");
   const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [dropFila, setDropFila] = useState<number | null>(null);
   const isScrollingManuallyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -190,7 +191,6 @@ function App() {
     modo: "replace" | "add" | "toggle";
   } | null>(null);
   const marqueeOverlayRef = useRef<HTMLDivElement | null>(null);
-  const dropLineRef = useRef<HTMLDivElement | null>(null);
   const [exportMensaje, setExportMensaje] = useState<string>("");
   const [showHelp, setShowHelp] = useState(false);
   const { pushHistorial, deshacer, rehacer } = useHistory(
@@ -1637,17 +1637,15 @@ function App() {
           bd.deltaT = deltaT;
           if (Math.abs(deltaT) > 0.002) bd.moved = true;
           for (const id of bd.ids) updateClipDiv(id);
-          // Línea de drop (fila destino)
+          // Fila destino (para la preview del bloque)
           const rect = area.getBoundingClientRect();
           const fila = Math.floor(
             (e.clientY - rect.top + area.scrollTop) / TRACK_H,
           );
-          const line = dropLineRef.current;
-          if (line && fila >= 0 && fila <= hablantesRef.current.length) {
-            line.style.display = "block";
-            line.style.top = `${fila * TRACK_H}px`;
-          } else if (line) {
-            line.style.display = "none";
+          if (fila >= 0 && fila <= hablantesRef.current.length) {
+            setDropFila(fila);
+          } else {
+            setDropFila(null);
           }
         }
         return;
@@ -1755,8 +1753,7 @@ function App() {
       if (bodyDragRef.current) {
         const bd = bodyDragRef.current;
         bodyDragRef.current = null;
-        const line = dropLineRef.current;
-        if (line) line.style.display = "none";
+        setDropFila(null);
         if (bd.moved) {
           let nuevoHablanteId: string | null | undefined = undefined;
           const area = trackAreaRef.current;
@@ -2393,12 +2390,7 @@ function App() {
         startTimes,
         moved: false,
       };
-      const line = dropLineRef.current;
-      if (line) {
-        const fila = captionRowIndex(cap.hablante_id, hablantesRef.current);
-        line.style.display = "block";
-        line.style.top = `${fila * TRACK_H}px`;
-      }
+      setDropFila(captionRowIndex(cap.hablante_id, hablantesRef.current));
       e.preventDefault();
       return;
     }
@@ -2789,7 +2781,54 @@ function App() {
                   </div>
                 </div>
               ))}
-              <div ref={dropLineRef} className="dropLine" style={{ display: "none" }} />
+              {bodyDragRef.current && dropFila !== null && (() => {
+                const bd = bodyDragRef.current;
+                const filaColor =
+                  dropFila === 0
+                    ? "#4a4853"
+                    : hablantes[dropFila - 1]?.color ?? "#4a4853";
+                const ws = windowStart;
+                const wSec = windowSecondsRef.current;
+                return (
+                  <div
+                    className="dragGhosts"
+                    style={{
+                      position: "absolute",
+                      left: TRACK_LABEL_W,
+                      right: 0,
+                      top: dropFila * TRACK_H + 1,
+                      height: TRACK_H - 2,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {bd.ids.map((id) => {
+                      const cap = captions.find((c) => c.id === id);
+                      if (!cap) return null;
+                      const inicio = Math.max(0, cap.inicio + bd.deltaT);
+                      const fin = inicio + (cap.fin - cap.inicio);
+                      const s = Math.max(inicio, ws);
+                      const e = Math.min(fin, ws + wSec);
+                      if (e <= s) return null;
+                      const left = ((s - ws) / wSec) * 100;
+                      const width = ((e - s) / wSec) * 100;
+                      return (
+                        <div
+                          key={id}
+                          className="dragGhost"
+                          style={{
+                            left: `${left}%`,
+                            width: `${width}%`,
+                            background: filaColor,
+                          }}
+                          title={cap.texto}
+                        >
+                          <span className="clipText">{cap.texto}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
             <div className="playheadLine" ref={playheadLineRef} />
             <div ref={marqueeOverlayRef} className="marqueeOverlay" style={{ display: "none" }} />
