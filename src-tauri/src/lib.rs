@@ -1358,6 +1358,9 @@ async fn extraer_audio_stream(
         );
 
         let map_arg = format!("0:a:{}", audio_track_index);
+        // -f mp4 explícito: el muxer se elige por la extensión del archivo y
+        // ".part" no la tiene (ffmpeg 9 falla con "Unable to choose an output
+        // format"). El rename final a .m4a preserva el formato.
         let mut output = Command::new("ffmpeg")
             .args([
                 "-i",
@@ -1369,6 +1372,8 @@ async fn extraer_audio_stream(
                 &map_arg,
                 "-movflags",
                 "+faststart",
+                "-f",
+                "mp4",
                 "-y",
                 output_part.to_str().ok_or("Ruta de salida inválida")?,
             ])
@@ -1395,6 +1400,8 @@ async fn extraer_audio_stream(
                     &map_arg,
                     "-movflags",
                     "+faststart",
+                    "-f",
+                    "mp4",
                     "-y",
                     output_part.to_str().ok_or("Ruta de salida inválida")?,
                 ])
