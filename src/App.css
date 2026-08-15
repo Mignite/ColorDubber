@@ -790,10 +790,6 @@ body {
   z-index: 1000;
 }
 
-.dropLine {
-  display: none;
-}
-
 .captionTime {
   font-family: var(--font-mono);
   font-size: 11px;

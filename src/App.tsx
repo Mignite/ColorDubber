@@ -177,14 +177,12 @@ function App() {
   const selectedCaptionIdsRef = useRef<string[]>([]);
   const bodyDragRef = useRef<{
     ids: string[];
-    startX: number;
     deltaT: number;
     startTimes: Map<string, number>;
     moved: boolean;
     els: Map<string, HTMLElement>;
     filaOrigen: Map<string, number>;
     targetFila: number;
-    startWs: number;
     lastX: number;
     lastY: number;
     ctrlDown: boolean;
@@ -1624,13 +1622,7 @@ function App() {
       const drag = isDraggingCaptionEdgeRef.current;
       let s = cap.inicio;
       let e = cap.fin;
-      const bd = bodyDragRef.current;
-      if (bd && bd.ids.includes(captionId)) {
-        const dur = cap.fin - cap.inicio;
-        const t = bd.startTimes.get(captionId) ?? cap.inicio;
-        s = t + bd.deltaT;
-        e = s + dur;
-      } else if (drag && drag.captionId === captionId) {
+      if (drag && drag.captionId === captionId) {
         const t = dragCurrentTimeRef.current;
         if (drag.edge === "start") s = t;
         else e = t;
@@ -2445,14 +2437,12 @@ function App() {
       }
       bodyDragRef.current = {
         ids,
-        startX: e.clientX,
         deltaT: 0,
         startTimes,
         moved: false,
         els,
         filaOrigen,
         targetFila: captionRowIndex(cap.hablante_id, hablantesRef.current),
-        startWs: windowStartRef.current,
         lastX: e.clientX,
         lastY: e.clientY,
         ctrlDown: false,
