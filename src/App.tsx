@@ -1327,6 +1327,7 @@ function App() {
       captionsRef.current = copy;
       return copy;
     });
+    setSelectedCaptionIds([nuevo.id]);
     // El focus disparará handleEditorFocus; ya se pusheó el snapshot pre-add
     skipEditorHistoryRef.current = true;
     setTimeout(() => textEditorRef.current?.focus(), 30);

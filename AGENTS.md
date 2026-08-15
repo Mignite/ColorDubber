@@ -118,6 +118,11 @@ Tauri v2 + React 19 + Rust. AI subtitle editing with Whisper diarization.
 - **Cargo.toml**: `description`/`authors` reales. El bin `calibrar` (tool de dev) se mantiene.
 - Verificado: `npm run build` + `npm test` 37/37 + `cargo check` limpio.
 
+## Session log (2026-08-15) — selección al crear fragmento con "a"
+- **Bug**: `agregarFragmento` (tecla `a`) no seleccionaba el caption nuevo cuando el playhead estaba sobre otro caption. El effect follow (App.tsx ~L2309, sin deps) corría tras el setCaptions y resolvía `currentCaption = matchingCaptions.find(c => c.id === selectedCaptionId)` — como `selectedCaptionId` seguía siendo el caption viejo (que también matcheaba el playhead, porque el nuevo empieza en `video.currentTime`), el follow no pisaba la selección y el nuevo quedaba sin seleccionar. Con el playhead libre sí funcionaba (matchingCaptions[0] = el nuevo), de ahí el "a veces".
+- **Fix**: `setSelectedCaptionIds([nuevo.id])` en `agregarFragmento` (patrón ya usado por Ctrl+V paste, L2029). Con `selectedCaptionId = nuevo.id`, el follow ahora encuentra el nuevo en matchingCaptions y lo mantiene. El `setCaptions` + `setSelectedCaptionIds` se bachean en un solo render.
+- Verificado: `npm run build` OK, `npm test` 37/37.
+
 ## Session log (2026-08-15) — header eliminado, estado de guardado en statusBar
 - **Header eliminado**: el `appHeader` con wordmark `COLORDUBBER` (espacio muerto) ya no existe. El `statusBar` del pie (columna izquierda) ahora muestra: indicador de guardado (`saveState` con punto `saveDot`, verde "Guardado" / ámbar "Sin guardar") + ruta del proyecto (`statusPath`, mono) cuando hay `rutaProyecto`; sin ruta muestra "Proyecto sin guardar" muteado. El hint "¿ para ayuda · Shift+scroll zoom" se movió al statusBar (`.statusHint` con `margin-left:auto`).
 - **Estado reactivo**: nuevo `hayCambios` (state) sincronizado con `isDirtyRef` en los 5 puntos de escritura (efecto que marca dirty, `cargarSrtDesdeRuta`, `guardarProyectoEnRuta`, `cargarProyectoDesdeRuta`, `handleNuevoProyecto`). `isDirtyRef` sigue siendo la fuente de verdad para `onCloseRequested`.
