@@ -1894,12 +1894,25 @@ function App() {
       }
     }
 
+    function onGlobalMouseDown(e: MouseEvent) {
+      // Los mousedown del timeline/trackArea llaman preventDefault(), lo que
+      // suprime el blur automático del navegador sobre el textarea enfocado.
+      // En fase captura (antes de cualquier preventDefault) forzamos el blur
+      // si el click es fuera del editor. blur() explícito no es bloqueable.
+      if (document.activeElement !== textEditorRef.current) return;
+      const target = e.target as HTMLElement;
+      if (target.closest(".captionEditorBox")) return;
+      textEditorRef.current?.blur();
+    }
+
     canvas.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousedown", onGlobalMouseDown, true);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
 
     return () => {
       canvas.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousedown", onGlobalMouseDown, true);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };

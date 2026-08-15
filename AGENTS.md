@@ -118,6 +118,11 @@ Tauri v2 + React 19 + Rust. AI subtitle editing with Whisper diarization.
 - **Cargo.toml**: `description`/`authors` reales. El bin `calibrar` (tool de dev) se mantiene.
 - Verificado: `npm run build` + `npm test` 37/37 + `cargo check` limpio.
 
+## Session log (2026-08-15) — click fuera del editor desenfoca el textarea
+- **Bug**: clickear fuera del `.captionEditorBox` (trackArea, clips, trackHandle, scrollbar) no desenfocaba el textarea. Causa: esos handlers llaman `preventDefault()` en mousedown (marquee, body drag, edge drag, trackHandle), y `preventDefault()` suprime el blur automático del navegador sobre el elemento enfocado (el foco no se mueve). El canvas sí desenfocaba (su mousedown no hace preventDefault).
+- **Fix**: listener de `window` `mousedown` en **fase captura** (`addEventListener("mousedown", fn, true)`) dentro del useEffect de listeners con deps `[]` (junto al del canvas): si `document.activeElement === textEditorRef.current` y el target NO está dentro de `.captionEditorBox`, llama `textEditorRef.current?.blur()` explícito (un `blur()` explícito NO es bloqueable por preventDefault). Captura corre antes que cualquier handler target/bubble, así que el blur ocurre antes de que el marquee/drag comience.
+- **Verificado**: `npm run build` OK, `npm test` 37/37, Playwright: `a` enfoca → click trackArea/canvas desenfoca (BODY) → click en textarea reenfoca; sin errores de consola.
+
 ## Session log (2026-08-15) — selección al crear fragmento con "a"
 - **Bug**: `agregarFragmento` (tecla `a`) no seleccionaba el caption nuevo cuando el playhead estaba sobre otro caption. El effect follow (App.tsx ~L2309, sin deps) corría tras el setCaptions y resolvía `currentCaption = matchingCaptions.find(c => c.id === selectedCaptionId)` — como `selectedCaptionId` seguía siendo el caption viejo (que también matcheaba el playhead, porque el nuevo empieza en `video.currentTime`), el follow no pisaba la selección y el nuevo quedaba sin seleccionar. Con el playhead libre sí funcionaba (matchingCaptions[0] = el nuevo), de ahí el "a veces".
 - **Fix**: `setSelectedCaptionIds([nuevo.id])` en `agregarFragmento` (patrón ya usado por Ctrl+V paste, L2029). Con `selectedCaptionId = nuevo.id`, el follow ahora encuentra el nuevo en matchingCaptions y lo mantiene. El `setCaptions` + `setSelectedCaptionIds` se bachean en un solo render.
