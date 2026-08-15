@@ -1563,8 +1563,8 @@ function App() {
     }
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const t = windowStartRef.current + (x / rect.width) * windowSecondsRef.current;
+    const x = e.clientX - rect.left - TRACK_LABEL_W;
+    const t = windowStartRef.current + (x / Math.max(1, rect.width - TRACK_LABEL_W)) * windowSecondsRef.current;
 
     // El mousedown ya pausó el video (y el mouseup ya restauró la reproducción
     // si correspondía): aquí solo se busca, sin tocar el estado de reproducción.
@@ -1580,11 +1580,15 @@ function App() {
     function getTimeFromMouse(e: MouseEvent): number {
       const rect = canvas!.getBoundingClientRect();
 
-      const x = e.clientX - rect.left;
-      const clampedX = Math.max(0, Math.min(rect.width, x));
+      const x = e.clientX - rect.left - TRACK_LABEL_W;
+      const clampedX = Math.max(
+        0,
+        Math.min(rect.width - TRACK_LABEL_W, x),
+      );
       return (
         windowStartRef.current +
-        (clampedX / rect.width) * windowSecondsRef.current
+        (clampedX / Math.max(1, rect.width - TRACK_LABEL_W)) *
+          windowSecondsRef.current
       );
     }
 
@@ -1601,10 +1605,10 @@ function App() {
           video.pause();
         }
         const rect = canvas!.getBoundingClientRect();
-        const x = e.clientX - rect.left;
+        const x = e.clientX - rect.left - TRACK_LABEL_W;
         const wSec = windowSecondsRef.current;
         const ws = windowStartRef.current;
-        const rawTime = ws + (x / rect.width) * wSec;
+        const rawTime = ws + (x / Math.max(1, rect.width - TRACK_LABEL_W)) * wSec;
         video.currentTime = Math.max(0, rawTime);
       }
     }
@@ -1702,7 +1706,10 @@ function App() {
         const wSec = windowSecondsRef.current;
         const ws = windowStartRef.current;
 
-        const newTime = Math.max(0, ws + (x / rect.width) * wSec);
+        const newTime = Math.max(
+          0,
+          ws + ((x - TRACK_LABEL_W) / Math.max(1, rect.width - TRACK_LABEL_W)) * wSec,
+        );
 
         const edgeZone = 30;
         const maxScrollSpeed = wSec * 0.5;
@@ -1759,7 +1766,7 @@ function App() {
           const wSec = windowSecondsRef.current;
           const ws = windowStartRef.current;
           const toT = (clientX: number) =>
-            ws + ((clientX - rect.left) / areaWidth) * wSec;
+            ws + ((clientX - rect.left - TRACK_LABEL_W) / areaWidth) * wSec;
           const toFila = (clientY: number) =>
             (clientY - rect.top + area.scrollTop) / TRACK_H;
           const ids = filtrarPorMarquee(
