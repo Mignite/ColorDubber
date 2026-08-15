@@ -278,26 +278,30 @@ fn existe_cache_volumen(
 }
 
 #[tauri::command]
-fn cargar_cache_volumen(
+async fn cargar_cache_volumen(
     app: tauri::AppHandle,
     ruta_video: String,
     track_index: Option<usize>,
 ) -> Result<Vec<f32>, String> {
     let path = ruta_cache_para(&app, &ruta_video, track_index)?;
-    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
-    if bytes.is_empty() || bytes.len() % 4 != 0 {
-        // Cache corrupto (crash a mitad de escritura): descartar y re-analizar
-        let _ = std::fs::remove_file(&path);
-        return Err("Cache de volumen corrupto, se re-analizará".to_string());
-    }
-    let mut resultado = Vec::with_capacity(bytes.len() / 4);
-    for chunk in bytes.chunks_exact(4) {
-        let arr: [u8; 4] = chunk
-            .try_into()
-            .map_err(|_| "Error leyendo cache".to_string())?;
-        resultado.push(f32::from_le_bytes(arr));
-    }
-    Ok(resultado)
+    tauri::async_runtime::spawn_blocking(move || {
+        let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+        if bytes.is_empty() || bytes.len() % 4 != 0 {
+            // Cache corrupto (crash a mitad de escritura): descartar y re-analizar
+            let _ = std::fs::remove_file(&path);
+            return Err("Cache de volumen corrupto, se re-analizará".to_string());
+        }
+        let mut resultado = Vec::with_capacity(bytes.len() / 4);
+        for chunk in bytes.chunks_exact(4) {
+            let arr: [u8; 4] = chunk
+                .try_into()
+                .map_err(|_| "Error leyendo cache".to_string())?;
+            resultado.push(f32::from_le_bytes(arr));
+        }
+        Ok(resultado)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[derive(Serialize, Deserialize)]
@@ -387,59 +391,63 @@ struct TrackInfo {
 }
 
 #[tauri::command]
-fn listar_tracks_audio(ruta: String) -> Result<Vec<TrackInfo>, String> {
-    use symphonia::core::formats::FormatOptions;
-    use symphonia::core::io::MediaSourceStream;
-    use symphonia::core::meta::MetadataOptions;
-    use symphonia::core::probe::Hint;
+async fn listar_tracks_audio(ruta: String) -> Result<Vec<TrackInfo>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        use symphonia::core::formats::FormatOptions;
+        use symphonia::core::io::MediaSourceStream;
+        use symphonia::core::meta::MetadataOptions;
+        use symphonia::core::probe::Hint;
 
-    let file = std::fs::File::open(&ruta).map_err(|e| e.to_string())?;
-    let mss = MediaSourceStream::new(Box::new(file), Default::default());
-    let mut hint = Hint::new();
-    if let Some(ext) = std::path::Path::new(&ruta)
-        .extension()
-        .and_then(|e| e.to_str())
-    {
-        hint.with_extension(ext);
-    }
+        let file = std::fs::File::open(&ruta).map_err(|e| e.to_string())?;
+        let mss = MediaSourceStream::new(Box::new(file), Default::default());
+        let mut hint = Hint::new();
+        if let Some(ext) = std::path::Path::new(&ruta)
+            .extension()
+            .and_then(|e| e.to_str())
+        {
+            hint.with_extension(ext);
+        }
 
-    let probed = symphonia::default::get_probe()
-        .format(
-            &hint,
-            mss,
-            &FormatOptions::default(),
-            &MetadataOptions::default(),
-        )
-        .map_err(|e| e.to_string())?;
+        let probed = symphonia::default::get_probe()
+            .format(
+                &hint,
+                mss,
+                &FormatOptions::default(),
+                &MetadataOptions::default(),
+            )
+            .map_err(|e| e.to_string())?;
 
-    let format = probed.format;
-    let mut resultado = Vec::new();
+        let format = probed.format;
+        let mut resultado = Vec::new();
 
-    for (i, track) in format
-        .tracks()
-        .iter()
-        .filter(|t| t.codec_params.sample_rate.is_some())
-        .enumerate()
-    {
-        let canales = track
-            .codec_params
-            .channels
-            .map(|c| c.count() as u16)
-            .unwrap_or(2);
-        let sample_rate = track.codec_params.sample_rate.unwrap();
-        println!(
-            "[TRACKS] symphonia asigna índice {} al stream_id={:?} ({}ch, {}Hz)",
-            i, track.id, canales, sample_rate
-        );
-        resultado.push(TrackInfo {
-            index: i,
-            nombre: format!("Track {}", i + 1),
-            canales,
-            sample_rate,
-        });
-    }
+        for (i, track) in format
+            .tracks()
+            .iter()
+            .filter(|t| t.codec_params.sample_rate.is_some())
+            .enumerate()
+        {
+            let canales = track
+                .codec_params
+                .channels
+                .map(|c| c.count() as u16)
+                .unwrap_or(2);
+            let sample_rate = track.codec_params.sample_rate.unwrap();
+            println!(
+                "[TRACKS] symphonia asigna índice {} al stream_id={:?} ({}ch, {}Hz)",
+                i, track.id, canales, sample_rate
+            );
+            resultado.push(TrackInfo {
+                index: i,
+                nombre: format!("Track {}", i + 1),
+                canales,
+                sample_rate,
+            });
+        }
 
-    Ok(resultado)
+        Ok(resultado)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 fn carpeta_modelos(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
@@ -1157,13 +1165,12 @@ fn ruta_glosario_global(app: &tauri::AppHandle) -> Result<std::path::PathBuf, St
 }
 
 #[tauri::command]
-fn cargar_glosario_global(app: tauri::AppHandle) -> String {
-    match ruta_glosario_global(&app) {
-        Ok(path) if path.exists() => {
-            std::fs::read_to_string(&path).unwrap_or_default()
-        }
-        _ => String::new(),
+fn cargar_glosario_global(app: tauri::AppHandle) -> Result<String, String> {
+    let path = ruta_glosario_global(&app)?;
+    if !path.exists() {
+        return Ok(String::new());
     }
+    std::fs::read_to_string(&path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -1444,7 +1451,6 @@ fn escribir_archivo_en_carpeta(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             guardar_proyecto,
             cargar_proyecto,
