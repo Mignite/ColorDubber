@@ -13,3 +13,12 @@ export const PALETA = [
   "#4EE8C3",
 ];
 export const HISTORY_LIMIT = 50;
+
+// ==== Islas de audio (duración inteligente de fragmentos) ====
+export const ISLA_VENTANA_FONDO_SEG = 2;
+export const ISLA_FACTOR_UMBRAL = 2.5;
+export const ISLA_PISO = 0.01;
+export const ISLA_HISTERESIS_MUESTRAS = 8;
+export const ISLA_MAX_DURACION = 5;
+export const ISLA_MIN_DURACION = 1.5;
+export const ISLA_FALLBACK = 1.5;

@@ -27,6 +27,7 @@ import {
   NEW_MARGIN,
   LERP_FACTOR,
   PALETA,
+  ISLA_FALLBACK,
 } from "./utils/constants";
 import { formatTime, parseTimeInput } from "./utils/time";
 import { parseSrt, buildSrt, formatSrtTimestamp } from "./utils/srt";
@@ -36,6 +37,7 @@ import {
   findSnapTime,
 } from "./utils/captions";
 import { filtrarPorMarquee, captionRowIndex } from "./utils/selection";
+import { buscarFinIslaAudio } from "./utils/audioIslands";
 
 import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
@@ -1310,15 +1312,22 @@ function App() {
       return copy;
     });
   }
+  // Duración de un fragmento nuevo: usa la isla de audio (fin del diálogo
+  // bajo el playhead) si hay análisis de volumen; fallback a ISLA_FALLBACK.
+  function duracionFragmento(inicio: number): number {
+    const finIsla = buscarFinIslaAudio(volumenRef.current, inicio);
+    return finIsla !== null ? finIsla - inicio : ISLA_FALLBACK;
+  }
+
   function agregarFragmento() {
     pushHistorial();
     const video = videoRef.current;
     const inicio = video ? video.currentTime : 0;
-    const duracionDefault = 1.5;
+    const duracion = duracionFragmento(inicio);
     const nuevo: Caption = {
       id: `cap-frag-${Date.now()}`,
       inicio,
-      fin: inicio + duracionDefault,
+      fin: inicio + duracion,
       texto: "",
       hablante_id: null,
     };
@@ -2027,11 +2036,11 @@ function App() {
           pushHistorial();
           const video = videoRef.current;
           const inicio = video ? video.currentTime : 0;
-          const duracionDefault = 1.5;
+          const duracion = duracionFragmento(inicio);
           const nuevo: Caption = {
             id: `cap-paste-${Date.now()}`,
             inicio,
-            fin: inicio + duracionDefault,
+            fin: inicio + duracion,
             texto: clipboardTextRef.current,
             hablante_id: null,
           };
@@ -2243,6 +2252,10 @@ function App() {
       ctx.moveTo(x + 0.5, 0);
       ctx.lineTo(x + 0.5, height);
       ctx.stroke();
+      // Con tickStep < 1s (0.5/0.1) hay varios ticks por segundo; etiquetar
+      // todos con mm:ss truncado duplicaría el mismo segundo. Solo etiquetar
+      // los que caen en segundo entero; el resto quedan como línea fina.
+      if (Math.abs(t - Math.round(t)) > 1e-9) continue;
       ctx.fillStyle = "#706e7b";
       const m = Math.floor(t / 60);
       const s = Math.floor(t % 60);
