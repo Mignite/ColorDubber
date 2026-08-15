@@ -477,6 +477,15 @@ body {
 
 .clip.dragging {
   filter: brightness(1.25);
+  z-index: 30;
+}
+
+.track.dropTarget {
+  background: rgba(232, 93, 78, 0.08);
+}
+
+.track.dropTarget .trackClips {
+  box-shadow: inset 0 0 0 1px rgba(232, 93, 78, 0.35);
 }
 
 .clipEdge {

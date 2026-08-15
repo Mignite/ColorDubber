@@ -108,8 +108,6 @@ function App() {
   const [modoMuestreoWhisper, setModoMuestreoWhisper] = useState<string>("beam5");
   const modoMuestreoWhisperRef = useRef("beam5");
   const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [dropFila, setDropFila] = useState<number | null>(null);
-  const [bodyDragTick, setBodyDragTick] = useState(0);
   const isScrollingManuallyRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -183,6 +181,9 @@ function App() {
     deltaT: number;
     startTimes: Map<string, number>;
     moved: boolean;
+    els: Map<string, HTMLElement>;
+    filaOrigen: Map<string, number>;
+    targetFila: number;
   } | null>(null);
   const justFinishedBodyDragRef = useRef(false);
   const marqueeStateRef = useRef<{
@@ -1637,18 +1638,29 @@ function App() {
           }
           bd.deltaT = deltaT;
           if (Math.abs(deltaT) > 0.002) bd.moved = true;
-          for (const id of bd.ids) updateClipDiv(id);
-          // Fila destino (para la preview del bloque)
+          // Fila destino (para el salto vertical y la reasignación al soltar)
           const rect = area.getBoundingClientRect();
           const fila = Math.floor(
             (e.clientY - rect.top + area.scrollTop) / TRACK_H,
           );
           if (fila >= 0 && fila <= hablantesRef.current.length) {
-            setDropFila(fila);
-          } else {
-            setDropFila(null);
+            bd.targetFila = fila;
           }
-          setBodyDragTick((t) => t + 1);
+          // Mover los clips con transform (sin re-render de React)
+          const pxX = (deltaT / wSec) * areaWidth;
+          for (const [id, el] of bd.els) {
+            const fila0 = bd.filaOrigen.get(id) ?? 0;
+            const py = (bd.targetFila - fila0) * TRACK_H;
+            el.style.transform = `translate(${pxX}px, ${py}px)`;
+            el.style.zIndex = "30";
+          }
+          // Highlight del track destino
+          const tracks = Array.from(
+            area.querySelectorAll<HTMLElement>(".track"),
+          );
+          tracks.forEach((t, i) => {
+            t.classList.toggle("dropTarget", i === bd.targetFila);
+          });
         }
         return;
       }
@@ -1755,29 +1767,34 @@ function App() {
       if (bodyDragRef.current) {
         const bd = bodyDragRef.current;
         bodyDragRef.current = null;
-        setDropFila(null);
+        // Limpiar transform y clases de los clips arrastrados
+        for (const el of bd.els.values()) {
+          el.style.transform = "";
+          el.style.zIndex = "";
+          el.classList.remove("dragging");
+        }
+        const area = trackAreaRef.current;
+        if (area) {
+          area
+            .querySelectorAll(".dropTarget")
+            .forEach((t) => t.classList.remove("dropTarget"));
+        }
         if (bd.moved) {
           let nuevoHablanteId: string | null | undefined = undefined;
-          const area = trackAreaRef.current;
-          if (area) {
-            const rect = area.getBoundingClientRect();
-            const fila = Math.floor(
-              (_e.clientY - rect.top + area.scrollTop) / TRACK_H,
-            );
-            const hablantes = hablantesRef.current;
-            if (fila === 0) {
-              nuevoHablanteId = null;
-            } else if (fila > 0 && fila <= hablantes.length) {
-              nuevoHablanteId = hablantes[fila - 1].id;
-            }
-            // Si el destino coincide con el hablante actual de TODOS los
-            // clips seleccionados, no aplicar el cambio (idempotente).
-            const caps = captionsRef.current.filter((c) =>
-              bd.ids.includes(c.id),
-            );
-            if (caps.every((c) => c.hablante_id === nuevoHablanteId)) {
-              nuevoHablanteId = undefined;
-            }
+          const hablantes = hablantesRef.current;
+          const fila = bd.targetFila;
+          if (fila === 0) {
+            nuevoHablanteId = null;
+          } else if (fila > 0 && fila <= hablantes.length) {
+            nuevoHablanteId = hablantes[fila - 1].id;
+          }
+          // Si el destino coincide con el hablante actual de TODOS los
+          // clips seleccionados, no aplicar el cambio (idempotente).
+          const caps = captionsRef.current.filter((c) =>
+            bd.ids.includes(c.id),
+          );
+          if (caps.every((c) => c.hablante_id === nuevoHablanteId)) {
+            nuevoHablanteId = undefined;
           }
           moverCaptions(bd.ids, bd.deltaT, nuevoHablanteId);
           justFinishedBodyDragRef.current = true;
@@ -2359,7 +2376,8 @@ function App() {
     if (e.button !== 0) return;
     e.stopPropagation();
     if (!edge) {
-      // Drag del cuerpo: mover la selección (o este clip) en bloque
+      // Drag del cuerpo: mover la selección (o este clip) en bloque.
+      // Los clips quedan montados; se mueven con transform en el mousemove.
       let ids: string[];
       if (selectedCaptionIdsRef.current.includes(cap.id)) {
         ids = [...selectedCaptionIdsRef.current];
@@ -2368,9 +2386,27 @@ function App() {
         setSelectedCaptionIds([cap.id]);
       }
       const startTimes = new Map<string, number>();
+      const els = new Map<string, HTMLElement>();
+      const filaOrigen = new Map<string, number>();
+      const area = trackAreaRef.current;
+      const tracks = area
+        ? Array.from(area.querySelectorAll<HTMLElement>(".track"))
+        : [];
       for (const id of ids) {
         const c = captionsRef.current.find((x) => x.id === id);
         if (c) startTimes.set(id, c.inicio);
+        const el = area?.querySelector<HTMLElement>(
+          `[data-caption-id="${id}"]`,
+        );
+        if (el) {
+          els.set(id, el);
+          el.classList.add("dragging");
+          const trackEl = el.closest<HTMLElement>(".track");
+          filaOrigen.set(
+            id,
+            trackEl ? tracks.indexOf(trackEl) : 0,
+          );
+        }
       }
       bodyDragRef.current = {
         ids,
@@ -2378,8 +2414,10 @@ function App() {
         deltaT: 0,
         startTimes,
         moved: false,
+        els,
+        filaOrigen,
+        targetFila: captionRowIndex(cap.hablante_id, hablantesRef.current),
       };
-      setDropFila(captionRowIndex(cap.hablante_id, hablantesRef.current));
       e.preventDefault();
       return;
     }
@@ -2714,10 +2752,8 @@ function App() {
                       const ws = windowStart;
                       const wSec = windowSecondsRef.current;
                       const drag = isDraggingCaptionEdgeRef.current;
-                      const bd = bodyDragRef.current;
-                      // Durante el body drag, el clip se renderiza como
-                      // preview en el track destino (no en su track original).
-                      if (bd && bd.ids.includes(cap.id)) return null;
+                      // Durante el body drag el clip queda montado en su track
+                      // y se mueve con transform (ver onMouseMove).
                       let s = cap.inicio;
                       let e = cap.fin;
                       if (drag && drag.captionId === cap.id) {
@@ -2766,57 +2802,8 @@ function App() {
                       );
                     })}
                   </div>
-                </div>
+</div>
               ))}
-              {bodyDragRef.current && dropFila !== null && (() => {
-                void bodyDragTick;
-                const bd = bodyDragRef.current;
-                const ws = windowStart;
-                const wSec = windowSecondsRef.current;
-                return (
-                  <div
-                    className="dragPreview"
-                    style={{
-                      position: "absolute",
-                      left: TRACK_LABEL_W,
-                      right: 0,
-                      top: dropFila * TRACK_H + 1,
-                      height: TRACK_H - 2,
-                      pointerEvents: "none",
-                      zIndex: 8,
-                    }}
-                  >
-                    {bd.ids.map((id) => {
-                      const cap = captions.find((c) => c.id === id);
-                      if (!cap) return null;
-                      const inicio = Math.max(0, cap.inicio + bd.deltaT);
-                      const fin = inicio + (cap.fin - cap.inicio);
-                      const s = Math.max(inicio, ws);
-                      const e = Math.min(fin, ws + wSec);
-                      if (e <= s) return null;
-                      const left = ((s - ws) / wSec) * 100;
-                      const width = ((e - s) / wSec) * 100;
-                      const color =
-                        speakerMap.get(cap.hablante_id ?? "")?.color ??
-                        "#4a4853";
-                      return (
-                        <div
-                          key={id}
-                          className="clip"
-                          style={{
-                            left: `${left}%`,
-                            width: `${width}%`,
-                            background: color,
-                          }}
-                          title={cap.texto}
-                        >
-                          <span className="clipText">{cap.texto}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
             </div>
             <div className="playheadLine" ref={playheadLineRef} />
             <div ref={marqueeOverlayRef} className="marqueeOverlay" style={{ display: "none" }} />
