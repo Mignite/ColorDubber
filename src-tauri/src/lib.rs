@@ -326,6 +326,8 @@ struct Proyecto {
     ruta_video: String,
     hablantes: Vec<Hablante>,
     captions: Vec<Caption>,
+    #[serde(default)]
+    playhead: f64,
 }
 
 struct ModeloWhisperInfo {

@@ -17,6 +17,7 @@ export interface Proyecto {
   ruta_video: string;
   hablantes: Hablante[];
   captions: Caption[];
+  playhead: number;
 }
 
 export interface ModeloInfo {

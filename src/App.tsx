@@ -174,6 +174,7 @@ function App() {
 
   const rutaProyectoRef = useRef("");
   const videoPathRef = useRef("");
+  const playheadPendienteRef = useRef<number | null>(null);
   const volumenRef = useRef<number[]>([]);
   const analisisVolumenRequestRef = useRef(0);
   const selectedCaptionIdsRef = useRef<string[]>([]);
@@ -639,6 +640,7 @@ function App() {
       ruta_video: videoPathRef.current,
       hablantes: hablantesRef.current,
       captions: captionsRef.current,
+      playhead: videoRef.current?.currentTime ?? 0,
     };
 
     try {
@@ -714,6 +716,7 @@ function App() {
       const existe: boolean = await invoke("existe_archivo", {
         ruta: proyecto.ruta_video,
       });
+      playheadPendienteRef.current = proyecto.playhead ?? 0;
       if (existe) {
         cargarVideoDesdeRuta(proyecto.ruta_video);
       } else {
@@ -747,6 +750,7 @@ function App() {
     setTrackSeleccionado(null);
     setAudioSrc(null);
     setSelectedCaptionIds([]);
+    playheadPendienteRef.current = null;
     // Descartar análisis en vuelo, waveform y duración del proyecto anterior
     analisisVolumenRequestRef.current++;
     setAnalizando(false);
@@ -912,7 +916,26 @@ function App() {
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
-      const onLoadedMeta = () => setVideoDuration(video.duration);
+      const onLoadedMeta = () => {
+        setVideoDuration(video.duration);
+        // Restaurar el playhead guardado en el proyecto (si hay uno pendiente)
+        // y posicionar la ventana del timeline para que lo muestre.
+        const pendiente = playheadPendienteRef.current;
+        if (pendiente !== null && video.duration > 0) {
+          const objetivo = Math.min(pendiente, video.duration);
+          video.currentTime = objetivo;
+          const wSec = windowSecondsRef.current;
+          const maxStart = Math.max(0, video.duration - wSec);
+          const nuevoWs = Math.max(
+            0,
+            Math.min(maxStart, objetivo - wSec * NEW_MARGIN),
+          );
+          windowStartRef.current = nuevoWs;
+          windowTargetRef.current = nuevoWs;
+          updateScrollbarThumb(nuevoWs, wSec, video.duration);
+          playheadPendienteRef.current = null;
+        }
+      };
       video.addEventListener("loadedmetadata", onLoadedMeta);
       return () => video.removeEventListener("loadedmetadata", onLoadedMeta);
     }
@@ -1105,6 +1128,11 @@ function App() {
     );
     if (fila >= 0 && fila <= hablantesRef.current.length) {
       bd.targetFila = fila;
+    }
+    // Un arrastre SOLO vertical (cambiar de carril sin mover en el tiempo)
+    // también debe commitear: el moved no puede depender solo del deltaT.
+    if (bd.targetFila !== (bd.filaOrigen.get(bd.ids[0]) ?? 0)) {
+      bd.moved = true;
     }
     // Mover los clips con transform (sin re-render de React)
     const pxX = (deltaT / wSec) * areaWidth;
@@ -2182,30 +2210,31 @@ function App() {
       return;
     }
     if (e.ctrlKey) {
-      // Ctrl+scroll = pan lateral (moverse en el tiempo)
-      e.preventDefault();
-      if (!videoRef.current) return;
-      const maxStart = Math.max(
-        0,
-        videoRef.current.duration - windowSecondsRef.current,
-      );
-      const panAmount = e.deltaY * 0.08;
-      const newTarget = Math.max(
-        0,
-        Math.min(maxStart, windowTargetRef.current + panAmount),
-      );
-      windowTargetRef.current = newTarget;
-      isScrollingManuallyRef.current = true;
-      if (autoFollowingRef.current) {
-        setAutoFollowing(false);
+      // Ctrl+scroll = subir/bajar entre los carriles de hablantes
+      const area = trackAreaRef.current;
+      if (area) {
+        e.preventDefault();
+        area.scrollTop += e.deltaY;
       }
       return;
     }
-    // Scroll normal = subir/bajar entre los carriles de hablantes
-    const area = trackAreaRef.current;
-    if (area) {
-      e.preventDefault();
-      area.scrollTop += e.deltaY;
+    // Scroll normal = pan lateral (moverse en el tiempo). Factor pequeño +
+    // LERP del rAF (LERP_FACTOR 0.12) = desplazamiento suave, sin saltos.
+    e.preventDefault();
+    if (!videoRef.current) return;
+    const maxStart = Math.max(
+      0,
+      videoRef.current.duration - windowSecondsRef.current,
+    );
+    const panAmount = e.deltaY * 0.03;
+    const newTarget = Math.max(
+      0,
+      Math.min(maxStart, windowTargetRef.current + panAmount),
+    );
+    windowTargetRef.current = newTarget;
+    isScrollingManuallyRef.current = true;
+    if (autoFollowingRef.current) {
+      setAutoFollowing(false);
     }
   };
 
