@@ -206,6 +206,7 @@ function App() {
   const playheadFrameSkipRef = useRef(0);
   const dragScrollVelocityRef = useRef(0);
   const isDirtyRef = useRef(false);
+  const [hayCambios, setHayCambios] = useState(false);
   const ignoreNextChangeRef = useRef(true);
 
   const [tracks, setTracks] = useState<TrackInfo[]>([]);
@@ -470,6 +471,7 @@ function App() {
     }
     if (captions.length > 0 || hablantes.length > 0 || rutaProyecto.length > 0) {
       isDirtyRef.current = true;
+      setHayCambios(true);
     }
   }, [captions, hablantes, rutaProyecto]);
 
@@ -590,6 +592,7 @@ function App() {
       const parsed = parseSrt(contenido);
       ignoreNextChangeRef.current = true;
       isDirtyRef.current = false;
+      setHayCambios(false);
       setCaptions(parsed);
     } catch (err) {
       console.error("Error cargando SRT:", err);
@@ -638,7 +641,11 @@ function App() {
 
     try {
       await invoke("guardar_proyecto", { ruta: path, proyecto });
+      if (rutaProyectoRef.current !== path) {
+        ignoreNextChangeRef.current = true;
+      }
       isDirtyRef.current = false;
+      setHayCambios(false);
       setRutaProyecto(path);
       rutaProyectoRef.current = path;
       console.log("Guardado exitoso");
@@ -687,6 +694,7 @@ function App() {
       });
       ignoreNextChangeRef.current = true;
       isDirtyRef.current = false;
+      setHayCambios(false);
       setRutaProyecto(path);
       setCaptions(proyecto.captions || []);
       setHablantes(proyecto.hablantes || []);
@@ -725,6 +733,7 @@ function App() {
     }
     ignoreNextChangeRef.current = true;
     isDirtyRef.current = false;
+    setHayCambios(false);
     setVideoSrc("");
     setVideoPath("");
     setRutaProyecto("");
@@ -2501,20 +2510,6 @@ function App() {
 
   return (
     <main className="app">
-      <header className="appHeader">
-        <span className="appWordmark">
-          <span className="rec" />
-          COLOR<strong>DUBBER</strong>
-        </span>
-        <span className="appHeaderHint">
-          {rutaProyecto ? (
-            <span className="appProjectPath">{rutaProyecto}</span>
-          ) : (
-            <span className="muted">Proyecto sin guardar</span>
-          )}
-          <span className="appHeaderKeyHint">¿ para ayuda · Shift+scroll zoom</span>
-        </span>
-      </header>
       {arrastrando && (
         <div className="dropOverlay">
           <p>Soltá el video o el .srt acá</p>
@@ -2935,13 +2930,20 @@ function App() {
 
           <div className="statusBar">
             {rutaProyecto ? (
-              <span>Proyecto: {rutaProyecto}</span>
+              <>
+                <span className={`saveState ${hayCambios ? "dirty" : "clean"}`}>
+                  <span className="saveDot" />
+                  {hayCambios ? "Sin guardar" : "Guardado"}
+                </span>
+                <span className="statusPath">{rutaProyecto}</span>
+              </>
             ) : (
               <span className="muted">Proyecto sin guardar</span>
             )}
             {exportMensaje && (
               <div className="exportMensaje">{exportMensaje}</div>
             )}
+            <span className="statusHint">¿ para ayuda · Shift+scroll zoom</span>
           </div>
         </div>
 

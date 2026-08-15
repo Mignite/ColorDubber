@@ -108,52 +108,6 @@ body {
   background: #55555f;
 }
 
-/* ===== HEADER / WORDMARK ===== */
-.appHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px 0;
-  flex-shrink: 0;
-}
-
-.appWordmark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  color: var(--text);
-}
-
-.appWordmark .rec {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  margin-right: 7px;
-  animation: recBlink 2.2s infinite;
-}
-
-@keyframes recBlink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.25;
-  }
-}
-
-.appHeaderHint {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--textFaint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ===== LAYOUT PRINCIPAL ===== */
 .app {
   width: 100%;
@@ -1026,23 +980,71 @@ button.primary:hover {
 .statusBar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-size: 12px;
   color: var(--textDim);
   padding: 4px 2px;
   flex-shrink: 0;
 }
 
-.statusBar .ok {
+.saveState {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.saveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.saveState.clean {
   color: var(--success);
 }
 
-.statusBar .ok svg {
-  width: 9px;
-  height: 9px;
+.saveState.clean .saveDot {
+  background: var(--success);
+}
+
+.saveState.dirty {
+  color: var(--warn);
+}
+
+.saveState.dirty .saveDot {
+  background: var(--warn);
+  animation: recBlink 2.2s infinite;
+}
+
+@keyframes recBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.statusPath {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--textFaint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusHint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--textFaint);
+  white-space: nowrap;
 }
 
 .muted {
