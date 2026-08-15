@@ -184,6 +184,10 @@ function App() {
     els: Map<string, HTMLElement>;
     filaOrigen: Map<string, number>;
     targetFila: number;
+    startWs: number;
+    lastX: number;
+    lastY: number;
+    ctrlDown: boolean;
   } | null>(null);
   const justFinishedBodyDragRef = useRef(false);
   const marqueeStateRef = useRef<{
@@ -1064,6 +1068,50 @@ function App() {
     };
   }, []);
 
+  // Helper del body drag: aplica el transform de los clips arrastrados según
+  // el TIEMPO bajo el cursor (ws + x→tiempo), no según píxeles acumulados,
+  // para que funcione también durante el auto-pan de los bordes.
+  function aplicarTransformBodyDrag(clientX: number, clientY: number, ctrlKey: boolean) {
+    const bd = bodyDragRef.current;
+    const area = trackAreaRef.current;
+    if (!bd || !area) return;
+    const areaWidth = Math.max(1, area.clientWidth - TRACK_LABEL_W);
+    const wSec = windowSecondsRef.current;
+    const ws = windowStartRef.current;
+    const rect = area.getBoundingClientRect();
+    const lead = captionsRef.current.find((c) => c.id === bd.ids[0]);
+    if (!lead) return;
+    let leadNuevo = ws + ((clientX - rect.left - TRACK_LABEL_W) / areaWidth) * wSec;
+    if (!ctrlKey) {
+      const snap = findSnapTime(leadNuevo, bd.ids, captionsRef.current);
+      if (snap !== null) leadNuevo = snap;
+    }
+    let deltaT = leadNuevo - lead.inicio;
+    if (deltaT < -lead.inicio) deltaT = -lead.inicio;
+    bd.deltaT = deltaT;
+    if (Math.abs(deltaT) > 0.002) bd.moved = true;
+    // Fila destino (para el salto vertical y la reasignación al soltar)
+    const fila = Math.floor(
+      (clientY - rect.top + area.scrollTop) / TRACK_H,
+    );
+    if (fila >= 0 && fila <= hablantesRef.current.length) {
+      bd.targetFila = fila;
+    }
+    // Mover los clips con transform (sin re-render de React)
+    const pxX = (deltaT / wSec) * areaWidth;
+    for (const [id, el] of bd.els) {
+      const fila0 = bd.filaOrigen.get(id) ?? 0;
+      const py = (bd.targetFila - fila0) * TRACK_H;
+      el.style.transform = `translate(${pxX}px, ${py}px)`;
+      el.style.zIndex = "30";
+    }
+    // Highlight del track destino
+    const tracks = Array.from(area.querySelectorAll<HTMLElement>(".track"));
+    tracks.forEach((t, i) => {
+      t.classList.toggle("dropTarget", i === bd.targetFila);
+    });
+  }
+
   useEffect(() => {
     let rafId: number;
     let lastTick = performance.now();
@@ -1082,13 +1130,21 @@ function App() {
             ? Math.max(0, video.duration - windowSecondsRef.current)
             : 0;
 
-        if (isDraggingPlayheadRef.current) {
+        if (isDraggingPlayheadRef.current || bodyDragRef.current) {
           const vel = dragScrollVelocityRef.current;
           if (vel !== 0) {
             const nuevo = Math.max(0, windowStartRef.current + vel * dt);
             windowStartRef.current = Math.min(nuevo, maxStart);
             windowTargetRef.current = windowStartRef.current;
             updateScrollbarThumb(windowStartRef.current, windowSecondsRef.current, video.duration);
+            // Re-render por frame: todos los clips siguen al canvas durante el pan.
+            setWindowStart(windowStartRef.current);
+            // El pan cambia el tiempo bajo el cursor: re-aplicar el transform
+            // para que los clips arrastrados sigan pegados al ratón.
+            const bd = bodyDragRef.current;
+            if (bd) {
+              aplicarTransformBodyDrag(bd.lastX, bd.lastY, bd.ctrlDown);
+            }
           } else {
             windowTargetRef.current = windowStartRef.current;
           }
@@ -1618,49 +1674,27 @@ function App() {
 
       if (bodyDragRef.current) {
         const bd = bodyDragRef.current;
+        bd.lastX = e.clientX;
+        bd.lastY = e.clientY;
+        bd.ctrlDown = e.ctrlKey;
         const area = trackAreaRef.current;
         if (area) {
-          const areaWidth = Math.max(1, area.clientWidth - TRACK_LABEL_W);
-          const wSec = windowSecondsRef.current;
-          let deltaT = ((e.clientX - bd.startX) / areaWidth) * wSec;
-          // Snap al borde de otros captions (Ctrl desactiva)
-          if (!e.ctrlKey) {
-            const lead = captionsRef.current.find((c) => c.id === bd.ids[0]);
-            if (lead) {
-              const leadNuevo = lead.inicio + deltaT;
-              const snap = findSnapTime(
-                leadNuevo,
-                bd.ids,
-                captionsRef.current,
-              );
-              if (snap !== null) deltaT = snap - lead.inicio;
-            }
-          }
-          bd.deltaT = deltaT;
-          if (Math.abs(deltaT) > 0.002) bd.moved = true;
-          // Fila destino (para el salto vertical y la reasignación al soltar)
+          aplicarTransformBodyDrag(e.clientX, e.clientY, e.ctrlKey);
+          // Auto-pan horizontal en los bordes (igual que el playhead)
           const rect = area.getBoundingClientRect();
-          const fila = Math.floor(
-            (e.clientY - rect.top + area.scrollTop) / TRACK_H,
-          );
-          if (fila >= 0 && fila <= hablantesRef.current.length) {
-            bd.targetFila = fila;
+          const wSec = windowSecondsRef.current;
+          const x = e.clientX - rect.left;
+          const edgeZone = 30;
+          const maxScrollSpeed = wSec * 0.5;
+          if (x < edgeZone) {
+            const factor = 1 - x / edgeZone;
+            dragScrollVelocityRef.current = -maxScrollSpeed * factor;
+          } else if (x > rect.width - edgeZone) {
+            const factor = (x - (rect.width - edgeZone)) / edgeZone;
+            dragScrollVelocityRef.current = maxScrollSpeed * factor;
+          } else {
+            dragScrollVelocityRef.current = 0;
           }
-          // Mover los clips con transform (sin re-render de React)
-          const pxX = (deltaT / wSec) * areaWidth;
-          for (const [id, el] of bd.els) {
-            const fila0 = bd.filaOrigen.get(id) ?? 0;
-            const py = (bd.targetFila - fila0) * TRACK_H;
-            el.style.transform = `translate(${pxX}px, ${py}px)`;
-            el.style.zIndex = "30";
-          }
-          // Highlight del track destino
-          const tracks = Array.from(
-            area.querySelectorAll<HTMLElement>(".track"),
-          );
-          tracks.forEach((t, i) => {
-            t.classList.toggle("dropTarget", i === bd.targetFila);
-          });
         }
         return;
       }
@@ -1767,6 +1801,7 @@ function App() {
       if (bodyDragRef.current) {
         const bd = bodyDragRef.current;
         bodyDragRef.current = null;
+        dragScrollVelocityRef.current = 0;
         // Limpiar transform y clases de los clips arrastrados
         for (const el of bd.els.values()) {
           el.style.transform = "";
@@ -2417,6 +2452,10 @@ function App() {
         els,
         filaOrigen,
         targetFila: captionRowIndex(cap.hablante_id, hablantesRef.current),
+        startWs: windowStartRef.current,
+        lastX: e.clientX,
+        lastY: e.clientY,
+        ctrlDown: false,
       };
       e.preventDefault();
       return;
