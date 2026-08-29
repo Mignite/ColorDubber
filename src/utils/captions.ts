@@ -1,6 +1,7 @@
 import type { Caption, OverlapEntry, Hablante } from "../types";
 import { SNAP_THRESHOLD } from "./constants";
 import { formatTime } from "./time";
+import { t } from "../i18n";
 
 export function BuildOverlapReport(
   caps: Caption[],
@@ -9,7 +10,7 @@ export function BuildOverlapReport(
   const nombreDe = (id: string | null) =>
     hablantes.find((h) => h.id === id)?.nombre ||
     hablantes.find((h) => h.id === id)?.tecla ||
-    "Sin hablante";
+    t("overlap.unassigned");
 
   const ordenados = [...caps].sort((a, b) => a.inicio - b.inicio);
   const resultado: OverlapEntry[] = [];
@@ -34,7 +35,7 @@ export function BuildOverlapReport(
 }
 
 export function FormatOverlapReport(entries: OverlapEntry[]): string {
-  if (entries.length === 0) return "No se encontraron subtítulos solapados.\n";
+  if (entries.length === 0) return t("overlap.noOverlaps");
   return entries
     .map(
       (e) =>

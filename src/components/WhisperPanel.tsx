@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ModeloInfo, TrackInfo, TranscripcionProgreso } from "../types";
+import { t } from "../i18n";
 
 interface Props {
   modelos: ModeloInfo[];
@@ -100,7 +101,7 @@ function WhisperPanel({
   return (
     <div className="speakersAccordion">
       <button className="speakersAccordionHeader" onClick={onTogglePanel}>
-        <span>{chipSvg} Modelos Whisper</span>
+        <span>{chipSvg} {t("whisper.title")}</span>
         {chevronSvg}
       </button>
       {panelAbierto && (
@@ -117,15 +118,15 @@ function WhisperPanel({
                 </div>
                 {m.descargado ? (
                   <>
-                    {modeloSeleccionado === m.id && <span className="modeloActivo">{checkSvg} activo</span>}
-                    <button className="iconBtnSmall" onClick={() => onEliminarModelo(m.id)}>Borrar</button>
+                    {modeloSeleccionado === m.id && <span className="modeloActivo">{checkSvg} {t("whisper.modelActive")}</span>}
+                    <button className="iconBtnSmall" onClick={() => onEliminarModelo(m.id)}>{t("whisper.delete")}</button>
                   </>
                 ) : descargandoModelo === m.id ? (
                   <span className="modeloProgreso">
                     {(progresoDescarga * 100).toFixed(0)}%
                   </span>
                 ) : (
-                  <button onClick={() => onDescargarModelo(m.id)}>Descargar</button>
+                  <button onClick={() => onDescargarModelo(m.id)}>{t("whisper.download")}</button>
                 )}
               </div>
 
@@ -148,7 +149,7 @@ function WhisperPanel({
                           >
                             <path d="M8 1.8a6.2 6.2 0 1 1-6.2 6.2" />
                           </svg>
-                          Conectando...
+                          {t("whisper.connecting")}
                         </span>
                       )}
                       {estadoDescarga === "descargando" && (
@@ -165,11 +166,11 @@ function WhisperPanel({
                             <path d="M8 2v8.5M4.5 7.5 8 11l3.5-3.5" />
                             <path d="M2.5 13.5h11" />
                           </svg>
-                          {(bytesDescargados / 1024 / 1024).toFixed(1) + " / " + (bytesTotal / 1024 / 1024).toFixed(0) + " MB"}
+                          {t("whisper.downloading", { downloaded: (bytesDescargados / 1024 / 1024).toFixed(1), total: (bytesTotal / 1024 / 1024).toFixed(0) })}
                         </span>
                       )}
                       {estadoDescarga === "completo" && (
-                        <span className="connectingState">{checkSvg} Completado</span>
+                        <span className="connectingState">{checkSvg} {t("whisper.completed")}</span>
                       )}
                     </span>
                     <span>{(progresoDescarga * 100).toFixed(0)}%</span>
@@ -185,7 +186,7 @@ function WhisperPanel({
 
               {errorTranscripcion && !transcribiendo && (
                 <div className="downloadErrorBox">
-                  {warnSvg} Error de transcripción: {errorTranscripcion}
+                  {warnSvg} {t("whisper.transcriptionError", { error: errorTranscripcion })}
                 </div>
               )}
             </div>
@@ -193,7 +194,7 @@ function WhisperPanel({
 
           <div className="trackSection">
             <div className="trackSectionTitle">
-              Selecciona pistas de audio para Whisper:
+              {t("whisper.selectTracks")}
             </div>
             <div className="trackList">
               {tracks.map((t) => (
@@ -209,63 +210,63 @@ function WhisperPanel({
             </div>
             {tracksSeleccionados.length === 0 && (
               <div className="trackWarning">
-                {warnSvg} Selecciona al menos una pista
+                {warnSvg} {t("whisper.noTrackWarning")}
               </div>
             )}
           </div>
 
           <div className="glossarySection">
-            <div className="glossaryLabel">Glosario global (persiste entre proyectos)</div>
+            <div className="glossaryLabel">{t("whisper.glossaryGlobalLabel")}</div>
             <input
               type="text"
               value={glosarioGlobal}
               onChange={(e) => onGlosarioGlobalChange(e.target.value)}
-              placeholder="Mignite, L, Gasben, Mid, Operator, GG"
+              placeholder={t("whisper.glossaryGlobalPlaceholder")}
               className="glossaryInput"
-              title="T\u00E9rminos que se aplican a todos los proyectos"
+              title={t("whisper.glossaryGlobalTitle")}
             />
           </div>
           <div className="glossarySection">
-            <div className="glossaryLabel">Glosario del proyecto</div>
+            <div className="glossaryLabel">{t("whisper.glossaryProjectLabel")}</div>
             <input
               type="text"
               value={glosario}
               onChange={(e) => onGlosarioChange(e.target.value)}
-              placeholder="Nacho, Mid, Operator, GG"
+              placeholder={t("whisper.glossaryProjectPlaceholder")}
               className="glossaryInput"
-              title="Palabras clave para ayudar a Whisper a escribirlas correctamente"
+              title={t("whisper.glossaryProjectTitle")}
             />
           </div>
           <div className="whisperConfigRow">
             <div className="whisperConfigItem">
-              <label className="whisperConfigLabel">Idioma</label>
+              <label className="whisperConfigLabel">{t("whisper.languageLabel")}</label>
               <select
                 className="whisperSelect"
                 value={idioma}
                 onChange={(e) => onIdiomaChange(e.target.value)}
                 disabled={transcribiendo}
               >
-                <option value="es">Español</option>
-                <option value="en">Inglés</option>
-                <option value="auto">Auto-detectar</option>
-                <option value="pt">Portugués</option>
-                <option value="fr">Francés</option>
-                <option value="it">Italiano</option>
-                <option value="de">Alemán</option>
-                <option value="ja">Japonés</option>
-                <option value="zh">Chino</option>
+                <option value="es">{t("whisper.language.es")}</option>
+                <option value="en">{t("whisper.language.en")}</option>
+                <option value="auto">{t("whisper.language.auto")}</option>
+                <option value="pt">{t("whisper.language.pt")}</option>
+                <option value="fr">{t("whisper.language.fr")}</option>
+                <option value="it">{t("whisper.language.it")}</option>
+                <option value="de">{t("whisper.language.de")}</option>
+                <option value="ja">{t("whisper.language.ja")}</option>
+                <option value="zh">{t("whisper.language.zh")}</option>
               </select>
             </div>
             <div className="whisperConfigItem">
-              <label className="whisperConfigLabel">Modo</label>
+              <label className="whisperConfigLabel">{t("whisper.modeLabel")}</label>
               <select
                 className="whisperSelect"
                 value={modoMuestreo}
                 onChange={(e) => onModoMuestreoChange(e.target.value)}
                 disabled={transcribiendo}
               >
-                <option value="beam5">Alta Precisión (Beam 5)</option>
-                <option value="greedy">Rápido (Greedy)</option>
+                <option value="beam5">{t("whisper.mode.beam5")}</option>
+                <option value="greedy">{t("whisper.mode.greedy")}</option>
               </select>
             </div>
           </div>
@@ -276,8 +277,8 @@ function WhisperPanel({
             disabled={transcribiendo || !modeloSeleccionado || tracksSeleccionados.length === 0}
           >
             {transcribiendo
-              ? (transcripcionProgreso?.mensaje ?? "Transcribiendo...") + (transcripcionProgreso ? " (" + transcripcionProgreso.progreso + "%)" : "")
-              : "Transcribir con Whisper (" + tracksSeleccionados.length + " track" + (tracksSeleccionados.length > 1 ? "s" : "") + " seleccionado" + (tracksSeleccionados.length > 1 ? "s" : "") + ")"}
+              ? (transcripcionProgreso?.mensaje ?? t("whisper.transcribing")) + (transcripcionProgreso ? " (" + transcripcionProgreso.progreso + "%)" : "")
+              : t("whisper.transcribe", { count: tracksSeleccionados.length, plural: tracksSeleccionados.length !== 1 ? "s" : "" })}
           </button>
           {transcribiendo && transcripcionProgreso && (
             <div className="transcriptionProgressTrack">

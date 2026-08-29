@@ -43,6 +43,7 @@ import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
 import WhisperPanel from "./components/WhisperPanel";
 import CaptionList from "./components/CaptionList";
+import { t } from "./i18n";
 import "./App.css";
 
 // Carriles por hablante en el timeline: altura fija por carril y tope de
@@ -622,7 +623,7 @@ function App() {
     try {
       const path = await open({
         multiple: false,
-        filters: [{ name: "Subtítulos", extensions: ["srt"] }],
+        filters: [{ name: t("dialog.filterSubtitles"), extensions: ["srt"] }],
       });
       if (path) await cargarSrtDesdeRuta(path);
     } catch (err) {
@@ -681,8 +682,8 @@ function App() {
   async function handleCargarProyecto() {
     if (isDirtyRef.current) {
       const ok = await ask(
-        "Tienes cambios sin guardar. ¿Abrir otro proyecto?",
-        { title: "Cambios sin guardar", kind: "warning" },
+        t("app.confirm.openProject"),
+        { title: t("app.confirm.unsavedTitle"), kind: "warning" },
       );
       if (!ok) return;
     }
@@ -730,8 +731,8 @@ function App() {
 
   async function handleNuevoProyecto() {
     if (isDirtyRef.current) {
-      const ok = await ask("Tienes cambios sin guardar. ¿Nuevo proyecto?", {
-        title: "Cambios sin guardar",
+      const ok = await ask(t("app.confirm.newProject"), {
+        title: t("app.confirm.unsavedTitle"),
         kind: "warning",
       });
       if (!ok) return;
@@ -762,7 +763,7 @@ function App() {
   }
   async function handleExportarSrtPorHablante() {
     if (captionsRef.current.length === 0) {
-      setExportMensaje("No hay subtítulos para exportar.");
+      setExportMensaje(t("app.export.noCaptions"));
       setTimeout(() => setExportMensaje(""), 4000);
       return;
     }
@@ -805,19 +806,19 @@ function App() {
       }
 
       if (archivosCreados === 0) {
-        setExportMensaje("Ningún subtítulo tiene hablante asignado todavía.");
+        setExportMensaje(t("app.export.noSpeaker"));
       } else if (sinAsignar > 0) {
         setExportMensaje(
-          `${archivosCreados} archivo(s) exportados. ${sinAsignar} subtítulo(s) sin hablante quedaron afuera.` +
+          t("app.export.exportedWithUnassigned", { count: archivosCreados, unassigned: sinAsignar }) +
             (solapes.length > 0
-              ? ` — ${solapes.length} solape(s), revisa solapes.txt.`
+              ? t("app.export.overlapSuffix", { count: solapes.length })
               : ""),
         );
       } else {
         setExportMensaje(
-          `${archivosCreados} archivo(s) exportados correctamente.` +
+          t("app.export.exportedOk", { count: archivosCreados }) +
             (solapes.length > 0
-              ? ` — ${solapes.length} solape(s), revisa solapes.txt.`
+              ? t("app.export.overlapSuffix", { count: solapes.length })
               : ""),
         );
       }
@@ -829,14 +830,14 @@ function App() {
 
   async function handleExportarJsonCombinado() {
     if (captionsRef.current.length === 0) {
-      setExportMensaje("No hay subtítulos para exportar.");
+      setExportMensaje(t("app.export.noCaptions"));
       setTimeout(() => setExportMensaje(""), 4000);
       return;
     }
 
     try {
       const path = await save({
-        filters: [{ name: "JSON combinado", extensions: ["json"] }],
+        filters: [{ name: t("dialog.filterJsonCombined"), extensions: ["json"] }],
         defaultPath: "subtitulos_combinado.json",
       });
       if (!path) return;
@@ -855,7 +856,7 @@ function App() {
         ruta: path,
         contenido: JSON.stringify(data, null, 2),
       });
-      setExportMensaje("JSON combinado exportado.");
+      setExportMensaje(t("app.export.jsonDone"));
       setTimeout(() => setExportMensaje(""), 4000);
     } catch (err) {
       console.error("Error exportando JSON:", err);
@@ -2143,8 +2144,8 @@ function App() {
 
         if (isDirtyRef.current) {
           const ok = await ask(
-            "Tienes cambios sin guardar. ¿Cerrar de todas formas?",
-            { title: "Cambios sin guardar", kind: "warning" },
+            t("app.confirm.closeProject"),
+            { title: t("app.confirm.unsavedTitle"), kind: "warning" },
           );
           if (!ok) return;
         }
@@ -2568,7 +2569,7 @@ function App() {
     <main className="app">
       {arrastrando && (
         <div className="dropOverlay">
-          <p>Soltá el video o el .srt acá</p>
+          <p>{t("app.dropOverlay")}</p>
         </div>
       )}
       <div className="mainGrid">
@@ -2588,16 +2589,16 @@ function App() {
                   <path d="M8 6v3.2" />
                   <circle cx="8" cy="11.4" r="0.6" fill="currentColor" stroke="none" />
                 </svg>
-                No se encontró el video en:
+                {t("app.videoNotFound")}
               </p>
               <p className="missingPath">{rutaFaltante}</p>
               <div className="missingActions">
-                <button onClick={handleAbrirVideo}>Buscar video</button>
+                <button onClick={handleAbrirVideo}>{t("app.searchVideo")}</button>
                 <button
                   className="secondary"
                   onClick={() => setVideoNoEncontrado(false)}
                 >
-                  Continuar sin video
+                  {t("app.continueWithoutVideo")}
                 </button>
               </div>
             </div>
@@ -2615,7 +2616,7 @@ function App() {
                   <button
                     className="iconBtn"
                     onClick={() => saltar(-5)}
-                    title="Retroceder 5s"
+                    title={t("app.transport.rewind")}
                   >
                     <svg
                       className="icon"
@@ -2628,7 +2629,7 @@ function App() {
                   <button
                     className="iconBtn playBtn"
                     onClick={togglePlay}
-                    title="Pausa / Reproducir"
+                    title={t("app.transport.playPause")}
                   >
                     {reproduciendo ? (
                       <svg
@@ -2651,7 +2652,7 @@ function App() {
                   <button
                     className="iconBtn"
                     onClick={() => saltar(5)}
-                    title="Adelantar 5s"
+                    title={t("app.transport.forward")}
                   >
                     <svg
                       className="icon"
@@ -2672,7 +2673,7 @@ function App() {
                   onFocus={handleTimeInputFocus}
                   onBlur={handleTimeInputBlur}
                   onKeyDown={handleTimeInputKeyDown}
-                  title="Click para editar, Enter para saltar ahí"
+                  title={t("app.timeInput.title")}
                 />
                 {tracks.length > 1 && (
                   <div className="trackSelectorWrap">
@@ -2684,7 +2685,7 @@ function App() {
                       }
                       disabled={extrayendo}
                       data-extracting={extrayendo || undefined}
-                      title="Selecciona el audio a usar en el waveform y transcripción"
+                      title={t("app.trackSelector.title")}
                     >
                       {tracks.map((t) => (
                         <option key={t.index} value={t.index}>
@@ -2707,7 +2708,7 @@ function App() {
                         >
                           <path d="M8 1.8a6.2 6.2 0 1 1-6.2 6.2" />
                         </svg>
-                        extrayendo audio...
+                        {t("app.trackSelector.extracting")}
                       </span>
                     )}
                   </div>
@@ -2716,24 +2717,24 @@ function App() {
             </>
           ) : (
             <div className="videoEmpty">
-              <p>Ningún video cargado</p>
-              <button onClick={handleAbrirVideo}>Elegir video</button>
+              <p>{t("app.noVideoLoaded")}</p>
+              <button onClick={handleAbrirVideo}>{t("app.chooseVideo")}</button>
             </div>
           )}
 
           <div className="captionEditorBox">
             {selectedCaptionIds.length > 1 ? (
               <div className="editingWhichTag">
-                <span>{selectedCaptionIds.length} seleccionados</span>
+                <span>{t("app.editor.multiSelected", { count: selectedCaptionIds.length })}</span>
                 <span className="speakerChip muted">
                   <span className="dot" />
-                  E deshabilitado con varios
+                  {t("app.editor.disabledMulti")}
                 </span>
               </div>
             ) : (
               currentCaption && (
                 <div className="editingWhichTag">
-                  <span>Editando</span>
+                  <span>{t("app.editor.editing")}</span>
                   {(() => {
                     const sp = currentCaption.hablante_id
                       ? hablantes.find(
@@ -2750,7 +2751,7 @@ function App() {
                         />
                         {sp
                           ? sp.nombre || sp.tecla
-                          : "sin hablante asignado"}
+                          : t("app.editor.noSpeaker")}
                       </span>
                     );
                   })()}
@@ -2765,7 +2766,7 @@ function App() {
                 !currentCaption || selectedCaptionIds.length > 1
               }
               placeholder={
-                currentCaption ? "" : "Sin subtítulo en este punto del video"
+                currentCaption ? "" : t("app.editor.placeholder")
               }
               onChange={(e) =>
                 currentCaption &&
@@ -2776,13 +2777,10 @@ function App() {
               onKeyDown={handleEditorKeyDown}
             />
             <div className="captionEditorHint">
-              E para editar · Enter para salir (retoma play/pausa anterior) ·
-              Shift+Enter salto de línea · Alt+←/→ salta entre subtítulos · A
-              para añadir · ↑/↓ cambiar entre simultaneos · Delete para eliminar
-              subtitulo seleccionado
+              {t("app.editor.hint")}
             </div>
             <button className="addFragmentBtn" onClick={agregarFragmento}>
-              + Nuevo fragmento
+              {t("app.editor.newFragment")}
             </button>
           </div>
 
@@ -2903,7 +2901,7 @@ function App() {
                 e.preventDefault();
               }}
               onClick={(e) => e.stopPropagation()}
-              title="Arrastrar para expandir la vista de carriles"
+              title={t("app.timeline.dragHandleTitle")}
             >
               <svg
                 className="icon xs"
@@ -2915,7 +2913,7 @@ function App() {
               >
                 <path d="M8 2.2v11.6M5.2 5.2 8 2.4l2.8 2.8M5.2 10.8 8 13.6l2.8-2.8" />
               </svg>
-              <span>arrastrar para expandir</span>
+              <span>{t("app.timeline.dragHandle")}</span>
             </div>
           </div>
           {videoDuration > 0 && (
@@ -2948,8 +2946,8 @@ function App() {
           <div className="timelineToolbar">
             <span className="zoomLabel">
               {analizando
-                ? `Analizando audio... ${(volumen.length / VENTANAS_POR_SEGUNDO).toFixed(0)}s procesados`
-                : `Zoom: ${windowSeconds.toFixed(1)}s · Shift+scroll zoom · scroll navegar · arrastrar bordes con snap`}
+                ? t("app.timeline.analyzing", { seconds: (volumen.length / VENTANAS_POR_SEGUNDO).toFixed(0) })
+                : t("app.timeline.zoom", { seconds: windowSeconds.toFixed(1) })}
             </span>
             <button
               className={`followBtn ${autoFollowing ? "active" : ""}`}
@@ -2968,7 +2966,7 @@ function App() {
                   isScrollingManuallyRef.current = false;
                 }
               }}
-              title="Seguir playhead automáticamente"
+              title={t("app.timeline.followTitle")}
             >
               <svg
                 className="icon sm"
@@ -2980,7 +2978,7 @@ function App() {
                 <circle cx="8" cy="8" r="2.6" />
                 <path d="M8 1.6v2.4M8 12v2.4M1.6 8h2.4M12 8h2.4" />
               </svg>
-              {autoFollowing ? "Seguir" : "Manual"}
+              {autoFollowing ? t("app.timeline.follow") : t("app.timeline.manual")}
             </button>
           </div>
 
@@ -2989,17 +2987,17 @@ function App() {
               <>
                 <span className={`saveState ${hayCambios ? "dirty" : "clean"}`}>
                   <span className="saveDot" />
-                  {hayCambios ? "Sin guardar" : "Guardado"}
+                  {hayCambios ? t("app.status.unsaved") : t("app.status.saved")}
                 </span>
                 <span className="statusPath">{rutaProyecto}</span>
               </>
             ) : (
-              <span className="muted">Proyecto sin guardar</span>
+              <span className="muted">{t("app.status.noProject")}</span>
             )}
             {exportMensaje && (
               <div className="exportMensaje">{exportMensaje}</div>
             )}
-            <span className="statusHint">¿ para ayuda · Shift+scroll zoom</span>
+            <span className="statusHint">{t("app.status.helpHint")}</span>
           </div>
         </div>
 
@@ -3046,9 +3044,9 @@ function App() {
             onModoMuestreoChange={setModoMuestreoWhisper}
           />
           <div className="rightColHeader">
-            <span className="rightColTitle">Subtítulos</span>
+            <span className="rightColTitle">{t("app.rightCol.title")}</span>
             {captions.length > 0 && (
-              <span className="captionCount">{captions.length} líneas</span>
+              <span className="captionCount">{t("app.rightCol.lines", { count: captions.length })}</span>
             )}
           </div>
           <CaptionList
@@ -3066,123 +3064,123 @@ function App() {
       {showHelp && (
         <div className="helpOverlay" onClick={() => setShowHelp(false)}>
           <div className="helpModal" onClick={(e) => e.stopPropagation()}>
-            <h2>Atajos de teclado</h2>
+            <h2>{t("app.help.title")}</h2>
             <table className="helpTable">
               <tbody>
                 <tr>
                   <td>
                     <kbd>?</kbd>
                   </td>
-                  <td>Abrir/cerrar esta ayuda</td>
+                  <td>{t("app.help.rowHelp")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Espacio</kbd>
                   </td>
-                  <td>Reproducir / Pausar</td>
+                  <td>{t("app.help.rowPlayPause")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>→</kbd> / <kbd>←</kbd>
                   </td>
-                  <td>Adelantar / Retroceder 5s</td>
+                  <td>{t("app.help.rowSeek5s")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Alt</kbd>+<kbd>→</kbd> / <kbd>Alt</kbd>+<kbd>←</kbd>
                   </td>
-                  <td>Saltar al siguiente / anterior subtítulo</td>
+                  <td>{t("app.help.rowJumpCaption")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>↑</kbd> / <kbd>↓</kbd>
                   </td>
-                  <td>Cambiar entre subtítulos simultáneos</td>
+                  <td>{t("app.help.rowCycleSimultaneous")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>A</kbd>
                   </td>
-                  <td>Añadir nuevo fragmento</td>
+                  <td>{t("app.help.rowAddFragment")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>C</kbd>
                   </td>
-                  <td>Dividir subtítulo en el playhead</td>
+                  <td>{t("app.help.rowSplit")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>E</kbd>
                   </td>
-                  <td>Editar texto del subtítulo</td>
+                  <td>{t("app.help.rowEdit")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Delete</kbd>
                   </td>
-                  <td>Eliminar subtítulo seleccionado</td>
+                  <td>{t("app.help.rowDelete")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>1</kbd>–<kbd>9</kbd>
                   </td>
-                  <td>Asignar hablante al subtítulo</td>
+                  <td>{t("app.help.rowAssignSpeaker")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>Z</kbd>
                   </td>
-                  <td>Deshacer</td>
+                  <td>{t("app.help.rowUndo")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> /{" "}
                     <kbd>Ctrl</kbd>+<kbd>Y</kbd>
                   </td>
-                  <td>Rehacer</td>
+                  <td>{t("app.help.rowRedo")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>S</kbd>
                   </td>
-                  <td>Guardar proyecto</td>
+                  <td>{t("app.help.rowSave")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>
                   </td>
-                  <td>Guardar como...</td>
+                  <td>{t("app.help.rowSaveAs")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>C</kbd>
                   </td>
-                  <td>Copiar texto del subtítulo</td>
+                  <td>{t("app.help.rowCopy")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>V</kbd>
                   </td>
-                  <td>Pegar como nuevo subtítulo</td>
+                  <td>{t("app.help.rowPaste")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Shift</kbd>+<kbd>scroll</kbd>
                   </td>
-                  <td>Zoom del timeline (2–60s)</td>
+                  <td>{t("app.help.rowZoom")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>scroll</kbd>
                   </td>
-                  <td>Navegar por el timeline</td>
+                  <td>{t("app.help.rowPan")}</td>
                 </tr>
                 <tr>
                   <td>
                     <kbd>Ctrl</kbd>+<kbd>arrastre</kbd>
                   </td>
-                  <td>Desactivar snap al mover bordes</td>
+                  <td>{t("app.help.rowSnap")}</td>
                 </tr>
               </tbody>
             </table>
@@ -3190,7 +3188,7 @@ function App() {
               className="addFragmentBtn"
               onClick={() => setShowHelp(false)}
             >
-              Cerrar
+              {t("app.help.close")}
             </button>
           </div>
         </div>

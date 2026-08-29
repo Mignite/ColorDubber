@@ -1,6 +1,7 @@
 import { memo, useRef, useState, useCallback, useLayoutEffect, useEffect } from "react";
 import type { Caption, Hablante } from "../types";
 import { formatTime } from "../utils/time";
+import { t } from "../i18n";
 
 const ROW_HEIGHT = 68;
 const ROW_MARGIN = 4;
@@ -75,7 +76,7 @@ function CaptionList({
     >
       {captions.length === 0 ? (
         <p className="placeholder">
-          Sin subtítulos cargados (Archivo → Cargar SRT, o arrastrá el .srt acá)
+          {t("captionList.empty")}
         </p>
       ) : (
         <div style={{ height: totalHeight, position: "relative" }}>
@@ -113,7 +114,7 @@ function CaptionList({
                         e.stopPropagation();
                         onEliminarCaption(c.id);
                       }}
-                      title="Eliminar subtítulo"
+                      title={t("captionList.delete")}
                     >
                       <svg
                         className="icon xs"

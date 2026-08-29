@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { Hablante } from "../types";
+import { t } from "../i18n";
 
 interface Props {
   hablantes: Hablante[];
@@ -73,14 +74,14 @@ function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onAc
   return (
     <div className="speakersAccordion">
       <button className="speakersAccordionHeader" onClick={onTogglePanel}>
-        <span>{usersSvg} Hablantes ({hablantes.length})</span>
+        <span>{usersSvg} {t("speakers.title", { count: hablantes.length })}</span>
         {chevronSvg}
       </button>
       {panelAbierto && (
         <div className="speakersPanel">
           {hablantes.map((h) => (
             <div key={h.id} className="speakerRow">
-              <label className="speakerDotWrap" title="Cambiar color">
+              <label className="speakerDotWrap" title={t("speakers.changeColor")}>
                 <span
                   className="speakerDot"
                   style={{ backgroundColor: h.color }}
@@ -94,7 +95,7 @@ function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onAc
               </label>
               <input
                 className="speakerInput"
-                placeholder="Nombre..."
+                placeholder={t("speakers.namePlaceholder")}
                 value={h.nombre}
                 onFocus={onCommit}
                 onChange={(e) => onActualizar(h.id, "nombre", e.target.value)}
@@ -105,16 +106,16 @@ function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onAc
                 value={h.tecla}
                 onFocus={onCommit}
                 onChange={(e) => onActualizar(h.id, "tecla", e.target.value)}
-                title="Tecla rápida para asignar"
+                title={t("speakers.keyTitle")}
               />
-              <button className="iconBtnSmall" onClick={() => onEliminar(h.id)} title="Eliminar hablante">
+              <button className="iconBtnSmall" onClick={() => onEliminar(h.id)} title={t("speakers.deleteTitle")}>
                 {xSvg}
               </button>
             </div>
           ))}
           {hablantes.length < 9 && (
             <button className="addSpeakerBtn" onClick={onAgregar}>
-              + Añadir hablante
+              {t("speakers.add")}
             </button>
           )}
         </div>
