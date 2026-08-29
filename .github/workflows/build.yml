@@ -19,12 +19,12 @@ jobs:
               C:/t/debug/release/bundle/**
               C:/t/release/bundle/**
               src-tauri/target/release/bundle/**
-            cmake_args: -DGGML_VULKAN=OFF
+            cmake_args: -DGGML_VULKAN_SHADERS_GEN_EXTERNAL=OFF
           - os: ubuntu-22.04
             platform: linux
             bundle_glob: |
               src-tauri/target/release/bundle/**
-            cmake_args: -DGGML_VULKAN=OFF
+            cmake_args: ""
 
     runs-on: ${{ matrix.os }}
 
@@ -66,23 +66,28 @@ jobs:
             librsvg2-dev \
             cmake
 
-      - name: Install Vulkan SDK (Linux) - skipped (CI CPU-only)
-        if: false
+      - name: Install Vulkan SDK (Linux)
+        if: matrix.platform == 'linux'
         run: |
-          sudo apt-get install -y libvulkan-dev glslang-tools vulkan-tools
-          vulkaninfo --summary || echo "::warning::vulkaninfo no disponible"
-          glslc --version || echo "::warning::glslc no encontrado"
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev glslang-tools shaderc spirv-tools vulkan-tools
+          vulkaninfo --summary || echo "::warning::vulkaninfo no disponible, pero headers instalados"
+          which glslc || which glslangValidator || echo "::warning::glslc no en PATH"
+          glslc --version 2>&1 || glslangValidator --version 2>&1 || echo "::warning::glslc/glslangValidator no encontrado"
+          # FindVulkan busca glslc, shaderc lo provee; si no está, creamos symlink
+          if [ ! -x /usr/bin/glslc ] && [ -x /usr/bin/glslangValidator ]; then
+            echo "Creando symlink glslc -> glslangValidator"
+            sudo ln -sf /usr/bin/glslangValidator /usr/bin/glslc || true
+          fi
+          ls -l /usr/bin/glslc* 2>&1 || true
 
-      # Vulkan desactivado en CI (CPU-only) — evita necesitar glslc/VULKAN_SDK en runners
-      # Para build local con GPU, tu PC sí usa Vulkan (no afecta).
-      - name: Setup Vulkan SDK (Windows) - skipped (CI CPU-only)
-        if: false
+      - name: Setup Vulkan SDK (Windows)
+        if: matrix.platform == 'windows'
         uses: humbletim/setup-vulkan-sdk@v1.2.1
         with:
           vulkan-query-version: 1.3.290.0
-          vulkan-components: Vulkan-Headers
           vulkan-use-cache: true
-        continue-on-error: true
+        continue-on-error: false
 
       # ── Fix .cargo/config.toml (solo Windows) ────────────────────
       - name: Fix cargo target-dir for Linux
