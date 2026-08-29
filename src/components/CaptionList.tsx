@@ -1,7 +1,7 @@
 import { memo, useRef, useState, useCallback, useLayoutEffect, useEffect } from "react";
 import type { Caption, Hablante } from "../types";
 import { formatTime } from "../utils/time";
-import { t } from "../i18n";
+import { useLocale } from "../i18n";
 
 const ROW_HEIGHT = 68;
 const ROW_MARGIN = 4;
@@ -27,6 +27,7 @@ function CaptionList({
   rowRefs,
   speakerMap,
 }: Props) {
+  const { t } = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);

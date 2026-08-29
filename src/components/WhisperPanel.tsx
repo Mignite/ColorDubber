@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { ModeloInfo, TrackInfo, TranscripcionProgreso } from "../types";
-import { t } from "../i18n";
+import { useLocale } from "../i18n";
 
 interface Props {
   modelos: ModeloInfo[];
@@ -43,6 +43,7 @@ function WhisperPanel({
   onTranscribir, onToggleTrack, onGlosarioGlobalChange, onGlosarioChange,
   onIdiomaChange, onModoMuestreoChange,
 }: Props) {
+  const { t } = useLocale();
   const chevronSvg = (
     <svg
       className={"icon xs chevron" + (panelAbierto ? " up" : "")}

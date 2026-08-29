@@ -43,7 +43,7 @@ import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
 import WhisperPanel from "./components/WhisperPanel";
 import CaptionList from "./components/CaptionList";
-import { t } from "./i18n";
+import { useLocale } from "./i18n";
 import "./App.css";
 
 // Carriles por hablante en el timeline: altura fija por carril y tope de
@@ -57,6 +57,7 @@ const WAVEFORM_H = 56;
 const TRACK_LABEL_W = 42;
 
 function App() {
+  const { locale, setLocale, t } = useLocale();
   const [modelos, setModelos] = useState<ModeloInfo[]>([]);
   const [modeloSeleccionado, setModeloSeleccionado] = useState<string>("");
   const [descargandoModelo, setDescargandoModelo] = useState<string | null>(
@@ -2998,6 +2999,26 @@ function App() {
               <div className="exportMensaje">{exportMensaje}</div>
             )}
             <span className="statusHint">{t("app.status.helpHint")}</span>
+            <div className="LocaleToggle" role="group" aria-label="Language / Idioma">
+              <button
+                type="button"
+                className={`LocaleBtn${locale === "en" ? " active" : ""}`}
+                aria-pressed={locale === "en"}
+                aria-label="Switch to English"
+                onClick={() => setLocale("en")}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={`LocaleBtn${locale === "es" ? " active" : ""}`}
+                aria-pressed={locale === "es"}
+                aria-label="Cambiar a español"
+                onClick={() => setLocale("es")}
+              >
+                ES
+              </button>
+            </div>
           </div>
         </div>
 

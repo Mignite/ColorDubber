@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { Hablante } from "../types";
-import { t } from "../i18n";
+import { useLocale } from "../i18n";
 
 interface Props {
   hablantes: Hablante[];
@@ -29,6 +29,7 @@ function normalizarColor(color: string): string {
 }
 
 function SpeakersPanel({ hablantes, panelAbierto, onTogglePanel, onAgregar, onActualizar, onCambiarColor, onEliminar, onCommit }: Props) {
+  const { t } = useLocale();
   const usersSvg = (
     <svg
       className="icon"
