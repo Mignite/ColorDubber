@@ -8,6 +8,8 @@
 
 Visual multi-speaker subtitle editor with AI diarization. Speaker-based color-coding, volume waveform, per-speaker lane timeline, local transcription with Whisper (GGML models) and VAD.
 
+> **⚠️ Windows only:** this project is developed, tested and built **only for Windows**. Linux is not supported — the Vulkan (`whisper-rs`), FFmpeg pipelines and WebView rendering are Windows-specific and unreliable elsewhere. Do not file Linux issues.
+
 > **⚠️ Transparency — heavy AI assistance:** this project was built with **heavy LLM assistance** for architecture, Rust/React implementation and debugging (canvas, waveform, diarization, Whisper). The author (1st-semester Systems Engineering student) understands the high-level flow, but **large parts of the codebase are not yet fully understood line-by-line by the author**. It is published honestly as a learning project and as a reference that might be useful to others. **Current plan:** deeply study each part (React canvas loop, Tauri IPC, Whisper/VAD, state handling) and **progressively rewrite/refactor all code with full personal understanding**. Issues and PRs pointing out confusing or improvable code are welcome — they help that learning.
 
 ## Screenshots
