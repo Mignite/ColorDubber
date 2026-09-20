@@ -20,20 +20,6 @@ export interface Proyecto {
   playhead: number;
 }
 
-export interface ModeloInfo {
-  id: string;
-  label: string;
-  tamano_mb_aprox: number;
-  descargado: boolean;
-}
-
-export interface SegmentoTranscrito {
-  inicio: number;
-  fin: number;
-  texto: string;
-  speaker_id: string | null;
-}
-
 export interface TrackInfo {
   index: number;
   nombre: string;
@@ -48,18 +34,4 @@ export interface OverlapEntry {
   textoA: string;
   hablanteB: string;
   textoB: string;
-}
-
-export interface TranscripcionProgreso {
-  fase: string;
-  progreso: number;
-  mensaje: string;
-}
-
-export interface ModeloDescargaEvent {
-  id: string;
-  progreso: number;
-  bytes_descargados?: number;
-  bytes_total?: number;
-  estado?: string;
 }
