@@ -14,11 +14,7 @@ import type {
   Hablante,
   Caption,
   Proyecto,
-  ModeloInfo,
-  SegmentoTranscrito,
   TrackInfo,
-  TranscripcionProgreso,
-  ModeloDescargaEvent,
 } from "./types";
 import {
   VENTANAS_POR_SEGUNDO,
@@ -46,7 +42,6 @@ import { buscarFinIslaAudio } from "./utils/audioIslands";
 
 import { useHistory } from "./hooks/useHistory";
 import SpeakersPanel from "./components/SpeakersPanel";
-import WhisperPanel from "./components/WhisperPanel";
 import CaptionList from "./components/CaptionList";
 import { useLocale } from "./i18n";
 import "./App.css";
@@ -63,19 +58,6 @@ const TRACK_LABEL_W = 42;
 
 function App() {
   const { locale, setLocale, t } = useLocale();
-  const [modelos, setModelos] = useState<ModeloInfo[]>([]);
-  const [modeloSeleccionado, setModeloSeleccionado] = useState<string>("");
-  const [descargandoModelo, setDescargandoModelo] = useState<string | null>(
-    null,
-  );
-  const [progresoDescarga, setProgresoDescarga] = useState<number>(0);
-  const [estadoDescarga, setEstadoDescarga] = useState<string>("");
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
-  const [bytesDescargados, setBytesDescargados] = useState<number>(0);
-  const [bytesTotal, setBytesTotal] = useState<number>(0);
-  const descargandoModeloRef = useRef<string | null>(null);
-  const [panelModelosAbierto, setPanelModelosAbierto] =
-    useState<boolean>(false);
   const [videoSrc, setVideoSrc] = useState<string>("");
   const [selectedCaptionIds, setSelectedCaptionIds] = useState<string[]>([]);
   const selectedCaptionId = selectedCaptionIds.length
@@ -98,27 +80,11 @@ function App() {
     useState<boolean>(false);
   const [timeInputValue, setTimeInputValue] = useState<string>("");
   const [editandoTiempo, setEditandoTiempo] = useState<boolean>(false);
-  const [transcribiendo, setTranscribiendo] = useState<boolean>(false);
-  const [errorTranscripcion, setErrorTranscripcion] = useState<string | null>(null);
-  const [transcripcionProgreso, setTranscripcionProgreso] = useState<{
-    fase: string;
-    progreso: number;
-    mensaje: string;
-  } | null>(null);
   const [extrayendo, setExtrayendo] = useState<boolean>(false);
   const [autoFollowing, setAutoFollowing] = useState<boolean>(true);
   const autoFollowingRef = useRef(true);
-  const [glosario, setGlosario] = useState<string>("");
-  const glosarioRef = useRef("");
   const [glosarioGlobal, setGlosarioGlobal] = useState<string>("");
   const glosarioGlobalRef = useRef("");
-  const [idiomaWhisper, setIdiomaWhisper] = useState<string>("es");
-  const idiomaWhisperRef = useRef("es");
-  const [modoMuestreoWhisper, setModoMuestreoWhisper] = useState<string>("beam5");
-  const modoMuestreoWhisperRef = useRef("beam5");
-  const [diarizadorWhisper, setDiarizadorWhisper] = useState<string>("polyvoice");
-  const diarizadorWhisperRef = useRef("polyvoice");
-  const [pyannoteDisponible, setPyannoteDisponible] = useState<boolean | null>(null);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const isScrollingManuallyRef = useRef(false);
 
@@ -229,149 +195,6 @@ function App() {
 
   const [tracksSeleccionados, setTracksSeleccionados] = useState<number[]>([]);
   const tracksSeleccionadosRef = useRef<number[]>([]);
-  const modeloSeleccionadoRef = useRef("");
-
-  // ===== FUNCIONES WHISPER =====
-  const cargarModelos = useCallback(async () => {
-    const lista = await invoke<ModeloInfo[]>("listar_modelos");
-    setModelos(lista);
-    if (!modeloSeleccionadoRef.current) {
-      const primero = lista.find((m) => m.descargado);
-      if (primero) setModeloSeleccionado(primero.id);
-    }
-  }, []);
-
-  const handleDescargarModelo = useCallback(
-    async (id: string) => {
-      descargandoModeloRef.current = id;
-      setDescargandoModelo(id);
-      setProgresoDescarga(0);
-      setEstadoDescarga("conectando");
-      setErrorDescarga(null);
-      setBytesDescargados(0);
-      setBytesTotal(0);
-      try {
-        await invoke("descargar_modelo", { id });
-        setEstadoDescarga("completo");
-        await cargarModelos();
-      } catch (err) {
-        const msg = typeof err === "string" ? err : JSON.stringify(err);
-        console.error("Error descargando modelo:", err);
-        setErrorDescarga(msg);
-        setEstadoDescarga("");
-      } finally {
-        descargandoModeloRef.current = null;
-        setDescargandoModelo(null);
-      }
-    },
-    [cargarModelos],
-  );
-
-  const handleEliminarModelo = useCallback(
-    async (id: string) => {
-      try {
-        await invoke("eliminar_modelo", { id });
-      } catch (err) {
-        console.error("Error eliminando modelo:", err);
-      }
-      // Si se borró el modelo seleccionado, limpiar la selección: evita el
-      // botón "Transcribir" habilitado apuntando a un modelo que ya no existe
-      if (modeloSeleccionadoRef.current === id) {
-        setModeloSeleccionado("");
-      }
-      await cargarModelos();
-    },
-    [cargarModelos],
-  );
-
-  const handleTranscribir = useCallback(async () => {
-    const modelo = modeloSeleccionadoRef.current;
-    const ruta = videoPathRef.current;
-    const tracksSel = tracksSeleccionadosRef.current;
-    const gGlobal = glosarioGlobalRef.current;
-    const gProyecto = glosarioRef.current;
-    if (!modelo || !ruta) return;
-    if (tracksSel.length === 0) {
-      console.warn("No hay tracks seleccionados");
-      return;
-    }
-
-    setTranscribiendo(true);
-    setTranscripcionProgreso(null);
-    setErrorTranscripcion(null);
-    try {
-      const glosarioCompleto =
-        [gGlobal, gProyecto]
-          .filter((g) => g.trim().length > 0)
-          .flatMap((g) =>
-            g
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean),
-          )
-          .join(", ") || null;
-      const segmentos = await invoke<SegmentoTranscrito[]>(
-        "transcribir_video",
-        {
-          rutaVideo: ruta,
-          modeloId: modelo,
-          trackIndices: tracksSel,
-          maxSpeakers: 10,
-          glosario: glosarioCompleto,
-          idioma: idiomaWhisperRef.current,
-          modoMuestreo: modoMuestreoWhisperRef.current,
-          diarizador: diarizadorWhisperRef.current,
-        },
-      );
-      // Se abrió otro video/proyecto mientras la transcripción corría: el
-      // resultado es del video viejo, descartarlo (como en extraer_audio_stream)
-      if (videoPathRef.current !== ruta) return;
-      const nuevosCaptions: Caption[] = segmentos.map((s, i) => ({
-        id: `cap-whisper-${Date.now()}-${i}`,
-        inicio: s.inicio,
-        fin: s.fin,
-        texto: s.texto,
-        hablante_id: s.speaker_id ?? null,
-      }));
-      pushHistorial();
-      setCaptions(nuevosCaptions);
-      captionsRef.current = nuevosCaptions;
-
-      {
-        const speakerIds = [
-          ...new Set(
-            segmentos
-              .map((s) => s.speaker_id)
-              .filter((id): id is string => id !== null),
-          ),
-        ];
-        if (speakerIds.length > 0) {
-          setHablantes((prev) => {
-            const existentes = new Set(prev.map((h) => h.id));
-            const nuevosHablantes = speakerIds
-              .filter((id) => !existentes.has(id))
-              .map((id, i) => ({
-                id,
-                nombre: `Hablante ${prev.length + i + 1}`,
-                tecla: String(((prev.length + i) % 9) + 1),
-                color: PALETA[(prev.length + i) % PALETA.length],
-              }));
-            if (nuevosHablantes.length === 0) return prev;
-            const merged = [...prev, ...nuevosHablantes];
-            hablantesRef.current = merged;
-            return merged;
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error transcribiendo:", err);
-      setErrorTranscripcion(
-        typeof err === "string" ? err : err instanceof Error ? err.message : String(err),
-      );
-    } finally {
-      setTranscribiendo(false);
-    }
-  }, []);
 
   async function cargarTracks(ruta: string) {
     try {
@@ -401,20 +224,9 @@ function App() {
     rutaProyectoRef.current = rutaProyecto;
     videoPathRef.current = videoPath;
     autoFollowingRef.current = autoFollowing;
-    glosarioRef.current = glosario;
     glosarioGlobalRef.current = glosarioGlobal;
     tracksSeleccionadosRef.current = tracksSeleccionados;
-    modeloSeleccionadoRef.current = modeloSeleccionado;
-    idiomaWhisperRef.current = idiomaWhisper;
-    modoMuestreoWhisperRef.current = modoMuestreoWhisper;
-    diarizadorWhisperRef.current = diarizadorWhisper;
   });
-
-  useEffect(() => {
-    invoke<{ disponible: boolean }>("verificar_pyannote")
-      .then((r) => setPyannoteDisponible(r.disponible))
-      .catch(() => setPyannoteDisponible(false));
-  }, []);
 
   useEffect(() => {
     if (videoDuration > 0) {
@@ -943,15 +755,6 @@ function App() {
     () => setPanelHablantesAbierto((v) => !v),
     [],
   );
-  const togglePanelModelos = useCallback(
-    () => setPanelModelosAbierto((v) => !v),
-    [],
-  );
-  const toggleTrack = useCallback((i: number) => {
-    setTracksSeleccionados((prev) =>
-      prev.includes(i) ? prev.filter((j) => j !== i) : [...prev, i],
-    );
-  }, []);
 
   useEffect(() => {
     const unlistenAbrir = listen("abrir_proyecto", () =>
@@ -973,10 +776,6 @@ function App() {
     const unlistenExportarJson = listen("exportar_json", () =>
       handleExportarJsonCombinado(),
     );
-    const unlistenTranscripcion = listen<TranscripcionProgreso>(
-      "transcripcion_progreso",
-      (e) => setTranscripcionProgreso(e.payload),
-    );
 
     return () => {
       unlistenAbrir.then((f) => f());
@@ -988,7 +787,6 @@ function App() {
       unlistenImportarAutosubs.then((f) => f());
       unlistenExportarSrt.then((f) => f());
       unlistenExportarJson.then((f) => f());
-      unlistenTranscripcion.then((f) => f());
     };
     // Los handlers leen refs (videoPathRef, captionsRef, etc.), nunca estado stale:
     // las deps vacías evitan re-suscripciones en cada cambio de captions/hablantes.
@@ -1099,7 +897,6 @@ function App() {
   }, [audioSrc]);
 
   useEffect(() => {
-    cargarModelos();
     invoke<string>("cargar_glosario_global")
       .then(setGlosarioGlobal)
       .catch(() => {});
@@ -1157,29 +954,6 @@ function App() {
       })();
     }
   }, [trackSeleccionado, videoPath, tracks]);
-
-  useEffect(() => {
-    const unlisten = listen<ModeloDescargaEvent>(
-      "modelo_descarga_progreso",
-      (event) => {
-      // Usamos el ref para evitar stale closure: el listener se monta una sola vez
-      // y siempre lee el valor actualizado sin necesidad de re-suscribirse.
-      if (
-        descargandoModeloRef.current &&
-        event.payload.id === descargandoModeloRef.current
-      ) {
-        setProgresoDescarga(event.payload.progreso);
-        if (event.payload.bytes_descargados !== undefined)
-          setBytesDescargados(event.payload.bytes_descargados);
-        if (event.payload.bytes_total !== undefined)
-          setBytesTotal(event.payload.bytes_total);
-        if (event.payload.estado) setEstadoDescarga(event.payload.estado);
-      }
-    });
-    return () => {
-      unlisten.then((f) => f());
-    };
-  }, []);
 
   // Helper del body drag: aplica el transform de los clips arrastrados según
   // el TIEMPO bajo el cursor (ws + x→tiempo), no según píxeles acumulados,
@@ -3113,39 +2887,6 @@ function App() {
             onCommit={pushHistorial}
           />
 
-          <WhisperPanel
-            modelos={modelos}
-            modeloSeleccionado={modeloSeleccionado}
-            descargandoModelo={descargandoModelo}
-            progresoDescarga={progresoDescarga}
-            estadoDescarga={estadoDescarga}
-            errorDescarga={errorDescarga}
-            bytesDescargados={bytesDescargados}
-            bytesTotal={bytesTotal}
-            panelAbierto={panelModelosAbierto}
-            transcribiendo={transcribiendo}
-            transcripcionProgreso={transcripcionProgreso}
-            errorTranscripcion={errorTranscripcion}
-            tracks={tracks}
-            tracksSeleccionados={tracksSeleccionados}
-            glosarioGlobal={glosarioGlobal}
-            glosario={glosario}
-            idioma={idiomaWhisper}
-            modoMuestreo={modoMuestreoWhisper}
-            diarizador={diarizadorWhisper}
-            pyannoteDisponible={pyannoteDisponible}
-            onTogglePanel={togglePanelModelos}
-            onSelectModelo={setModeloSeleccionado}
-            onDescargarModelo={handleDescargarModelo}
-            onEliminarModelo={handleEliminarModelo}
-            onTranscribir={handleTranscribir}
-            onToggleTrack={toggleTrack}
-            onGlosarioGlobalChange={setGlosarioGlobal}
-            onGlosarioChange={setGlosario}
-            onIdiomaChange={setIdiomaWhisper}
-            onModoMuestreoChange={setModoMuestreoWhisper}
-            onDiarizadorChange={setDiarizadorWhisper}
-          />
           <div className="rightColHeader">
             <span className="rightColTitle">{t("app.rightCol.title")}</span>
             {captions.length > 0 && (
