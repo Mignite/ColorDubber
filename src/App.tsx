@@ -436,7 +436,7 @@ function App() {
     try {
       const path = await open({
         multiple: false,
-        filters: [{ name: "Video", extensions: ["mp4", "mov", "avi", "mkv"] }],
+        filters: [{ name: t("dialog.filterVideo"), extensions: ["mp4", "mov", "avi", "mkv"] }],
       });
       if (path) {
         console.log(`[DEBUG handleAbrirVideo] Video seleccionado: ${path}`);
