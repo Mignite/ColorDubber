@@ -21,6 +21,8 @@ interface Props {
   glosario: string;
   idioma: string;
   modoMuestreo: string;
+  diarizador: string;
+  pyannoteDisponible: boolean | null;
   onTogglePanel: () => void;
   onSelectModelo: (id: string) => void;
   onDescargarModelo: (id: string) => void;
@@ -31,6 +33,7 @@ interface Props {
   onGlosarioChange: (v: string) => void;
   onIdiomaChange: (v: string) => void;
   onModoMuestreoChange: (v: string) => void;
+  onDiarizadorChange: (v: string) => void;
 }
 
 function WhisperPanel({
@@ -38,10 +41,10 @@ function WhisperPanel({
   estadoDescarga, errorDescarga, bytesDescargados, bytesTotal,
   panelAbierto, transcribiendo, transcripcionProgreso, errorTranscripcion,
   tracks, tracksSeleccionados, glosarioGlobal, glosario,
-  idioma, modoMuestreo,
+  idioma, modoMuestreo, diarizador, pyannoteDisponible,
   onTogglePanel, onSelectModelo, onDescargarModelo, onEliminarModelo,
   onTranscribir, onToggleTrack, onGlosarioGlobalChange, onGlosarioChange,
-  onIdiomaChange, onModoMuestreoChange,
+  onIdiomaChange, onModoMuestreoChange, onDiarizadorChange,
 }: Props) {
   const { t } = useLocale();
   const chevronSvg = (
@@ -268,6 +271,19 @@ function WhisperPanel({
               >
                 <option value="beam5">{t("whisper.mode.beam5")}</option>
                 <option value="greedy">{t("whisper.mode.greedy")}</option>
+              </select>
+            </div>
+            <div className="whisperConfigItem">
+              <label className="whisperConfigLabel">{t("whisper.diarizerLabel")}</label>
+              <select
+                className="whisperSelect"
+                value={diarizador}
+                onChange={(e) => onDiarizadorChange(e.target.value)}
+                disabled={transcribiendo}
+                title={pyannoteDisponible === false ? t("whisper.diarizer.missing") : undefined}
+              >
+                <option value="polyvoice">{t("whisper.diarizer.polyvoice")}</option>
+                <option value="pyannote">{t("whisper.diarizer.pyannote")}</option>
               </select>
             </div>
           </div>

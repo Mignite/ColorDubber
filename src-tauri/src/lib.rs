@@ -620,6 +620,7 @@ async fn transcribir_video(
     glosario: Option<String>,
     idioma: Option<String>,
     modo_muestreo: Option<String>,
+    diarizador: Option<String>,
 ) -> Result<Vec<SegmentoTranscrito>, String> {
     // Un solo WhisperContext a la vez: cada transcripción carga el modelo en RAM
     // (large-v3 ≈ 3GB) en su thread dedicado. El permit vive hasta que termina.
@@ -923,22 +924,35 @@ async fn transcribir_video(
 
         println!("[POST] raw_tokens={}", raw_tokens.len());
 
-        // 3. Diarización con polyvoice (antes del formatter, para split por hablante a nivel token)
-        emit_progreso("diarizando", 90, "Identificando hablantes con polyvoice...");
-        let diar_turns: Option<Vec<polyvoice::SpeakerTurn>> = match diarizar_get_turns(&audio, max_speakers) {
-            Ok(t) => {
-                println!("[DIAR] Diarización completada, {} turns", t.len());
-                Some(t)
+        // 3. Diarización (antes del formatter, para split por hablante a nivel token).
+        // pyannote es Python externo con fallback a polyvoice nativo (best-effort igual
+        // que antes: si falla, se sigue sin speakers en vez de romper la transcripción).
+        let usar_pyannote = diarizador.as_deref() == Some("pyannote");
+        let mut speaker_index: Option<Vec<(f64, f64, String)>> = None;
+        if usar_pyannote {
+            match diarizar_pyannote(&audio) {
+                Ok(idx) => {
+                    println!("[DIAR] Diarización pyannote completada, {} turns", idx.len());
+                    speaker_index = Some(idx);
+                }
+                Err(e) => {
+                    println!("[DIAR] pyannote falló ({}), fallback a polyvoice", e);
+                    emit_progreso("diarizando", 90, "Pyannote no disponible, usando polyvoice...");
+                }
             }
-            Err(e) => {
-                println!("[DIAR] Error (no crítica): {}, omitiendo speakers", e);
-                None
+        }
+        if speaker_index.is_none() {
+            emit_progreso("diarizando", 90, "Identificando hablantes con polyvoice...");
+            match diarizar_get_turns(&audio, max_speakers) {
+                Ok(t) => {
+                    println!("[DIAR] Diarización completada, {} turns", t.len());
+                    speaker_index = Some(indice_turns(&t));
+                }
+                Err(e) => {
+                    println!("[DIAR] Error (no crítica): {}, omitiendo speakers", e);
+                }
             }
-        };
-
-        // Asignar speaker a cada token y detectar cambios de hablante
-        let speaker_index: Option<Vec<(f64, f64, String)>> =
-            diar_turns.as_ref().map(|t| indice_turns(t));
+        }
         let token_speakers: Vec<Option<String>> = if let Some(ref index) = speaker_index {
             raw_tokens.iter()
                 .map(|t| find_speaker_for_time(t.inicio, index).map(|s| s.to_string()))
@@ -1159,6 +1173,131 @@ fn verificar_ffmpeg() -> bool {
         .arg("-version")
         .output()
         .is_ok()
+}
+
+#[derive(Serialize)]
+struct PyannoteInfo {
+    disponible: bool,
+    version: Option<String>,
+}
+
+// Busca un python con pyannote.audio instalado (devuelve programa, args base y versión).
+// El diarizador pyannote es Python externo (como ffmpeg): la app lo verifica y lo
+// invoca por CLI, nunca se empaqueta dentro del binario.
+fn python_con_pyannote() -> Result<(String, Vec<String>, String), String> {
+    const CANDIDATOS: &[&[&str]] = &[&["python"], &["python3"], &["py", "-3"]];
+    for cand in CANDIDATOS {
+        let out = std::process::Command::new(cand[0])
+            .args(&cand[1..])
+            .arg("-c")
+            .arg("import pyannote.audio; print(pyannote.audio.__version__)")
+            .output();
+        if let Ok(o) = out {
+            if o.status.success() {
+                let version = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                return Ok((
+                    cand[0].to_string(),
+                    cand[1..].iter().map(|s| s.to_string()).collect(),
+                    version,
+                ));
+            }
+        }
+    }
+    Err("pyannote.audio no encontrado (instala Python con: pip install pyannote.audio soundfile)".to_string())
+}
+
+#[tauri::command]
+fn verificar_pyannote() -> PyannoteInfo {
+    match python_con_pyannote() {
+        Ok((_, _, version)) => PyannoteInfo { disponible: true, version: Some(version) },
+        Err(_) => PyannoteInfo { disponible: false, version: None },
+    }
+}
+
+// Escribe PCM16 mono 16k con header WAV mínimo (sin deps: hound se quitó del repo).
+fn escribir_wav_mono_16k(ruta: &std::path::Path, muestras: &[f32]) -> Result<(), String> {
+    let mut bytes = Vec::with_capacity(44 + muestras.len() * 2);
+    let n = muestras.len() as u32;
+    bytes.extend_from_slice(b"RIFF");
+    bytes.extend_from_slice(&(36 + n * 2).to_le_bytes());
+    bytes.extend_from_slice(b"WAVEfmt ");
+    bytes.extend_from_slice(&16u32.to_le_bytes());
+    bytes.extend_from_slice(&1u16.to_le_bytes());
+    bytes.extend_from_slice(&1u16.to_le_bytes());
+    bytes.extend_from_slice(&16000u32.to_le_bytes());
+    bytes.extend_from_slice(&32000u32.to_le_bytes());
+    bytes.extend_from_slice(&2u16.to_le_bytes());
+    bytes.extend_from_slice(&16u16.to_le_bytes());
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&(n * 2).to_le_bytes());
+    for m in muestras {
+        let v = (m.clamp(-1.0, 1.0) * 32767.0) as i16;
+        bytes.extend_from_slice(&v.to_le_bytes());
+    }
+    escribir_atomico(ruta, &bytes)
+}
+
+// Diariza con pyannote community-1 vía el script empaquetado (include_str!:
+// viaja dentro del binario, se vuelca a temp en cada uso — sin config de
+// bundle resources). Devuelve el índice (inicio, fin, speaker) ya ordenado,
+// listo para find_speaker_for_time. El audio ya viene en f32 16k mono.
+fn diarizar_pyannote(audio: &[f32]) -> Result<Vec<(f64, f64, String)>, String> {
+    let (prog, base_args, _) = python_con_pyannote()?;
+    let tag = format!(
+        "colordubber-diar-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0)
+    );
+    let dir = std::env::temp_dir();
+    let script = dir.join(format!("{}.py", tag));
+    let wav = dir.join(format!("{}.wav", tag));
+    let salida = dir.join(format!("{}.json", tag));
+    escribir_atomico(&script, include_str!("../resources/diarizar_pyannote.py").as_bytes())?;
+    escribir_wav_mono_16k(&wav, audio)?;
+    let resultado = (|| -> Result<Vec<(f64, f64, String)>, String> {
+        let out = std::process::Command::new(&prog)
+            .args(&base_args)
+            .arg(&script)
+            .arg("--wav")
+            .arg(&wav)
+            .arg("--out")
+            .arg(&salida)
+            .output()
+            .map_err(|e| format!("spawn python: {}", e))?;
+        if !out.status.success() {
+            return Err(format!(
+                "pyannote falló: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ));
+        }
+        let texto = std::fs::read_to_string(&salida).map_err(|e| e.to_string())?;
+        let v: serde_json::Value =
+            serde_json::from_str(&texto).map_err(|e| format!("JSON turns: {}", e))?;
+        let mut idx: Vec<(f64, f64, String)> = v
+            .get("turns")
+            .and_then(|t| t.as_array())
+            .ok_or("turns ausente")?
+            .iter()
+            .filter_map(|t| {
+                Some((
+                    t.get("inicio")?.as_f64()?,
+                    t.get("fin")?.as_f64()?,
+                    t.get("speaker")?.as_str()?.to_string(),
+                ))
+            })
+            .collect();
+        idx.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+        Ok(idx)
+    })();
+    let _ = std::fs::remove_file(&script);
+    let _ = std::fs::remove_file(&wav);
+    let _ = std::fs::remove_file(&salida);
+    let idx = resultado?;
+    println!("[DIAR] pyannote: {} turns", idx.len());
+    Ok(idx)
 }
 
 fn ruta_glosario_global(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
@@ -1472,6 +1611,7 @@ pub fn run() {
             cargar_glosario_global,
             guardar_glosario_global,
             verificar_ffmpeg,
+            verificar_pyannote,
         ])
         .setup(|app| {
             let nuevo = MenuItemBuilder::new("Nuevo proyecto")
@@ -1492,6 +1632,9 @@ pub fn run() {
             let cargar_srt = MenuItemBuilder::new("Cargar SRT")
                 .id("cargar_srt")
                 .build(app)?;
+            let importar_autosubs = MenuItemBuilder::new("Importar auto-subs (SRT+TXT)")
+                .id("importar_autosubs")
+                .build(app)?;
 
             let menu_archivo = SubmenuBuilder::new(app, "Archivo")
                 .item(&nuevo)
@@ -1501,6 +1644,7 @@ pub fn run() {
                 .separator()
                 .item(&abrir_video)
                 .item(&cargar_srt)
+                .item(&importar_autosubs)
                 .build()?;
 
             let exportar_srt = MenuItemBuilder::new("Exportar SRT por hablante")

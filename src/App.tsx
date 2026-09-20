@@ -32,6 +32,11 @@ import {
 import { formatTime, parseTimeInput } from "./utils/time";
 import { parseSrt, buildSrt, formatSrtTimestamp } from "./utils/srt";
 import {
+  asignarHablantesPorTexto,
+  hablantesDesdeNombres,
+  parseAutosubsTxt,
+} from "./utils/autosubs";
+import {
   BuildOverlapReport,
   FormatOverlapReport,
   findSnapTime,
@@ -111,6 +116,9 @@ function App() {
   const idiomaWhisperRef = useRef("es");
   const [modoMuestreoWhisper, setModoMuestreoWhisper] = useState<string>("beam5");
   const modoMuestreoWhisperRef = useRef("beam5");
+  const [diarizadorWhisper, setDiarizadorWhisper] = useState<string>("polyvoice");
+  const diarizadorWhisperRef = useRef("polyvoice");
+  const [pyannoteDisponible, setPyannoteDisponible] = useState<boolean | null>(null);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const isScrollingManuallyRef = useRef(false);
 
@@ -312,6 +320,7 @@ function App() {
           glosario: glosarioCompleto,
           idioma: idiomaWhisperRef.current,
           modoMuestreo: modoMuestreoWhisperRef.current,
+          diarizador: diarizadorWhisperRef.current,
         },
       );
       // Se abrió otro video/proyecto mientras la transcripción corría: el
@@ -398,7 +407,14 @@ function App() {
     modeloSeleccionadoRef.current = modeloSeleccionado;
     idiomaWhisperRef.current = idiomaWhisper;
     modoMuestreoWhisperRef.current = modoMuestreoWhisper;
+    diarizadorWhisperRef.current = diarizadorWhisper;
   });
+
+  useEffect(() => {
+    invoke<{ disponible: boolean }>("verificar_pyannote")
+      .then((r) => setPyannoteDisponible(r.disponible))
+      .catch(() => setPyannoteDisponible(false));
+  }, []);
 
   useEffect(() => {
     if (videoDuration > 0) {
@@ -629,6 +645,65 @@ function App() {
       if (path) await cargarSrtDesdeRuta(path);
     } catch (err) {
       console.error("Error abriendo diálogo SRT:", err);
+    }
+  }
+
+  // Importa el par SRT+TXT de auto-subs: tiempos del SRT, hablantes de los
+  // turnos "Speaker N" del TXT (match secuencial por texto en autosubs.ts).
+  // Primero el SRT; el TXT gemelo (misma carpeta, misma base) se busca solo
+  // y si no está se pide en un segundo diálogo.
+  async function handleImportarAutosubs() {
+    try {
+      const srtPath = await open({
+        multiple: false,
+        filters: [{ name: t("dialog.filterSubtitles"), extensions: ["srt"] }],
+      });
+      if (!srtPath) return;
+      const contenidoSrt = await invoke<string>("leer_archivo_texto", {
+        ruta: srtPath,
+      });
+      const cues = parseSrt(contenidoSrt);
+      if (cues.length === 0) return;
+      const gemelo = (srtPath as string).replace(/\.srt$/i, ".txt");
+      let txtPath: string | null = null;
+      try {
+        const existe: boolean = await invoke("existe_archivo", { ruta: gemelo });
+        if (existe) txtPath = gemelo;
+      } catch {
+        txtPath = null;
+      }
+      if (!txtPath) {
+        txtPath = (await open({
+          multiple: false,
+          filters: [{ name: "Texto", extensions: ["txt"] }],
+        })) as string | null;
+      }
+      if (!txtPath) return;
+      const contenidoTxt = await invoke<string>("leer_archivo_texto", {
+        ruta: txtPath,
+      });
+      const turnos = parseAutosubsTxt(contenidoTxt);
+      const numeros = asignarHablantesPorTexto(cues, turnos);
+      const hablantes = hablantesDesdeNombres(
+        [...new Set(numeros.filter((n): n is string => n !== null))].sort(),
+      );
+      const idPorNumero = new Map(
+        hablantes.map((h) => [h.nombre.replace(/^Hablante /, ""), h.id]),
+      );
+      pushHistorial();
+      ignoreNextChangeRef.current = true;
+      isDirtyRef.current = false;
+      setHayCambios(false);
+      setHablantes(hablantes);
+      setCaptions(
+        cues.map((c, i) => ({
+          ...c,
+          hablante_id: numeros[i] !== null ? (idPorNumero.get(numeros[i] as string) ?? null) : null,
+        })),
+      );
+      setSelectedCaptionIds([]);
+    } catch (err) {
+      console.error("Error importando auto-subs:", err);
     }
   }
 
@@ -889,6 +964,9 @@ function App() {
     const unlistenNuevo = listen("nuevo_proyecto", () => handleNuevoProyecto());
     const unlistenAbrirVideo = listen("abrir_video", () => handleAbrirVideo());
     const unlistenCargarSrt = listen("cargar_srt", () => handleAbrirSrt());
+    const unlistenImportarAutosubs = listen("importar_autosubs", () =>
+      handleImportarAutosubs(),
+    );
     const unlistenExportarSrt = listen("exportar_srt_hablantes", () =>
       handleExportarSrtPorHablante(),
     );
@@ -907,6 +985,7 @@ function App() {
       unlistenNuevo.then((f) => f());
       unlistenAbrirVideo.then((f) => f());
       unlistenCargarSrt.then((f) => f());
+      unlistenImportarAutosubs.then((f) => f());
       unlistenExportarSrt.then((f) => f());
       unlistenExportarJson.then((f) => f());
       unlistenTranscripcion.then((f) => f());
@@ -3053,6 +3132,8 @@ function App() {
             glosario={glosario}
             idioma={idiomaWhisper}
             modoMuestreo={modoMuestreoWhisper}
+            diarizador={diarizadorWhisper}
+            pyannoteDisponible={pyannoteDisponible}
             onTogglePanel={togglePanelModelos}
             onSelectModelo={setModeloSeleccionado}
             onDescargarModelo={handleDescargarModelo}
@@ -3063,6 +3144,7 @@ function App() {
             onGlosarioChange={setGlosario}
             onIdiomaChange={setIdiomaWhisper}
             onModoMuestreoChange={setModoMuestreoWhisper}
+            onDiarizadorChange={setDiarizadorWhisper}
           />
           <div className="rightColHeader">
             <span className="rightColTitle">{t("app.rightCol.title")}</span>
