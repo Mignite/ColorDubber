@@ -550,7 +550,7 @@ function App() {
   async function handleGuardarComo() {
     try {
       const path = await save({
-        filters: [{ name: "Proyecto ColorDubber", extensions: ["json"] }],
+        filters: [{ name: t("dialog.filterProject"), extensions: ["json"] }],
       });
       if (!path) return;
       await guardarProyectoEnRuta(path);
@@ -577,7 +577,7 @@ function App() {
     }
     const path = await open({
       multiple: false,
-      filters: [{ name: "Proyecto ColorDubber", extensions: ["json"] }],
+      filters: [{ name: t("dialog.filterProject"), extensions: ["json"] }],
     });
     if (!path) return;
 
