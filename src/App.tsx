@@ -487,7 +487,7 @@ function App() {
       if (!txtPath) {
         txtPath = (await open({
           multiple: false,
-          filters: [{ name: "Texto", extensions: ["txt"] }],
+          filters: [{ name: t("dialog.filterText"), extensions: ["txt"] }],
         })) as string | null;
       }
       if (!txtPath) return;

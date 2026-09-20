@@ -74,6 +74,7 @@
   "overlap.unassigned": "Sin hablante",
   "dialog.filterSubtitles": "Subtítulos",
   "dialog.filterVideo": "Video",
+  "dialog.filterText": "Texto",
   "dialog.filterProject": "Proyecto ColorDubber",
   "dialog.filterJsonCombined": "JSON combinado"
 }
