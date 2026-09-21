@@ -24,3 +24,5 @@ AGENTS.md
 .vscode/
 *.tmp
 *.part
+
+.superpowers/

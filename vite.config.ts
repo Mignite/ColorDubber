@@ -16,7 +16,10 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    // 127.0.0.1 explícito: con host:false vite quedaba solo en ::1 y los
+    // clientes que resolvían localhost a 127.0.0.1 veían ventana en blanco
+    // sin error en consola. Solo afecta a dev, nunca al release.
+    host: host || "127.0.0.1",
     hmr: host
       ? {
           protocol: "ws",
