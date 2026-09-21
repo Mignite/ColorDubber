@@ -166,60 +166,6 @@ struct Proyecto {
     playhead: f64,
 }
 
-struct ModeloWhisperInfo {
-    id: &'static str,
-    label: &'static str,
-    archivo: &'static str,
-    tamano_mb_aprox: u32,
-}
-
-const MODELOS_DISPONIBLES: &[ModeloWhisperInfo] = &[
-    ModeloWhisperInfo {
-        id: "tiny",
-        label: "Tiny (rápido, menos preciso)",
-        archivo: "ggml-tiny.bin",
-        tamano_mb_aprox: 75,
-    },
-    ModeloWhisperInfo {
-        id: "base",
-        label: "Base (balance recomendado)",
-        archivo: "ggml-base.bin",
-        tamano_mb_aprox: 148,
-    },
-    ModeloWhisperInfo {
-        id: "small",
-        label: "Small (más preciso, más lento)",
-        archivo: "ggml-small.bin",
-        tamano_mb_aprox: 488,
-    },
-    ModeloWhisperInfo {
-        id: "medium",
-        label: "Medium (alta precisión, pesado)",
-        archivo: "ggml-medium.bin",
-        tamano_mb_aprox: 1530,
-    },
-    ModeloWhisperInfo {
-        id: "large-v3",
-        label: "Large v3 (máxima precisión, muy pesado)",
-        archivo: "ggml-large-v3.bin",
-        tamano_mb_aprox: 3100,
-    },
-    ModeloWhisperInfo {
-        id: "large-v3-turbo",
-        label: "Large v3 Turbo (alta precisión, más rápido que large-v3)",
-        archivo: "ggml-large-v3-turbo.bin",
-        tamano_mb_aprox: 1550,
-    },
-];
-
-#[derive(Serialize)]
-struct ModeloInfo {
-    id: String,
-    label: String,
-    tamano_mb_aprox: u32,
-    descargado: bool,
-}
-
 #[derive(Serialize)]
 struct TrackInfo {
     index: usize,
@@ -288,147 +234,6 @@ async fn listar_tracks_audio(ruta: String) -> Result<Vec<TrackInfo>, String> {
     .map_err(|e| e.to_string())?
 }
 
-fn carpeta_modelos(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    let dir = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|e| e.to_string())?
-        .join("whisper_models");
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir)
-}
-
-fn ruta_modelo_por_id(app: &tauri::AppHandle, id: &str) -> Result<std::path::PathBuf, String> {
-    let info = MODELOS_DISPONIBLES
-        .iter()
-        .find(|m| m.id == id)
-        .ok_or("Modelo desconocido")?;
-    Ok(carpeta_modelos(app)?.join(info.archivo))
-}
-
-#[tauri::command]
-fn listar_modelos(app: tauri::AppHandle) -> Result<Vec<ModeloInfo>, String> {
-    let dir = carpeta_modelos(&app)?;
-    let mut result = Vec::new();
-    for m in MODELOS_DISPONIBLES {
-        let path = dir.join(m.archivo);
-        result.push(ModeloInfo {
-            id: m.id.to_string(),
-            label: m.label.to_string(),
-            tamano_mb_aprox: m.tamano_mb_aprox,
-            descargado: path.exists(),
-        });
-    }
-    Ok(result)
-}
-
-#[tauri::command]
-async fn descargar_modelo(app: tauri::AppHandle, id: String) -> Result<(), String> {
-    use futures_util::StreamExt;
-    use tokio::io::AsyncWriteExt;
-
-    let info = MODELOS_DISPONIBLES
-        .iter()
-        .find(|m| m.id == id)
-        .ok_or("Modelo desconocido")?;
-    let url = format!(
-        "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/{}",
-        info.archivo
-    );
-    let destino = ruta_modelo_por_id(&app, &id)?;
-    // .part único por proceso: dos descargas concurrentes no se pisan el archivo
-    let destino_part = destino.with_extension(format!("part-{}", std::process::id()));
-
-    let respuesta = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-    if !respuesta.status().is_success() {
-        return Err(format!(
-            "No se pudo descargar el modelo (HTTP {})",
-            respuesta.status()
-        ));
-    }
-    let total: u64 = respuesta.content_length().unwrap_or(0);
-
-    let mut archivo = tokio::fs::File::create(&destino_part)
-        .await
-        .map_err(|e| e.to_string())?;
-    let mut descargado: u64 = 0;
-    let mut stream = respuesta.bytes_stream();
-
-    {
-        let _ = app.emit(
-            "modelo_descarga_progreso",
-            serde_json::json!({
-                "id": id,
-                "progreso": 0.0,
-                "bytes_descargados": 0u64,
-                "bytes_total": total,
-                "estado": "descargando",
-            }),
-        );
-    }
-
-    let mut last_emit = std::time::Instant::now();
-
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| e.to_string())?;
-        archivo.write_all(&chunk).await.map_err(|e| e.to_string())?;
-        descargado += chunk.len() as u64;
-
-        if last_emit.elapsed().as_millis() >= 150 {
-            last_emit = std::time::Instant::now();
-            let progreso = if total > 0 {
-                descargado as f64 / total as f64
-            } else {
-                0.0
-            };
-            let _ = app.emit(
-                "modelo_descarga_progreso",
-                serde_json::json!({
-                    "id": id,
-                    "progreso": progreso,
-                    "bytes_descargados": descargado,
-                    "bytes_total": total,
-                    "estado": "descargando",
-                }),
-            );
-        }
-    }
-
-    archivo.flush().await.map_err(|e| e.to_string())?;
-    drop(archivo);
-
-    // Descarga incompleta (conexión cortada "limpiamente"): no marcar como
-    // descargado un modelo truncado.
-    if total > 0 && descargado != total {
-        let _ = tokio::fs::remove_file(&destino_part).await;
-        return Err(format!(
-            "Descarga incompleta ({} de {} bytes), reintenta",
-            descargado, total
-        ));
-    }
-
-    // Renombrar .part -> archivo final. En Windows el rename reemplaza el
-    // destino existente (MOVEFILE_REPLACE_EXISTING): no hay ventana en la que
-    // el modelo previo desaparezca. Solo tras el éxito se emite "completo".
-    tokio::fs::rename(&destino_part, &destino).await.map_err(|e| {
-        let _ = tokio::fs::remove_file(&destino_part);
-        format!("Error finalizando descarga: {}", e)
-    })?;
-
-    let _ = app.emit(
-        "modelo_descarga_progreso",
-        serde_json::json!({
-            "id": id,
-            "progreso": 1.0,
-            "bytes_descargados": descargado,
-            "bytes_total": total,
-            "estado": "completo",
-        }),
-    );
-
-    Ok(())
-}
-
 #[tauri::command]
 fn guardar_proyecto(ruta: String, proyecto: Proyecto) -> Result<(), String> {
     let json = serde_json::to_string_pretty(&proyecto).map_err(|e| e.to_string())?;
@@ -458,26 +263,6 @@ fn verificar_ffmpeg() -> bool {
         .arg("-version")
         .output()
         .is_ok()
-}
-
-fn ruta_glosario_global(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    let dir = app.path().app_local_data_dir().map_err(|e| e.to_string())?;
-    Ok(dir.join("glosario_global.txt"))
-}
-
-#[tauri::command]
-fn cargar_glosario_global(app: tauri::AppHandle) -> Result<String, String> {
-    let path = ruta_glosario_global(&app)?;
-    if !path.exists() {
-        return Ok(String::new());
-    }
-    std::fs::read_to_string(&path).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn guardar_glosario_global(app: tauri::AppHandle, texto: String) -> Result<(), String> {
-    let path = ruta_glosario_global(&app)?;
-    escribir_atomico(&path, texto.as_bytes())
 }
 
 #[tauri::command]
@@ -627,15 +412,6 @@ async fn analizar_volumen(
 }
 
 #[tauri::command]
-fn eliminar_modelo(app: tauri::AppHandle, id: String) -> Result<(), String> {
-    let path = ruta_modelo_por_id(&app, &id)?;
-    if path.exists() {
-        std::fs::remove_file(&path).map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-#[tauri::command]
 async fn extraer_audio_stream(
     app: tauri::AppHandle,
     ruta_video: String,
@@ -762,13 +538,8 @@ pub fn run() {
             escribir_archivo_en_carpeta,
             existe_cache_volumen,
             cargar_cache_volumen,
-            listar_modelos,
-            descargar_modelo,
-            eliminar_modelo,
             listar_tracks_audio,
             extraer_audio_stream,
-            cargar_glosario_global,
-            guardar_glosario_global,
             verificar_ffmpeg,
         ])
         .setup(|app| {

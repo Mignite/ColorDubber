@@ -83,8 +83,6 @@ function App() {
   const [extrayendo, setExtrayendo] = useState<boolean>(false);
   const [autoFollowing, setAutoFollowing] = useState<boolean>(true);
   const autoFollowingRef = useRef(true);
-  const [glosarioGlobal, setGlosarioGlobal] = useState<string>("");
-  const glosarioGlobalRef = useRef("");
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const isScrollingManuallyRef = useRef(false);
 
@@ -224,7 +222,6 @@ function App() {
     rutaProyectoRef.current = rutaProyecto;
     videoPathRef.current = videoPath;
     autoFollowingRef.current = autoFollowing;
-    glosarioGlobalRef.current = glosarioGlobal;
     tracksSeleccionadosRef.current = tracksSeleccionados;
   });
 
@@ -897,32 +894,11 @@ function App() {
   }, [audioSrc]);
 
   useEffect(() => {
-    invoke<string>("cargar_glosario_global")
-      .then(setGlosarioGlobal)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     const el = timelineRef.current;
     if (!el) return;
     el.addEventListener("wheel", handleWheelTimeline, { passive: false });
     return () => el.removeEventListener("wheel", handleWheelTimeline);
   }, []);
-
-  const guardarGlosarioGlobal = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  useEffect(() => {
-    if (guardarGlosarioGlobal.current)
-      clearTimeout(guardarGlosarioGlobal.current);
-    guardarGlosarioGlobal.current = setTimeout(() => {
-      invoke("guardar_glosario_global", { texto: glosarioGlobal });
-    }, 500);
-    return () => {
-      if (guardarGlosarioGlobal.current)
-        clearTimeout(guardarGlosarioGlobal.current);
-    };
-  }, [glosarioGlobal]);
 
   useEffect(() => {
     if (

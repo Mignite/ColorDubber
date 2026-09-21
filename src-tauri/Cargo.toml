@@ -15,10 +15,6 @@ default-run = "colordubber-ai"
 name = "colordubber_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-[[bin]]
-name = "calibrar"
-path = "bin/calibrar.rs"
-
 [profile.release]
 lto = "thin"
 codegen-units = 1
@@ -38,7 +34,5 @@ symphonia = { version = "0.5", features = ["aac", "isomp4", "mp3", "wav"] }
 reqwest = { version = "0.12", features = ["stream"] }
 tokio = { version = "1", features = ["fs", "io-util"] }
 futures-util = "0.3"
-whisper-rs = { version = "0.16", features = ["vulkan"] }
-polyvoice = { version = "0.12", features = ["onnx", "download", "segmentation", "embedder", "clusterer", "resegmentation"] }
 unicode-segmentation = "1.13.3"
 
