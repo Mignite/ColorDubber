@@ -11,9 +11,9 @@ Visual multi-speaker subtitle editor and color-coding companion for [auto-subs](
 
 ## Screenshots
 
-> See approved design study in [`design/mockup.html`](design/mockup.html) (tokens, typography, per-speaker timeline).
+![ColorDubber — timeline por hablante y coloreado](https://raw.githubusercontent.com/Mignite/ColorDubber/main/design/screenshot.png)
 
-Placeholder: add screenshots in `design/` or `docs/screenshots/` and reference them here.
+> See approved design study in [`design/mockup.html`](design/mockup.html) (tokens, typography, per-speaker timeline).
 
 ## Features
 
