@@ -15,7 +15,7 @@ Visual multi-speaker subtitle editor and color-coding companion for [auto-subs](
 
 > See approved design study in [`design/mockup.html`](design/mockup.html) (tokens, typography, per-speaker timeline).
 
-![Alt text](relative%20design/screenshot.png?raw=true "Title")
+![alt text](https://github.com/Mignite/ColorDubber/edit/main/design/screenshot.png?raw=true)
 
 
 ## Features
