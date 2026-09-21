@@ -15,7 +15,8 @@ Visual multi-speaker subtitle editor and color-coding companion for [auto-subs](
 
 > See approved design study in [`design/mockup.html`](design/mockup.html) (tokens, typography, per-speaker timeline).
 
-Placeholder: add screenshots in `design/` or `docs/screenshots/` and reference them here.
+![Alt text](relative%20design/screenshot.png?raw=true "Title")
+
 
 ## Features
 
