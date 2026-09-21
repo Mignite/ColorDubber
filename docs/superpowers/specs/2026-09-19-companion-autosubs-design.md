@@ -42,7 +42,7 @@ integrado).
   `whisper-rs` y `polyvoice` de `Cargo.toml`.
 - Se queda: `analizar_volumen` (symphonia), `extraer_audio_stream` + 
   `verificar_ffmpeg` (ffmpeg sigue requisito externo), IO de
-  proyecto/SRT/glosario, cache de volumen, menú (menos items de IA).
+  proyecto/SRT, cache de volumen, menú (menos items de IA).
 - Docs: actualizar `AGENTS.md` (IPC Surface, comandos, patrones) marcando
   lo retirado como histórico; no borrar session logs.
 - Verificación: `cargo check` + `npm run build/test` + release build de

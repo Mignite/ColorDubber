@@ -1373,48 +1373,6 @@ button.primary:hover {
   transition: width 0.2s ease;
 }
 
-.whisperConfigRow {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
-}
-
-.whisperConfigItem {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.whisperConfigLabel {
-  font-size: 11px;
-  color: var(--textFaint);
-  margin-bottom: 3px;
-}
-
-.whisperSelect {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text);
-  padding: 4px 6px;
-  font-size: 11px;
-  font-family: var(--font-body);
-  outline: none;
-  cursor: pointer;
-}
-
-.whisperSelect:hover {
-  border-color: var(--borderStrong);
-}
-
-.whisperSelect:focus {
-  border-color: var(--info);
-}
-
 .exportMensaje {
   font-size: 12px;
   color: var(--success);

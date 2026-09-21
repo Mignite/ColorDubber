@@ -10,7 +10,7 @@
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tauri:build:release": "cross-env CMAKE_ARGS=-DGGML_VULKAN_SHADERS_GEN_EXTERNAL=OFF tauri build"
+    "tauri:build:release": "tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

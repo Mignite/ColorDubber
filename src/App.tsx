@@ -191,21 +191,14 @@ function App() {
     null,
   );
 
-  const [tracksSeleccionados, setTracksSeleccionados] = useState<number[]>([]);
-  const tracksSeleccionadosRef = useRef<number[]>([]);
-
   async function cargarTracks(ruta: string) {
     try {
       const lista = await invoke<TrackInfo[]>("listar_tracks_audio", { ruta });
       if (videoPathRef.current !== ruta) return; // se abrió otro video mientras tanto
       setTracks(lista);
       if (lista.length > 0) {
-        // Seleccionar todas las pistas por defecto
-        const todosLosIndices = lista.map((t) => t.index);
-        setTracksSeleccionados(todosLosIndices);
         setTrackSeleccionado(lista[0].index); // para waveform y remuxeo
       } else {
-        setTracksSeleccionados([]);
         setTrackSeleccionado(null);
       }
     } catch (err) {
@@ -222,7 +215,6 @@ function App() {
     rutaProyectoRef.current = rutaProyecto;
     videoPathRef.current = videoPath;
     autoFollowingRef.current = autoFollowing;
-    tracksSeleccionadosRef.current = tracksSeleccionados;
   });
 
   useEffect(() => {
