@@ -1,6 +1,9 @@
 // Primitivas del formato Advanced SubStation Alpha (v4.00+).
 // Puras y sin dependencias: el builder y el parser se apoyan acá.
 
+import type { Caption, PresetAss } from "../types";
+import { ASS_FACTOR_ANCHO, ASS_FACTOR_ALTO_LINEA } from "./constants";
+
 const RE_HEX6 = /^[0-9a-fA-F]{6}$/;
 // ASS escribe &HAABBGGRR. Acepta 8 dígitos (con alpha) o 6 (sin alpha),
 // y descarta el & final que algunas herramientas agregan.
@@ -79,4 +82,71 @@ export function unescapeAssText(s: string): string {
  *  que la siguen se funden en un solo espacio. */
 export function sanitizeNombreDialogo(s: string): string {
   return s.replace(/,\s*/g, " ").trim();
+}
+
+/** Greedy de interval graph: cada caption entra al primer carril libre.
+ *  `fin <= inicio` — dos captions que solo se tocan comparten carril.
+ *  Ordena por inicio acá adentro: el llamador no puede olvidarse. */
+export function asignarCarriles(caps: Caption[]): Map<string, number> {
+  const carriles = new Map<string, number>();
+  const finPorCarril: number[] = [];
+  for (const c of [...caps].sort((a, b) => a.inicio - b.inicio)) {
+    let carril = finPorCarril.findIndex((fin) => fin <= c.inicio);
+    if (carril === -1) {
+      carril = finPorCarril.length;
+      finPorCarril.push(c.fin);
+    } else {
+      finPorCarril[carril] = c.fin;
+    }
+    carriles.set(c.id, carril);
+  }
+  return carriles;
+}
+
+/** Renglones estimados. Los \n explícitos cuentan como renglones completos;
+ *  el resto se estima por ancho de glifo contra el ancho útil del canvas. */
+export function lineasDeCaption(
+  texto: string,
+  preset: PresetAss,
+  resX: number,
+): number {
+  const partes = texto.split("\n");
+  const explicitas = partes.length - 1;
+  const resto = partes[partes.length - 1];
+  const anchoUtil = Math.max(1, resX - preset.marginL - preset.marginR);
+  const charsPorLinea = Math.max(
+    1,
+    anchoUtil / (preset.fontsize * ASS_FACTOR_ANCHO),
+  );
+  return explicitas + Math.max(1, Math.ceil(resto.length / charsPorLinea));
+}
+
+/** MarginV por caption. El offset de un carril es la suma de las alturas
+ *  MÁXIMAS de los carriles que tiene debajo, no su propia altura: si no, un
+ *  caption de 1 renglón se le monta encima del de 3 que tiene abajo. */
+export function calcularMargenesV(
+  caps: Caption[],
+  preset: PresetAss,
+  resX: number,
+): Map<string, number> {
+  const carriles = asignarCarriles(caps);
+  const altoPorCarril = new Map<number, number>();
+  for (const c of caps) {
+    const carril = carriles.get(c.id) ?? 0;
+    const alto =
+      lineasDeCaption(c.texto, preset, resX) * preset.fontsize * ASS_FACTOR_ALTO_LINEA;
+    altoPorCarril.set(carril, Math.max(altoPorCarril.get(carril) ?? 0, alto));
+  }
+  const offset = new Map<number, number>();
+  let acumulado = 0;
+  for (const carril of [...altoPorCarril.keys()].sort((a, b) => a - b)) {
+    offset.set(carril, acumulado);
+    acumulado += altoPorCarril.get(carril) ?? 0;
+  }
+  const salida = new Map<string, number>();
+  for (const c of caps) {
+    const base = offset.get(carriles.get(c.id) ?? 0) ?? 0;
+    salida.set(c.id, Math.round(preset.marginV + base));
+  }
+  return salida;
 }

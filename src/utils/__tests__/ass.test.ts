@@ -7,7 +7,11 @@ import {
   escapeAssText,
   unescapeAssText,
   sanitizeNombreDialogo,
+  asignarCarriles,
+  calcularMargenesV,
 } from "../ass";
+import type { Caption, PresetAss } from "../../types";
+import { DEFAULT_PRESET_ASS, ASS_FACTOR_ALTO_LINEA } from "../constants";
 
 describe("hexToAssColor", () => {
   it("convierte a BGR invertido con alpha opaco", () => {
@@ -107,5 +111,60 @@ describe("sanitizeNombreDialogo", () => {
 
   it("deja nombres sin comas intactos", () => {
     expect(sanitizeNombreDialogo("Juan")).toBe("Juan");
+  });
+});
+
+function cap(id: string, inicio: number, fin: number, texto = "x"): Caption {
+  return { id, inicio, fin, texto, hablante_id: null };
+}
+
+const PRESET: PresetAss = { ...DEFAULT_PRESET_ASS };
+
+describe("asignarCarriles", () => {
+  it("pone en carriles distintos lo que se solapa", () => {
+    const carriles = asignarCarriles([cap("a", 0, 3), cap("b", 2, 5)]);
+    expect(carriles.get("a")).toBe(0);
+    expect(carriles.get("b")).toBe(1);
+  });
+
+  it("reutiliza el mismo carril cuando no hay solape", () => {
+    const carriles = asignarCarriles([cap("a", 0, 3), cap("b", 3, 5)]);
+    expect(carriles.get("a")).toBe(0);
+    expect(carriles.get("b")).toBe(0);
+  });
+
+  it("mete en carriles distintos tres simultáneos", () => {
+    const carriles = asignarCarriles([cap("a", 0, 5), cap("b", 1, 6), cap("c", 2, 7)]);
+    expect([carriles.get("a"), carriles.get("b"), carriles.get("c")]).toEqual([0, 1, 2]);
+  });
+
+  it("ordena por inicio internamente, no confía en el llamador", () => {
+    const carriles = asignarCarriles([cap("b", 2, 5), cap("a", 0, 3)]);
+    expect(carriles.get("a")).toBe(0);
+    expect(carriles.get("b")).toBe(1);
+  });
+});
+
+describe("calcularMargenesV", () => {
+  it("deja todo en marginV cuando no hay solapes", () => {
+    const m = calcularMargenesV([cap("a", 0, 3), cap("b", 3, 5)], PRESET, 1920);
+    expect(m.get("a")).toBe(PRESET.marginV);
+    expect(m.get("b")).toBe(PRESET.marginV);
+  });
+
+  it("sube el segundo carril", () => {
+    const m = calcularMargenesV([cap("a", 0, 3), cap("b", 2, 5)], PRESET, 1920);
+    expect(m.get("b")!).toBeGreaterThan(m.get("a")!);
+  });
+
+  it("el offset del carril de arriba usa el alto MÁXIMO de los de abajo", () => {
+    // a tiene 3 renglones ("\n" explícito), b solo 1: b debe subir 3, no 1.
+    const m = calcularMargenesV(
+      [cap("a", 0, 3, "uno\ndos\ntres"), cap("b", 2, 5, "x")],
+      PRESET,
+      1920,
+    );
+    const unRenglon = PRESET.fontsize * ASS_FACTOR_ALTO_LINEA;
+    expect(m.get("b")! - m.get("a")!).toBe(Math.round(unRenglon * 3));
   });
 });

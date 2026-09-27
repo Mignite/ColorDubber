@@ -35,3 +35,18 @@ export interface OverlapEntry {
   hablanteB: string;
   textoB: string;
 }
+
+export interface PresetAss {
+  id: string;
+  nombre: string;
+  fontname: string;
+  fontsize: number;
+  color: string;
+  outlineColor: string;
+  outline: number;
+  shadow: number;
+  alignment: number;
+  marginL: number;
+  marginR: number;
+  marginV: number;
+}

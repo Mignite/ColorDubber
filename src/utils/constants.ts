@@ -1,3 +1,5 @@
+import type { PresetAss } from "../types";
+
 export const VENTANAS_POR_SEGUNDO = 15;
 export const EXT_VIDEO = [".mp4", ".mov", ".avi", ".mkv"];
 export const EDGE_TRIGGER = 0.92;
@@ -22,3 +24,25 @@ export const ISLA_HISTERESIS_MUESTRAS = 8;
 export const ISLA_MAX_DURACION = 5;
 export const ISLA_MIN_DURACION = 1.5;
 export const ISLA_FALLBACK = 1.5;
+
+// ==== Export .ass (Advanced SubStation Alpha) ====
+export const ASS_PRESETS_ARCHIVO = "presets_ass.json";
+// Ancho medio de glifo como fracción del tamaño de fuente. Conservador a
+// propósito: subestimar renglones hace que el caption de arriba se monte
+// encima del de abajo (el lado peligroso); sobreestimar solo deja un hueco.
+export const ASS_FACTOR_ANCHO = 0.5;
+export const ASS_FACTOR_ALTO_LINEA = 1.35;
+export const DEFAULT_PRESET_ASS: PresetAss = {
+  id: "preset-default",
+  nombre: "Default",
+  fontname: "Inter",
+  fontsize: 48,
+  color: "#FFFFFF",
+  outlineColor: "#000000",
+  outline: 2,
+  shadow: 1,
+  alignment: 2,
+  marginL: 10,
+  marginR: 10,
+  marginV: 40,
+};
