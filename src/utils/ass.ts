@@ -222,3 +222,193 @@ export function buildAss(
     `${eventos.join("\n")}\n`
   );
 }
+
+export interface EstiloAss {
+  nombre: string;
+  fontname: string;
+  fontsize: number;
+  primaryColour: string;
+  outlineColour: string;
+  outline: number;
+  shadow: number;
+  alignment: number;
+  marginL: number;
+  marginR: number;
+  marginV: number;
+}
+
+export interface AssParseResult {
+  captions: Caption[];
+  hablantes: Hablante[];
+  styles: EstiloAss[];
+}
+
+/** Divide una línea según las columnas de su Format. El ÚLTIMO campo se come
+ *  el resto de la línea, que es lo que permite comas dentro de Text. */
+function splitSegunFormat(
+  linea: string,
+  formato: string[],
+): Record<string, string> {
+  const partes: string[] = [];
+  let resto = linea;
+  for (let i = 0; i < formato.length - 1; i++) {
+    const p = resto.indexOf(",");
+    partes.push(p === -1 ? resto : resto.slice(0, p));
+    resto = p === -1 ? "" : resto.slice(p + 1);
+  }
+  partes.push(resto);
+  const out: Record<string, string> = {};
+  formato.forEach((k, i) => {
+    out[k.trim()] = (partes[i] ?? "").trim();
+  });
+  return out;
+}
+
+function num(v: string | undefined, fallback: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function parseAss(texto: string): AssParseResult {
+  const normalizado = texto.replace(/\r/g, "");
+  if (!/^ScriptType:\s*v4\.00\+/m.test(normalizado)) {
+    throw new Error("solo .ass v4.00+ (ScriptType), no .ssa v4.00");
+  }
+
+  const estilos: EstiloAss[] = [];
+  const eventos: Record<string, string>[] = [];
+  let seccion = "";
+  let formatoStyle: string[] = ASS_STYLE_FORMAT.split(",");
+  let formatoEvents: string[] = ASS_EVENTS_FORMAT.split(",");
+  // Un Dialogue multilínea sigue en las líneas siguientes: se pegan al último
+  // evento. Es la forma normal de los .ass de Aegisub/Kdenlive.
+  const CONOCIDOS = [
+    "Format:",
+    "Style:",
+    "Dialogue:",
+    "Comment:",
+    "Picture:",
+    "Sound:",
+    "Movie:",
+    "Command:",
+  ];
+  let ultimoEvento: Record<string, string> | null = null;
+
+  for (const linea of normalizado.split("\n")) {
+    const s = linea.trim();
+    if (!s) continue;
+    if (s.startsWith("[")) {
+      seccion = s.toLowerCase();
+      ultimoEvento = null;
+      continue;
+    }
+    if (seccion === "[v4+ styles]") {
+      if (s.startsWith("Format:")) {
+        formatoStyle = s.slice(7).split(",").map((c) => c.trim());
+        continue;
+      }
+      if (s.startsWith("Style:")) {
+        const f = splitSegunFormat(s.slice(6), formatoStyle);
+        estilos.push({
+          nombre: f.Name ?? "",
+          fontname: f.Fontname ?? "Arial",
+          fontsize: num(f.Fontsize, 48),
+          primaryColour: f.PrimaryColour ?? "&H00FFFFFF",
+          outlineColour: f.OutlineColour ?? "&H00000000",
+          outline: num(f.Outline, 2),
+          shadow: num(f.Shadow, 0),
+          alignment: num(f.Alignment, 2),
+          marginL: num(f.MarginL, 10),
+          marginR: num(f.MarginR, 10),
+          marginV: num(f.MarginV, 40),
+        });
+      }
+    } else if (seccion === "[events]") {
+      if (s.startsWith("Format:")) {
+        formatoEvents = s.slice(7).split(",").map((c) => c.trim());
+        continue;
+      }
+      if (s.startsWith("Dialogue:")) {
+        ultimoEvento = splitSegunFormat(s.slice(9), formatoEvents);
+        eventos.push(ultimoEvento);
+        continue;
+      }
+      if (ultimoEvento && !CONOCIDOS.some((p) => s.startsWith(p))) {
+        ultimoEvento.Text = (ultimoEvento.Text ?? "") + "\n" + s;
+      }
+    }
+  }
+
+  // El Style Default es "sin hablante": no se reconstruye como hablante.
+  const nombrePorEstilo = new Map<string, string>();
+  for (const e of eventos) {
+    const estilo = e.Style ?? "";
+    if (!estilo || estilo === "Default" || nombrePorEstilo.has(estilo)) continue;
+    nombrePorEstilo.set(estilo, e.Name ?? "");
+  }
+
+  // El ORDEN importa y NO es el de los eventos: se itera la lista de estilos
+  // del archivo, que es el orden del array de hablantes original. Armarlos en
+  // orden de eventos renumeraría H1↔H2 en cuanto el hablante 2 hable primero,
+  // y el re-export siguiente cambiaría el color de cada quien.
+  const hablantes: Hablante[] = [];
+  for (const st of estilos) {
+    if (st.nombre === "Default" || !st.nombre) continue;
+    const nombre = nombrePorEstilo.get(st.nombre) ?? st.nombre;
+    hablantes.push({
+      id: st.nombre,
+      nombre: nombre || st.nombre,
+      tecla: "",
+      color: assColorToHex(st.primaryColour),
+    });
+  }
+  // Un Dialogue puede referenciar un estilo sin línea Style: (archivo raro).
+  // No se pierde: se agrega al final en vez de descartarse en silencio.
+  for (const estilo of nombrePorEstilo.keys()) {
+    if (hablantes.some((h) => h.id === estilo)) continue;
+    hablantes.push({
+      id: estilo,
+      nombre: nombrePorEstilo.get(estilo) || estilo,
+      tecla: "",
+      color: "#FFFFFF",
+    });
+  }
+
+  const captions: Caption[] = eventos.map((e, i) => {
+    const estilo = e.Style ?? "";
+    return {
+      id: `cap-${i + 1}-${Math.random().toString(36).slice(2, 7)}`,
+      inicio: parseAssTime(e.Start ?? ""),
+      fin: parseAssTime(e.End ?? ""),
+      texto: unescapeAssText(e.Text ?? ""),
+      hablante_id: !estilo || estilo === "Default" ? null : estilo,
+    };
+  });
+
+  return { captions, hablantes, styles: estilos };
+}
+
+/** Base para el preset que crea el import. Sin Style Default no hay de dónde
+ *  sacar un color base, así que devuelve null y el caller usa DEFAULT_PRESET_ASS. */
+export function presetDesdeEstilos(
+  styles: EstiloAss[],
+  nombre: string,
+  id: string,
+): PresetAss | null {
+  const base = styles.find((s) => s.nombre === "Default");
+  if (!base) return null;
+  return {
+    id,
+    nombre,
+    fontname: base.fontname,
+    fontsize: base.fontsize,
+    color: assColorToHex(base.primaryColour),
+    outlineColor: assColorToHex(base.outlineColour),
+    outline: base.outline,
+    shadow: base.shadow,
+    alignment: base.alignment,
+    marginL: base.marginL,
+    marginR: base.marginR,
+    marginV: base.marginV,
+  };
+}
