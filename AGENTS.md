@@ -29,15 +29,7 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 
 ## Windows build prerequisites (after a fresh install/format)
 - **Visual Studio Build Tools** with C++ workload (MSVC), Rust toolchain, ffmpeg on PATH. (Sin whisper-rs no hay build CMake: ni CMake ni Vulkan SDK necesarios.)
-- **Target dir**: `.cargo/config.toml` (en la **raíz**, no en `src-tauri/`) sets
-  `target-dir = "C:\t"`. Debe quedar en la raíz a propósito: cargo busca config desde el cwd
-  hacia los padres, y `tauri dev` corre cargo con cwd = `src-tauri/`, así que un config en la
-  raíz es el único lugar que ven tanto `tauri dev` como un `cargo` manual desde la raíz.
-  **No dupliques el config en `src-tauri/`**: dos configs con `target-dir` distintos se
-  contradicen y gana el más cercano, cada invocation lee un caché distinto y quedan
-  directorios huérfanos (pasó: 9 GB en `C:\t\debug\debug` y `C:\t\debug\release`).
-  El motivo original del path corto (whisper-rs-sys + Vulkan SDK) ya no aplica: las deps
-  actuales son tauri/serde/symphonia/tokio. Ver "Session log 2026-09-26 — target dir duplicado".
+- **Target dir**: ya NO hayoverride de `target-dir`. Usa el default de cargo, `src-tauri/target/`. El override a `C:\t` existió por whisper-rs-sys + Vulkan SDK (paths profundos que rompían el límite de 260 chars de Windows) y se eliminó al quitar la IA local: las deps actuales (tauri, serde, symphonia, tokio) no tienen ese problema. **No lo re-agregues** — un target dir fuera del proyecto rompe `cargo clean` y hace que el cache de build quede en un lugar que nadie recuerda. El instalador del release ahora sale en `src-tauri\target\release\bundle\nsis`.
 
 ## Critical Patterns
 1. **Dual ref+state** — `useRef` synced via a bare `useEffect` (no deps, App.tsx ~line 300) for every value read in rAF or event listeners. Ref is source of truth in callbacks.
@@ -54,7 +46,7 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 
 ## Known Traps & Gotchas
 - **`diarization-benchmark/` (71k files) rompe `tauri dev`**: two `.venv` de Python con 69.662 archivos dentro del project root. El watcher de Vite (chokidar) recorre TODO el root y `server.watch.ignored` solo excluía `src-tauri`, así que el crawl inicial saturaba el event loop: las peticiones HTTP al dev server se colgaban (5 s timeout) y el webview, al pedir `devUrl`, no recibía respuesta → **ventana negra**. Release no lo suffería (no hay dev server ni watcher). Fix: `ignored` incluye `diarization-benchmark`, `.venv*` y `__pycache__` (vite.config.ts). **Regla: cualquier carpeta nueva pesada en la raíz va al `ignored` de Vite.** A/B medido: sin el ignore, req1=200 en 3934 ms y req2-5 timeout 5 s; con el ignore, 5/5 en 4-5 ms.
-- **Meter un solo `.cargo/config.toml` en la raíz** (ver "Windows build prerequisites"). Dos configs con `target-dir` distintos se contradicen y gana el más cercano → cada invocation lee un caché distinto.
+- **Meter un solo `.cargo/config.toml` en la raíz** (ver "Windows build prerequisites"). Dos configs con `target-dir` distintos se contradicen y gana el más cercano → cada invocation lee un caché distinto. **Ya no hay ningún config** (26-sep-2026): el target volvió al default del proyecto.
 - **Track index mapping**: `listar_tracks_audio` enumerates tracks *filtered* by `sample_rate.is_some()`; `analizar_volumen` uses the same filtered `.nth(idx)`, but ffmpeg is called with `-map 0:a:N` (N-th *audio* stream). Works for typical containers; may mismatch on exotic layouts.
 - **Hotkey collisions**: app hotkeys (`a`, `c`, `e`, `s`, `z`, `y`, `?`, arrows) take precedence over speaker hotkeys — don't assign those letters to a speaker.
 - **Float precision**: `formatTime()` truncates to 2 decimals; roundtripping `parseTimeInput(formatTime(x))` drifts for values like 3599.99. `formatSrtTimestamp()` handles ms rollover (1.9995 → `00:00:02,000`).
