@@ -29,7 +29,18 @@ export default defineConfig(async () => ({
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // Cuidado con agregar carpetas acá abajo: el watcher (chokidar) recorre
+      // TODO el project root, y `diarization-benchmark/` tiene ~71k archivos
+      // (casi todos de dos .venv de Python). Sin esto, el crawl inicial tardaba
+      // minutos y el request del webview a devUrl caia en medio del crawl: se
+      // colgaba y la ventana quedaba negra. El build de release no lo suffería
+      // porque no hay dev server ni watcher.
+      ignored: [
+        "**/src-tauri/**",
+        "**/diarization-benchmark/**",
+        "**/.venv*/**",
+        "**/__pycache__/**",
+      ],
     },
   },
 }));
