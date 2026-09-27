@@ -23,43 +23,54 @@ export function limpiarNombresFuentes(raw: string[]): string[] {
   return [...vistos].sort((a, b) => a.localeCompare(b));
 }
 
-const INEXISTENTE = "cdub-fuente-que-no-existe-zzz";
 const MUESTRA = "abcdefghijklmnopqrstuvwxyz 0123456789 WMWiIlj";
 
 /** Deja pasar solo las familias que el renderer realmente puede pintar.
- *  Mide el ancho de un texto con la familia candidata contra el fallback
- *  (monospace): si cambia, la familia existe.
+ *  Mide el texto con la familia candidata y compara contra el fallback.
  *
- *  ponytail: una fuente cuyas métricas coincidan exactamente con monospace
- *  se descarta por falso negativo. El input sigue siendo texto libre, así que
- *  igual se puede escribir a mano.
+ *  Hace falta comparar contra DOS genéricos, no uno: Consolas (instalada en
+ *  cualquier Windows) ES la monospace por defecto, así que midiendo solo
+ *  contra `monospace` sus métricas dan idénticas al fallback y se cuela. Con
+ *  serif + monospace no hay forma de que una familia real coincida con
+ *  ambos. Medido: con un solo genérico, Consolas desaparecía de la lista.
  */
 export function detectarFamilias(candidatas: string[]): string[] {
   if (typeof document === "undefined") return candidatas;
+  const BASELINE = "cdub-fuente-que-no-existe-zzz";
   const caja = document.createElement("div");
   caja.style.cssText =
     "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-size:48px;line-height:normal;";
-  const ancho = (familia: string): number => {
-    const span = document.createElement("span");
-    span.style.fontFamily = `"${familia}", monospace`;
-    span.textContent = MUESTRA;
-    caja.appendChild(span);
-    return span.getBoundingClientRect().width;
+  // Imprescindible: fuera del document el div no tiene layout y TODAS las
+  // medidas dan 0, con lo cual |0-0| = 0 y se cuela todo. Medido: sin esta
+  // línea la función devolvía [] siempre.
+  document.body.appendChild(caja);
+
+  const medir = (fontFamilies: string[]): number[] => {
+    const spans = fontFamilies.map((ff) => {
+      const span = document.createElement("span");
+      span.style.fontFamily = ff;
+      span.style.whiteSpace = "nowrap";
+      span.textContent = MUESTRA;
+      caja.appendChild(span);
+      return span;
+    });
+    const out = spans.map((s) => s.getBoundingClientRect().width);
+    for (const s of spans) s.remove();
+    return out;
   };
 
-  // Un solo paso de layout para todas: se miden midiendo, no una por vez.
-  const base = ancho(INEXISTENTE);
-  const spans = candidatas.map((familia) => {
-    const span = document.createElement("span");
-    span.style.fontFamily = `"${familia}", monospace`;
-    span.textContent = MUESTRA;
-    caja.appendChild(span);
-    return span;
-  });
-  const anchos = spans.map((s) => s.getBoundingClientRect().width);
+  const con = (generico: string) => (f: string) => `"${f}", ${generico}`;
+  const baseMono = medir([`"${BASELINE}", monospace`])[0];
+  const baseSerif = medir([`"${BASELINE}", serif`])[0];
+  // Dos pasadas: cada genérico solo, así cada familia candidata se mide una vez.
+  const wMono = medir(candidatas.map(con("monospace")));
+  const wSerif = medir(candidatas.map(con("serif")));
   caja.remove();
 
-  return candidatas.filter((_, i) => Math.abs(anchos[i] - base) > 0.5);
+  return candidatas.filter(
+    (_, i) =>
+      Math.abs(wMono[i] - baseMono) > 0.5 || Math.abs(wSerif[i] - baseSerif) > 0.5,
+  );
 }
 
 let cache: Promise<string[]> | null = null;
