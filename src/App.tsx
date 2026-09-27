@@ -15,6 +15,7 @@ import type {
   Caption,
   Proyecto,
   TrackInfo,
+  PresetAss,
 } from "./types";
 import {
   VENTANAS_POR_SEGUNDO,
@@ -27,6 +28,13 @@ import {
 } from "./utils/constants";
 import { formatTime, parseTimeInput } from "./utils/time";
 import { parseSrt, buildSrt, formatSrtTimestamp } from "./utils/srt";
+import { buildAss, parseAss, presetDesdeEstilos } from "./utils/ass";
+import {
+  cargarPresetsAss,
+  guardarPresetsAss,
+  nuevoPreset,
+} from "./utils/assPresets";
+import { AssExportModal } from "./components/AssExportModal";
 import {
   asignarHablantesPorTexto,
   hablantesDesdeNombres,
@@ -174,6 +182,9 @@ function App() {
   const marqueeOverlayRef = useRef<HTMLDivElement | null>(null);
   const [exportMensaje, setExportMensaje] = useState<string>("");
   const [showHelp, setShowHelp] = useState(false);
+  const [assModalAbierto, setAssModalAbierto] = useState(false);
+  const [presetsAss, setPresetsAss] = useState<PresetAss[]>([]);
+  const [resAss, setResAss] = useState({ x: 1920, y: 1080 });
   const { pushHistorial, deshacer, rehacer } = useHistory(
     captionsRef,
     hablantesRef,
@@ -740,6 +751,100 @@ function App() {
     }
   }
 
+  async function handleExportarAss() {
+    if (captionsRef.current.length === 0) {
+      setExportMensaje(t("assExport.noCaptions"));
+      setTimeout(() => setExportMensaje(""), 4000);
+      return;
+    }
+    // El PlayRes sigue al video real para que el tamaño de fuente se vea igual
+    // en Kdenlive. Sin video cargado, 1080p.
+    const v = videoRef.current;
+    setResAss({ x: v?.videoWidth || 1920, y: v?.videoHeight || 1080 });
+    setPresetsAss(await cargarPresetsAss());
+    setAssModalAbierto(true);
+  }
+
+  async function persistirPresets(presets: PresetAss[]) {
+    setPresetsAss(presets);
+    try {
+      await guardarPresetsAss(presets);
+    } catch (err) {
+      console.error("Error guardando presets .ass:", err);
+    }
+  }
+
+  async function exportarAssConPreset(preset: PresetAss) {
+    try {
+      const path = await save({
+        filters: [{ name: t("dialog.filterAss"), extensions: ["ass"] }],
+        defaultPath: "subtitulos.ass",
+      });
+      if (!path) return;
+      // Se arma DESPUÉS del save: si el usuario cancela, no se hace el trabajo.
+      const contenido = buildAss(
+        captionsRef.current,
+        hablantesRef.current,
+        preset,
+        resAss.x,
+        resAss.y,
+      );
+      await invoke("escribir_archivo_texto", { ruta: path, contenido });
+      setAssModalAbierto(false);
+      setExportMensaje(t("assExport.done", { count: captionsRef.current.length }));
+      setTimeout(() => setExportMensaje(""), 5000);
+    } catch (err) {
+      console.error("Error exportando .ass:", err);
+    }
+  }
+
+  async function handleCargarAss() {
+    try {
+      const path = await open({
+        multiple: false,
+        filters: [{ name: t("dialog.filterAss"), extensions: ["ass"] }],
+      });
+      if (!path) return;
+      const contenido = await invoke<string>("leer_archivo_texto", { ruta: path });
+      const resultado = parseAss(contenido);
+      if (resultado.captions.length === 0) return;
+
+      // El import crea un preset desde el Style Default del archivo: es la vía
+      // para traer estilos de un .ass de Premiere sin tipearlos.
+      const nombrePreset =
+        (path as string).split(/[\\/]/).pop()?.replace(/\.ass$/i, "") ?? "Importado";
+      const nuevo =
+        presetDesdeEstilos(
+          resultado.styles,
+          nombrePreset,
+          `preset-import-${Date.now().toString(36)}`,
+        ) ?? nuevoPreset({ nombre: nombrePreset });
+      const actuales = await cargarPresetsAss();
+      await persistirPresets([...actuales.filter((p) => p.id !== nuevo.id), nuevo]);
+
+      // Mismo patrón que cargarSrtDesdeRuta: la carga deja el proyecto limpio.
+      ignoreNextChangeRef.current = true;
+      isDirtyRef.current = false;
+      setHayCambios(false);
+      setHablantes(resultado.hablantes);
+      setCaptions(resultado.captions);
+      setSelectedCaptionIds([]);
+      setExportMensaje(
+        t("assExport.importDone", {
+          count: resultado.captions.length,
+          speakers: resultado.hablantes.length,
+        }) +
+          " " +
+          t("assExport.importPresetCreated", { name: nombrePreset }),
+      );
+      setTimeout(() => setExportMensaje(""), 5000);
+    } catch (err) {
+      console.error("Error importando .ass:", err);
+      setExportMensaje(t("assExport.importError", { error: String(err) }));
+      setTimeout(() => setExportMensaje(""), 5000);
+    }
+  }
+
   const togglePanelHablantes = useCallback(
     () => setPanelHablantesAbierto((v) => !v),
     [],
@@ -765,6 +870,10 @@ function App() {
     const unlistenExportarJson = listen("exportar_json", () =>
       handleExportarJsonCombinado(),
     );
+    const unlistenExportarAss = listen("exportar_ass", () =>
+      handleExportarAss(),
+    );
+    const unlistenCargarAss = listen("cargar_ass", () => handleCargarAss());
 
     return () => {
       unlistenAbrir.then((f) => f());
@@ -776,6 +885,8 @@ function App() {
       unlistenImportarAutosubs.then((f) => f());
       unlistenExportarSrt.then((f) => f());
       unlistenExportarJson.then((f) => f());
+      unlistenExportarAss.then((f) => f());
+      unlistenCargarAss.then((f) => f());
     };
     // Los handlers leen refs (videoPathRef, captionsRef, etc.), nunca estado stale:
     // las deps vacías evitan re-suscripciones en cada cambio de captions/hablantes.
@@ -3004,6 +3115,20 @@ function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Montaje condicional: el modal inicializa su estado desde `presets`
+          en cada apertura, así no necesita efecto de sincronización. */}
+      {assModalAbierto && (
+        <AssExportModal
+          presets={presetsAss}
+          hablantes={hablantes}
+          resX={resAss.x}
+          resY={resAss.y}
+          onCerrar={() => setAssModalAbierto(false)}
+          onExportar={exportarAssConPreset}
+          onGuardar={persistirPresets}
+        />
       )}
     </main>
   );

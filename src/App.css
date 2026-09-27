@@ -1592,9 +1592,6 @@ button.primary:hover {
   right: 0;
   line-height: 1.15;
   font-weight: 400;
-}
-
-.assPreviewCap {
   /* ponytail: outline por 4 offsets. Es una aproximación — libass lo dibuja
      como anillo continuo y esto deja las diagonales un pelo sueltas. El shadow
      sí es exacto: ASS lo dibuja en OutlineColour, offset abajo-derecha. */

@@ -561,6 +561,9 @@ pub fn run() {
             let cargar_srt = MenuItemBuilder::new("Cargar SRT")
                 .id("cargar_srt")
                 .build(app)?;
+            let cargar_ass = MenuItemBuilder::new("Cargar .ass")
+                .id("cargar_ass")
+                .build(app)?;
             let importar_autosubs = MenuItemBuilder::new("Importar auto-subs (SRT+TXT)")
                 .id("importar_autosubs")
                 .build(app)?;
@@ -573,6 +576,7 @@ pub fn run() {
                 .separator()
                 .item(&abrir_video)
                 .item(&cargar_srt)
+                .item(&cargar_ass)
                 .item(&importar_autosubs)
                 .build()?;
 
@@ -582,10 +586,14 @@ pub fn run() {
             let exportar_json = MenuItemBuilder::new("Exportar JSON combinado")
                 .id("exportar_json")
                 .build(app)?;
+            let exportar_ass = MenuItemBuilder::new("Exportar .ass...")
+                .id("exportar_ass")
+                .build(app)?;
 
             let menu_exportar = SubmenuBuilder::new(app, "Exportar")
                 .item(&exportar_srt)
                 .item(&exportar_json)
+                .item(&exportar_ass)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
