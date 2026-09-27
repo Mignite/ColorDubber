@@ -58,7 +58,18 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
   se cuela; (3) los nombres PostScript ("BebasNeue-Regular") NO resuelven como familia CSS:
   es correcto que el aviso los rechace. Verificado en browser. Sin test unitario: necesita
   DOM y el proyecto no tiene jsdom.
-- **La lista de fuentes trae nombres de estilo, no familias**: "Calibri Bold", "Arial Bold
+- **La lista de fuentes del preset sale de GDI+/DirectWrite, NO del registro**: el comando
+  `listar_fuentes_sistema` shellea a `powershell.exe -NoProfile -NonInteractive` con
+  `[System.Drawing.Text.InstalledFontCollection]::new().Families` — 186 familias limpias en
+  ~400 ms (pwsh tarda 1250 ms, no lo uses). El registro queda solo de fallback. Motivo
+  medido: el registro da el nombre con el estilo pegado (`Bebas Neue Regular` en vez de
+  `Bebas Neue`) y **110 de sus 201 entradas no son familias** sino estilos (`Arial Bold`,
+  `Calibri Bold Italic`); GDI devuelve las 186 familias reales. Ojo con el atajo de
+  normalizar quitando `" Bold"`/`" Light"`: destruiría `Arial Black` y `Calibri Light`, que
+  **sí** son familias. El filtro por medición deja 166 de 186: son familias que GDI ve pero
+  el webview no pinta, y el input sigue siendo texto libre si alguna la necesitás.
+  Con `font-kit` (DirectWrite nativo en Rust) se obtendría lo mismo con una dep mas; no
+  vale la pena mientras `powershell.exe` funcione.
   Italic" vienen del registro y no son familias reales (el filtro los rechaza), pero
   "Bebas Neue Regular" y "Arial Black" SÍ resuelven y quedan en la lista aunque la familia
   sea "Bebas Neue"/"Arial". Con `DirectWrite`/`font-kit` se obtendrían las familias limpias;
