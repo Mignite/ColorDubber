@@ -24,49 +24,64 @@ export function limpiarNombresFuentes(raw: string[]): string[] {
 }
 
 const MUESTRA = "abcdefghijklmnopqrstuvwxyz 0123456789 WMWiIlj";
+const BASELINE = "cdub-fuente-que-no-existe-zzz";
 
-/** Deja pasar solo las familias que el renderer realmente puede pintar.
- *  Mide el texto con la familia candidata y compara contra el fallback.
- *
- *  Hace falta comparar contra DOS genéricos, no uno: Consolas (instalada en
- *  cualquier Windows) ES la monospace por defecto, así que midiendo solo
- *  contra `monospace` sus métricas dan idénticas al fallback y se cuela. Con
- *  serif + monospace no hay forma de que una familia real coincida con
- *  ambos. Medido: con un solo genérico, Consolas desaparecía de la lista.
- */
-export function detectarFamilias(candidatas: string[]): string[] {
-  if (typeof document === "undefined") return candidatas;
-  const BASELINE = "cdub-fuente-que-no-existe-zzz";
+/** Mide un conjunto de font-families ya armados. La div tiene que estar en el
+ *  document: fuera del DOM no hay layout, todas las medidas dan 0 y se cuela
+ *  todo (medido: sin esto la detección devolvía [] siempre). */
+function medir(fontFamilies: string[]): number[] {
   const caja = document.createElement("div");
   caja.style.cssText =
     "position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-size:48px;line-height:normal;";
-  // Imprescindible: fuera del document el div no tiene layout y TODAS las
-  // medidas dan 0, con lo cual |0-0| = 0 y se cuela todo. Medido: sin esta
-  // línea la función devolvía [] siempre.
   document.body.appendChild(caja);
+  const spans = fontFamilies.map((ff) => {
+    const span = document.createElement("span");
+    span.style.fontFamily = ff;
+    span.style.whiteSpace = "nowrap";
+    span.textContent = MUESTRA;
+    caja.appendChild(span);
+    return span;
+  });
+  const out = spans.map((s) => s.getBoundingClientRect().width);
+  caja.remove();
+  return out;
+}
 
-  const medir = (fontFamilies: string[]): number[] => {
-    const spans = fontFamilies.map((ff) => {
-      const span = document.createElement("span");
-      span.style.fontFamily = ff;
-      span.style.whiteSpace = "nowrap";
-      span.textContent = MUESTRA;
-      caja.appendChild(span);
-      return span;
-    });
-    const out = spans.map((s) => s.getBoundingClientRect().width);
-    for (const s of spans) s.remove();
-    return out;
-  };
+const cacheResolucion = new Map<string, boolean>();
 
-  const con = (generico: string) => (f: string) => `"${f}", ${generico}`;
+/** ¿El renderer puede pintar ESA cadena exacta como font-family?
+ *
+ *  Es la pregunta correcta para el aviso "no está instalada", y no puede
+ *  contestarse con la lista: el registro de Windows da el nombre con el estilo
+ *  pegado ("Bebas Neue Regular") pero el nombre de familia real es "Bebas
+ *  Neue", así que comparar exacto daba un falso negativo (medido).
+ */
+export function fuenteResuelve(nombre: string): boolean {
+  if (typeof document === "undefined") return true;
+  const limpio = nombre.trim();
+  if (!limpio) return true;
+  const cacheado = cacheResolucion.get(limpio);
+  if (cacheado !== undefined) return cacheado;
   const baseMono = medir([`"${BASELINE}", monospace`])[0];
   const baseSerif = medir([`"${BASELINE}", serif`])[0];
-  // Dos pasadas: cada genérico solo, así cada familia candidata se mide una vez.
+  const wMono = medir([`"${limpio}", monospace`])[0];
+  const wSerif = medir([`"${limpio}", serif`])[0];
+  // Consolas ES la monospace por defecto de Windows: con un solo genérico sus
+  // métricas son idénticas al fallback y se colaba. Con dos, no hay familia
+  // real que coincida con ambos.
+  const ok = Math.abs(wMono - baseMono) > 0.5 || Math.abs(wSerif - baseSerif) > 0.5;
+  cacheResolucion.set(limpio, ok);
+  return ok;
+}
+
+/** Deja pasar solo las familias que el renderer puede pintar. */
+export function detectarFamilias(candidatas: string[]): string[] {
+  if (typeof document === "undefined") return candidatas;
+  const baseMono = medir([`"${BASELINE}", monospace`])[0];
+  const baseSerif = medir([`"${BASELINE}", serif`])[0];
+  const con = (g: string) => (f: string) => `"${f}", ${g}`;
   const wMono = medir(candidatas.map(con("monospace")));
   const wSerif = medir(candidatas.map(con("serif")));
-  caja.remove();
-
   return candidatas.filter(
     (_, i) =>
       Math.abs(wMono[i] - baseMono) > 0.5 || Math.abs(wSerif[i] - baseSerif) > 0.5,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Hablante, PresetAss } from "../types";
 import { useLocale } from "../i18n";
 import { nuevoPreset } from "../utils/assPresets";
-import { fuentesDisponibles } from "../utils/fuentes";
+import { fuentesDisponibles, fuenteResuelve } from "../utils/fuentes";
 
 interface Props {
   presets: PresetAss[];
@@ -244,10 +244,7 @@ export function AssExportModal({
                         ))
                     )}
                     {borrador.fontname.trim() !== "" &&
-                      !fuentes.some(
-                        (f) =>
-                          f.toLowerCase() === borrador.fontname.trim().toLowerCase(),
-                      ) && (
+                      !fuenteResuelve(borrador.fontname) && (
                         <div className="assFontItem muted">
                           {t("assExport.fontNotInstalled")}
                         </div>

@@ -46,16 +46,23 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 
 ## Known Traps & Gotchas
 - **`diarization-benchmark/` (71k files) rompe `tauri dev`**: two `.venv` de Python con 69.662 archivos dentro del project root. El watcher de Vite (chokidar) recorre TODO el root y `server.watch.ignored` solo excluía `src-tauri`, así que el crawl inicial saturaba el event loop: las peticiones HTTP al dev server se colgaban (5 s timeout) y el webview, al pedir `devUrl`, no recibía respuesta → **ventana negra**. Release no lo suffería (no hay dev server ni watcher). Fix: `ignored` incluye `diarization-benchmark`, `.venv*` y `__pycache__` (vite.config.ts). **Regla: cualquier carpeta nueva pesada en la raíz va al `ignored` de Vite.** A/B medido: sin el ignore, req1=200 en 3934 ms y req2-5 timeout 5 s; con el ignore, 5/5 en 4-5 ms.
-- **Detección de fuentes del preset .ass**: `detectarFamilias` en `src/utils/fuentes.ts` mide
-  texto con la familia candidata y compara contra el fallback. Dos cosas que se midieron
-  rompiendo y NO son evidentes: (1) la `div` de medición **tiene que estar en el
-  `document`** — fuera del DOM no hay layout, todas las medidas dan 0 y la función
-  devuelve `[]` siempre; (2) hay que comparar contra **dos** genéricos (serif +
-  monospace), no uno: Consolas ES la monospace por defecto de Windows, así que con un
-  solo genérico sus métricas son idénticas al fallback y desaparece de la lista.
-  Verificado en browser: `Arial, Bebas Neue, Consolas, Segoe UI` 4/4 detectadas contra
-  `Calibri Bold` y una fuente inventada 2/2 rechazadas. Es la única parte sin test
-  unitario: necesita DOM y el proyecto no tiene jsdom.
+- **Detección de fuentes del preset .ass**: `src/utils/fuentes.ts`. `detectarFamilias` filtra la
+  lista (registro de Windows, HKLM + HKCU) y `fuenteResuelve` contesta si el renderer
+  puede pintar un nombre. **El aviso de "no instalada" usa `fuenteResuelve(nombre)`, NO una
+  comparación contra la lista**: el registro da el nombre con el estilo pegado ("Bebas Neue
+  Regular") y la familia real es "Bebas Neue", así que comparar exacto daba falso negativo
+  (medido). Tres cosas que se midieron rompiendo y no son evidentes: (1) la `div` de
+  medición **tiene que estar en el `document`**, fuera del DOM no hay layout, todas las
+  medidas dan 0 y devuelve `[]` siempre; (2) hay que comparar contra **dos** genéricos
+  (serif + monospace), porque Consolas ES la monospace por defecto de Windows y con uno solo
+  se cuela; (3) los nombres PostScript ("BebasNeue-Regular") NO resuelven como familia CSS:
+  es correcto que el aviso los rechace. Verificado en browser. Sin test unitario: necesita
+  DOM y el proyecto no tiene jsdom.
+- **La lista de fuentes trae nombres de estilo, no familias**: "Calibri Bold", "Arial Bold
+  Italic" vienen del registro y no son familias reales (el filtro los rechaza), pero
+  "Bebas Neue Regular" y "Arial Black" SÍ resuelven y quedan en la lista aunque la familia
+  sea "Bebas Neue"/"Arial". Con `DirectWrite`/`font-kit` se obtendrían las familias limpias;
+  ver la nota de deps abajo.
 - **`devCsp` y el host de Vite**: el websocket de HMR tiene que estar permitido para el
   MISMO host al que apunta `devUrl`. `devUrl` está pineado a `127.0.0.1:1420` y Vite
   escucha en `127.0.0.1`, así que `connect-src` necesita `ws://127.0.0.1:1420` (dejar
