@@ -110,5 +110,8 @@
   "assExport.assignment": "Style per speaker",
   "assExport.assignmentHint": "This export only, not saved",
   "assExport.applyToAll": "Apply to all",
-  "assExport.unassigned": "Unassigned"
+  "assExport.unassigned": "Unassigned",
+  "assExport.fontsLoading": "Loading system fonts...",
+  "assExport.fontPicker": "Show installed fonts",
+  "assExport.fontsEmpty": "No font matches"
 }

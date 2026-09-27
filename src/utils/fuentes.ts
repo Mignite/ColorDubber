@@ -94,16 +94,24 @@ let cache: Promise<string[]> | null = null;
  *  el set de fuentes no cambia mientras la app esté abierta. */
 export function fuentesDisponibles(): Promise<string[]> {
   if (!cache) {
-    cache = invoke<string[]>("listar_fuentes_sistema")
-      .then((raw) => {
-        const limpias = limpiarNombresFuentes(raw ?? []);
-        return detectarFamilias(limpias);
-      })
-      .catch((err) => {
-        console.error("Error listando fuentes del sistema:", err);
-        cache = null; // se reintenta la próxima vez
-        return [] as string[];
-      });
+    cache = (async () => {
+      // Esperar a las webfonts ANTES de medir: la app carga Inter, Space
+      // Grotesk y JetBrains Mono por @font-face, y si se mide mientras cargan
+      // caen al fallback y se marcan como "no instaladas" (falso positivo).
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        try {
+          await document.fonts.ready;
+        } catch {
+          // sin soporte: seguimos igual
+        }
+      }
+      const raw = await invoke<string[]>("listar_fuentes_sistema");
+      return detectarFamilias(limpiarNombresFuentes(raw ?? []));
+    })().catch((err) => {
+      console.error("Error listando fuentes del sistema:", err);
+      cache = null; // se reintenta la próxima vez
+      return [] as string[];
+    });
   }
   return cache;
 }

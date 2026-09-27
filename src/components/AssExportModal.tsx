@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Hablante, PresetAss } from "../types";
 import { useLocale } from "../i18n";
 import { nuevoPreset } from "../utils/assPresets";
@@ -55,7 +55,9 @@ export function AssExportModal({
   // Acción que se quiere ejecutar pero primero hay que confirmar el descarte.
   const [pendiente, setPendiente] = useState<(() => void) | null>(null);
   const [fuentes, setFuentes] = useState<string[]>([]);
+  const [fuentesCargadas, setFuentesCargadas] = useState(false);
   const [listaFuentesAbierta, setListaFuentesAbierta] = useState(false);
+  const inputFuenteRef = useRef<HTMLInputElement>(null);
   // Mapeo hablante -> preset SOLO para este export. No se persiste: no es una
   // propiedad del hablante ni del proyecto, es una decisión de esta exportación.
   const primero = presets[0]?.id ?? "";
@@ -65,12 +67,21 @@ export function AssExportModal({
   const presetDe = (hablanteId: string): string =>
     asignacion[hablanteId] ?? primero;
 
+  // Con el campo vacio se muestran las primeras; con texto, las que lo contienen.
+  const consulta = (borrador?.fontname ?? "").trim().toLowerCase();
+  const filtradas = fuentes
+    .filter((f) => f.toLowerCase().includes(consulta))
+    .slice(0, 40);
+
+
   // El modal se monta fresco en cada apertura, así que esto corre una vez por
   // apertura (y la promesa está cacheada por sesión).
   useEffect(() => {
     let vivo = true;
     fuentesDisponibles().then((f) => {
-      if (vivo) setFuentes(f);
+      if (!vivo) return;
+      setFuentes(f);
+      setFuentesCargadas(true);
     });
     return () => {
       vivo = false;
@@ -200,36 +211,67 @@ export function AssExportModal({
               </div>
               <div className="assField">
                 <label>{t("assExport.field_fontname")}</label>
-                <input
-                  value={borrador.fontname}
-                  placeholder={t("assExport.fontPlaceholder")}
-                  onFocus={() => setListaFuentesAbierta(true)}
-                  onBlur={() => window.setTimeout(() => setListaFuentesAbierta(false), 120)}
-                  onChange={(e) => editar("fontname", e.target.value)}
-                />
-                {listaFuentesAbierta && fuentes.length > 0 && (
+                <div className="assFontPicker">
+                  <input
+                    ref={inputFuenteRef}
+                    className="assFontInput"
+                    value={borrador.fontname}
+                    placeholder={t("assExport.fontPlaceholder")}
+                    onFocus={() => setListaFuentesAbierta(true)}
+                    onBlur={() =>
+                      window.setTimeout(() => setListaFuentesAbierta(false), 150)
+                    }
+                    onChange={(e) => editar("fontname", e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className={
+                      "assFontCaret" + (listaFuentesAbierta ? " abierto" : "")
+                    }
+                    title={t("assExport.fontPicker")}
+                    aria-label={t("assExport.fontPicker")}
+                    aria-expanded={listaFuentesAbierta}
+                    // preventDefault para que el click no robe el foco: si lo
+                    //-robara, el onBlur del input cerraria la lista al instante.
+                    onMouseDown={(e) => e.preventDefault()}
+                    // El toggle mira el estado de la LISTA, no document.activeElement:
+                    // si la lista esta abierta la cierra, si esta cerrada enfoca el
+                    // input y su onFocus la abre. Asi nunca queda abierta sin un
+                    // blur que la cierre.
+                    onClick={() => {
+                      if (listaFuentesAbierta) {
+                        setListaFuentesAbierta(false);
+                      } else {
+                        inputFuenteRef.current?.focus();
+                      }
+                    }}
+                  >
+                    <svg
+                      className="chevron"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      strokeLinecap="round"
+                    >
+                      <path d="M3 6l5 5 5-5" />
+                    </svg>
+                  </button>
+                </div>
+                {listaFuentesAbierta && (
                   <div className="assFontList">
-                    {borrador.fontname.trim() === "" ? (
-                      fuentes.slice(0, 40).map((f) => (
-                        <button
-                          key={f}
-                          className="assFontItem"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            editar("fontname", f);
-                            setListaFuentesAbierta(false);
-                          }}
-                        >
-                          {f}
-                        </button>
-                      ))
+                    {!fuentesCargadas ? (
+                      <div className="assFontItem muted">
+                        {t("assExport.fontsLoading")}
+                      </div>
                     ) : (
-                      fuentes
-                        .filter((f) =>
-                          f.toLowerCase().includes(borrador.fontname.toLowerCase()),
-                        )
-                        .slice(0, 40)
-                        .map((f) => (
+                      <>
+                        {filtradas.length === 0 && (
+                          <div className="assFontItem muted">
+                            {t("assExport.fontsEmpty")}
+                          </div>
+                        )}
+                        {filtradas.map((f) => (
                           <button
                             key={f}
                             className="assFontItem"
@@ -241,14 +283,15 @@ export function AssExportModal({
                           >
                             {f}
                           </button>
-                        ))
+                        ))}
+                        {borrador.fontname.trim() !== "" &&
+                          !fuenteResuelve(borrador.fontname) && (
+                            <div className="assFontItem muted">
+                              {t("assExport.fontNotInstalled")}
+                            </div>
+                          )}
+                      </>
                     )}
-                    {borrador.fontname.trim() !== "" &&
-                      !fuenteResuelve(borrador.fontname) && (
-                        <div className="assFontItem muted">
-                          {t("assExport.fontNotInstalled")}
-                        </div>
-                      )}
                   </div>
                 )}
               </div>

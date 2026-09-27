@@ -110,5 +110,8 @@
   "assExport.assignment": "Estilo por hablante",
   "assExport.assignmentHint": "Solo para este export, no se guarda",
   "assExport.applyToAll": "Aplicar a todos",
-  "assExport.unassigned": "Sin hablante asignado"
+  "assExport.unassigned": "Sin hablante asignado",
+  "assExport.fontsLoading": "Cargando fuentes del sistema...",
+  "assExport.fontPicker": "Ver fuentes instaladas",
+  "assExport.fontsEmpty": "Ninguna fuente coincide"
 }
