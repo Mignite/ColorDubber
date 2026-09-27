@@ -17,11 +17,14 @@ configurable por el usuario y persistido como preset global. Y poder reimportar 
 | Builder y parser en TS puro (`src/utils/ass.ts`) | 0 deps nuevas, 0 comandos Rust, todo testeable con vitest |
 | Presets = base; el color de cada hablante sale de `Hablante.color` (PALETA) | Agregar un hablante no obliga a tocar el preset |
 | `Style:` con nombre numerado `H1..Hn`; nombre cosmético en la columna `Name` de `Dialogue:` | Elimina de raíz el bug de nombres duplicados; el nombre legible sigue visible en Aegisub/Kdenlive |
-| Solapes de tiempo → apilado vertical por `MarginV` | Puro layout, no toca el texto; timeline limpio produce un `.ass` idéntico |
+| Solapes de tiempo → **un solo evento con `\N` y color por línea** | Kdenlive no maneja varios tracks de subs, y el apilado por `MarginV` dependía de que el renderizador lo respetara por evento |
+| **Preset por hablante, elegido en el export y NO persistido** | El mapeo solo existe para exportar: no es una propiedad del hablante ni del proyecto |
+| El preset es el estilo completo, color incluido | `Hablante.color` pasa a ser identidad en el editor; el color del video lo decide el preset |
+| El import es **parcial** con eventos fusionados | Aceptado: un evento fusionado vuelve como un caption con el texto, sin los colores por linea (ver "Riesgos") |
 | Presets editables solo dentro del modal de export | Un solo componente nuevo, un solo lugar |
 | Sin `\pos` | Para apilar basta `MarginV`; `\pos` es para rótulos fijos (feature aparte) |
 | El import crea un preset a partir de los `Style:` del archivo | El parse ya existe, ~10 líneas, y es la vía para traer estilos de Premiere sin tipearlos (vetoable) |
-| Sin clamp de carriles, sin topes de stack | El apilado no se recorta; el preview del modal es el guard. Ver "No objetivos" |
+| Sin `\pos` | Para el rotulo del hablante; con `\N` y `\c` el fusionado no lo necesita |
 
 ## No objetivos
 
@@ -145,52 +148,44 @@ Dialogue: 0,0:00:02.50,0:00:05.00,H2,María,0,0,105,,Otro texto
 - `PlayResX/Y` = `videoRef.current?.videoWidth/Height`, con fallback `1920x1080`
   si no hay video cargado. Se leen en el handler de export, sin estado nuevo.
 
-## Apilado de solapes
-
-`asignarCarriles(captions) → Map<captionId, carril>`
-
-Greedy de interval graph, ~15 líneas: se ordenan por `inicio` y cada caption entra al
-carril más bajo cuyo último `fin` ya terminó, es decir `finUltimoDelCarril <= inicio`
-(tocar no cuenta como solapar: un caption que arranca justo cuando termina el anterior
-comparte carril).
-
-### Offset de carril: dos pasadas, no una
-
-El `MarginV` de un caption depende del **alto de los carriles que tiene debajo**, no
-de sus propias líneas. Si el caption del carril 0 tiene 3 renglones y el del carril 1
-tiene 1, el del carril 1 tiene que subir 3 renglones; si no, se le monta encima.
+## Fusionado de solapes
 
 ```
-// pasada 1: asignarCarriles → Map<id, carril>
-// pasada 2: altoPorCarril[c] = max(lineas(caption) de los captions del carril c) * fontsize * 1.35
-//           offsetAcumulado[c] = sum(altoPorCarril[0..c-1])   →  offsetAcumulado[0] = 0
-// marginV del caption = preset.marginV + offsetAcumulado[carril]
+segmentarPorSolape(caps) -> SegmentoAss[]   // { inicio, fin, captions }
 ```
 
-`lineas(texto, preset, resX)`:
+Barrido (sweep-line), no agrupacion en cadena. Emite un evento por cada instante en
+que cambia el set de hablantes activos, asi ninguna linea queda en pantalla despues de
+que su hablante dejo de hablar.
+
+Con A=[0,10], B=[5,15], C=[12,20] (A y C no se solapan) produce **6** segmentos:
 
 ```
-partes = texto.split("\n")
-lineas = partes.length - 1
-resto = partes[partes.length - 1]
-charsPorLinea = (resX - preset.marginL - preset.marginR) / (preset.fontsize * ASS_FACTOR_ANCHO)
-lineas += max(1, ceil(len(resto) / charsPorLinea))
+[0,5]A   [5,10]A+B   [10,12]B   [12,15]B+C   [15,20]C
 ```
 
-- Los `\n` explícitos cuentan como renglones completos (si no, un caption con newline
-  subestima su altura y el de arriba se le monta).
-- `ASS_FACTOR_ANCHO = 0.5` (ancho medio de glifo como fracción del tamaño de fuente) se
-  deja **conservador a propósito**: subestimar renglones hace que el caption de arriba
-  se monte encima del de abajo, que es el lado peligroso. Sobreestimar solo deja un hueco.
-- El conteo de líneas **solo calcula la altura del carril, no el layout del texto**.
-  Con `WrapStyle: 0` sigue mandando libass: si el heuristic se equivoca, el texto se
-  envuelve igual y queda un hueco de más o una línea apretada. Nunca rompe.
-- Timeline sin solapes → todos en carril 0 → `offsetAcumulado[0] = 0` → `.ass`
-  byte-idéntico al de la versión sin apilado. Cero regresión visual.
-- `# ponytail: alto de carril heurístico, sin clamp contra resY. Si una pila de 4+ hablantes se sale de pantalla, upgrade path = reducir ASS_FACTOR_ALTO_LINEA dinámicamente hasta que la pila quepa en resY.`
+Una agrupacion en cadena habria dado un solo evento [0,20] con las tres lineas,
+dejando el texto de A visible 10 s despues de que termino. Son 8 lineas de codigo
+menos y un defecto visible en el video final que no se puede arreglar sin regenerar el
+.ass.
 
-El `Layer` de todos los eventos es 0. No se usa: apilar por `MarginV` no genera
-z-order.
+### Overrides por linea
+
+El `Style:` del evento es el del primer hablante. Cada linea lleva overrides
+**solo de los campos que difieren** del preset base:
+
+```
+{\fnSpace Grotesk\fs52\c&HE85D4E&\bord2\shad1}Texto de Juan\N{\c&H4EA8E8&}Texto de Maria
+```
+
+Cuando todos los hablantes comparten preset —el caso de un solo hablante— no se emite
+ningun override y la salida es identica a la de un evento normal. `\N` une las lineas;
+`\c` color primario, `\3c` color de contorno, `\bord` y `\shad` borde y sombra.
+
+**No existe mas apilado**: se borran `asignarCarriles`, `lineasDeCaption`,
+`calcularMargenesV`, `ASS_FACTOR_ANCHO` y `ASS_FACTOR_ALTO_LINEA`. El `MarginV`
+vuelve a ser el valor fijo del preset.
+
 
 ## Formato de entrada (`parseAss`)
 
@@ -224,9 +219,9 @@ Exportar y reimportar un `.ass` sin tocarlo devuelve el mismo proyecto: mismas
 veces, mismo texto, mismo nombre y color por hablante. Es el test que prueba las dos
 mitades del formato, y por eso el `Style:` numerado tiene que ser re-asociable.
 
-Los `MarginV` de apilado **no** se reimportan (el apilado es una decisión de
-renderizado, no del modelo). Reimportar un `.ass` con solapes devuelve todos los
-captions en carril 0 para el siguiente export — que es el comportamiento correcto,
+Los `MarginV` **no** se reimportan (el preset los define). Un evento fusionado vuelve como
+un caption unico con las lineas unidas por `\n` y **sin los overrides de color**: `unescapeAssText`
+descarta los bloques `{...}`. No es info corrupta, es info que no esta.
 porque el siguiente export recalcula los carriles.
 
 ### Decisión (vetoable en la review del spec)
@@ -254,8 +249,8 @@ Un solo componente, hace de selector y de editor.
   - `fontsize`, `outline`, `shadow`, `marginL/R/V`: `<input type="number">`.
   - `fontname`: `<input type="text">` con `list` de `datalist` con las fuentes que ya
     usa la app (`Inter`, `Space Grotesk`, `JetBrains Mono`) — sin validación, es texto
-    libre que viaja al `.ass`.
-- **Preview** (abajo, ancho completo): mini-frame con fondo oscuro y **2-3 captions
+- **Sin preview.** Se valida en Kdenlive, que es donde se consume. Asi el modal es solo
+  editor de presets + asignacion hablante -> preset.
   apilados** (uno por hablante, con su color), renderizados con CSS equivalente —
   `font-family`, `color`, `-webkit-text-stroke` para el outline, `text-shadow` para el
   drop shadow, `text-align` según alignment, `padding` según margins. Alimentado por
@@ -322,7 +317,7 @@ campo, labels de botones, mensajes de éxito/error, confirmaciones de descarte.
 5. `buildAss` — cabeceras correctas, `Format:` de styles con 23 campos, un `Style:`
    por hablante + `Default`, orden de eventos, `Name` con el nombre cosmético,
    color por hablante desde PALETA, `PlayResX/Y` del video.
-6. `buildAss` **sin solapes** → `MarginV` igual a `preset.marginV` en todos los
+6. `buildAss` **sin solapes** -> un `Dialogue:` por caption, `MarginV` del preset.
    eventos (el byte-idéntico).
 7. `asignarCarriles` — dos captions solapados → carriles 0 y 1; tres simultáneos →
    0,1,2; sin solape → todos 0; captions del mismo hablante también se apilan;
@@ -333,7 +328,7 @@ campo, labels de botones, mensajes de éxito/error, confirmaciones de descarte.
    renglones en su altura.
 9. `parseAss` — `Style:` por nombre de columna, `Dialogue:` a `Caption`,
    `Default`→`hablante_id: null`, `&HAABBGGRR`→`#RRGGBB`, `ScriptType` viejo → error.
-10. **Round-trip** — `parseAss(buildAss(caps, hablantes, preset, 1920, 1080))`
+10. **Round-trip** - `parseAss(buildAss(caps, hablantes, presetDe, 1920, 1080))`
     devuelve las mismas veces, textos, nombres y colores.
 11. Import → preset (si se mantiene esa decisión): un `.ass` con `Style: Default` deja
     un preset cuyo `color` es el `PrimaryColour` de ese style.
@@ -346,9 +341,9 @@ campo, labels de botones, mensajes de éxito/error, confirmaciones de descarte.
 | `src/utils/__tests__/ass.test.ts` | **nuevo** — 11 grupos de tests |
 | `src/types.ts` | `+ PresetAss` |
 | `src/utils/constants.ts` | `+ DEFAULT_PRESET_ASS`, `+ ASS_PRESETS_ARCHIVO = "presets_ass.json"`, `+ ASS_FACTOR_ANCHO = 0.5`, `+ ASS_FACTOR_ALTO_LINEA = 1.35` |
-| `src/components/AssExportModal.tsx` | **nuevo** — lista + editor + preview |
-| `src/components/AssPreview.tsx` | **nuevo** — el mini-frame con CSS equivalente |
-| `src/App.css` | estilos del modal y del preview |
+| `src/components/AssExportModal.tsx` | lista + editor de presets + filas hablante -> preset |
+| ~~`src/components/AssPreview.tsx`~~ | **borrado**: el preview salio del modal |
+| `src/App.css` | estilos del modal (el preview se borro con el) |
 | `src/App.tsx` | `assModalAbierto` state, `handleExportarAss`, `handleCargarAss`, listener del menú |
 | `src-tauri/src/lib.rs` | 2 items de menú (`exportar_ass`, `cargar_ass`). **Sin comandos nuevos** |
 | `src/i18n/es.json`, `en.json` | ~20 keys `assExport.*` |
