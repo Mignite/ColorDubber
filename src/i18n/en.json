@@ -104,5 +104,7 @@
   "assExport.importDone": ".ass imported: {count} subtitle(s), {speakers} speaker(s).",
   "assExport.importError": "Could not read the .ass: {error}",
   "assExport.importPresetCreated": "Created preset \"{name}\" from the file.",
-  "dialog.filterAss": "Advanced SubStation Alpha (.ass)"
+  "dialog.filterAss": "Advanced SubStation Alpha (.ass)",
+  "assExport.fontPlaceholder": "Type or pick a font...",
+  "assExport.fontNotInstalled": "Not installed: the .ass will fall back"
 }

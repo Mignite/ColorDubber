@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Hablante, PresetAss } from "../types";
 import { useLocale } from "../i18n";
 import { nuevoPreset } from "../utils/assPresets";
+import { fuentesDisponibles } from "../utils/fuentes";
 import { AssPreview } from "./AssPreview";
 
 interface Props {
@@ -58,6 +59,20 @@ export function AssExportModal({
   const [borrador, setBorrador] = useState<PresetAss | null>(presets[0] ?? null);
   // Acción que se quiere ejecutar pero primero hay que confirmar el descarte.
   const [pendiente, setPendiente] = useState<(() => void) | null>(null);
+  const [fuentes, setFuentes] = useState<string[]>([]);
+  const [listaFuentesAbierta, setListaFuentesAbierta] = useState(false);
+
+  // El modal se monta fresco en cada apertura, así que esto corre una vez por
+  // apertura (y la promesa está cacheada por sesión).
+  useEffect(() => {
+    let vivo = true;
+    fuentesDisponibles().then((f) => {
+      if (vivo) setFuentes(f);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   const original = presets.find((p) => p.id === seleccionId) ?? null;
   const sucio =
@@ -179,14 +194,58 @@ export function AssExportModal({
                 <label>{t("assExport.field_fontname")}</label>
                 <input
                   value={borrador.fontname}
-                  list="assFuentes"
+                  placeholder={t("assExport.fontPlaceholder")}
+                  onFocus={() => setListaFuentesAbierta(true)}
+                  onBlur={() => window.setTimeout(() => setListaFuentesAbierta(false), 120)}
                   onChange={(e) => editar("fontname", e.target.value)}
                 />
-                <datalist id="assFuentes">
-                  <option value="Inter" />
-                  <option value="Space Grotesk" />
-                  <option value="JetBrains Mono" />
-                </datalist>
+                {listaFuentesAbierta && fuentes.length > 0 && (
+                  <div className="assFontList">
+                    {borrador.fontname.trim() === "" ? (
+                      fuentes.slice(0, 40).map((f) => (
+                        <button
+                          key={f}
+                          className="assFontItem"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            editar("fontname", f);
+                            setListaFuentesAbierta(false);
+                          }}
+                        >
+                          {f}
+                        </button>
+                      ))
+                    ) : (
+                      fuentes
+                        .filter((f) =>
+                          f.toLowerCase().includes(borrador.fontname.toLowerCase()),
+                        )
+                        .slice(0, 40)
+                        .map((f) => (
+                          <button
+                            key={f}
+                            className="assFontItem"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              editar("fontname", f);
+                              setListaFuentesAbierta(false);
+                            }}
+                          >
+                            {f}
+                          </button>
+                        ))
+                    )}
+                    {borrador.fontname.trim() !== "" &&
+                      !fuentes.some(
+                        (f) =>
+                          f.toLowerCase() === borrador.fontname.trim().toLowerCase(),
+                      ) && (
+                        <div className="assFontItem muted">
+                          {t("assExport.fontNotInstalled")}
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
               {CAMPOS_NUMERO.map((campo) => (
                 <div className="assField" key={campo}>

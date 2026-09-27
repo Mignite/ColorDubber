@@ -514,6 +514,42 @@ fn escribir_archivo_texto(ruta: String, contenido: String) -> Result<(), String>
     escribir_atomico(std::path::Path::new(&ruta), contenido.as_bytes())
 }
 
+/// Nombres de fuentes instaladas, tal cual los devuelve el registro de Windows
+/// ("Calibri Bold (TrueType)", ...). NO devuelve familias limpias ni filtra las
+/// que no existen como familia: eso lo hace el frontend, que puede medir contra
+/// el fallback real del renderer. Se consulta HKLM (sistema) y HKCU (fuentes
+/// instaladas por el usuario, que no aparecen en HKLM).
+#[tauri::command]
+fn listar_fuentes_sistema() -> Result<Vec<String>, String> {
+    let claves = [
+        r"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts",
+        r"HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts",
+    ];
+    let mut todas: Vec<String> = Vec::new();
+    for clave in claves {
+        // Si la clave no existe (típico en HKCU sin fuentes de usuario), reg
+        // escribe en stderr y devuelve código 1: en ese caso no hay nada que
+        // agregar, no es un error.
+        let salida = std::process::Command::new("reg")
+            .args(["query", clave])
+            .output()
+            .map_err(|e| e.to_string())?;
+        for linea in String::from_utf8_lossy(&salida.stdout).lines() {
+            let t = linea.trim();
+            if t.is_empty() || t.starts_with("HKEY") {
+                continue;
+            }
+            // Cada línea: "    <nombre>    <tipo>    <ruta del archivo>"
+            if let Some(nombre) = t.split_whitespace().next() {
+                if !nombre.is_empty() {
+                    todas.push(nombre.to_string());
+                }
+            }
+        }
+    }
+    Ok(todas)
+}
+
 #[tauri::command]
 fn escribir_archivo_en_carpeta(
     carpeta: String,
@@ -541,6 +577,7 @@ pub fn run() {
             listar_tracks_audio,
             extraer_audio_stream,
             verificar_ffmpeg,
+            listar_fuentes_sistema,
         ])
         .setup(|app| {
             let nuevo = MenuItemBuilder::new("Nuevo proyecto")
