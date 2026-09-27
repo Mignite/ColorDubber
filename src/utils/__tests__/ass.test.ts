@@ -9,9 +9,17 @@ import {
   sanitizeNombreDialogo,
   asignarCarriles,
   calcularMargenesV,
+  buildAss,
+  ASS_STYLE_FORMAT,
+  ASS_EVENTS_FORMAT,
 } from "../ass";
-import type { Caption, PresetAss } from "../../types";
+import type { Caption, PresetAss, Hablante } from "../../types";
 import { DEFAULT_PRESET_ASS, ASS_FACTOR_ALTO_LINEA } from "../constants";
+
+const HABLANTES: Hablante[] = [
+  { id: "sp1", nombre: "Juan", tecla: "1", color: "#E85D4E" },
+  { id: "sp2", nombre: "María", tecla: "2", color: "#4EA8E8" },
+];
 
 describe("hexToAssColor", () => {
   it("convierte a BGR invertido con alpha opaco", () => {
@@ -166,5 +174,113 @@ describe("calcularMargenesV", () => {
     );
     const unRenglon = PRESET.fontsize * ASS_FACTOR_ALTO_LINEA;
     expect(m.get("b")! - m.get("a")!).toBe(Math.round(unRenglon * 3));
+  });
+});
+
+describe("buildAss", () => {
+  it("escribe las cabeceras v4.00+ con el PlayRes pedido", () => {
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1280, 720);
+    expect(out).toContain("ScriptType: v4.00+");
+    expect(out).toContain("PlayResX: 1280");
+    expect(out).toContain("PlayResY: 720");
+    expect(out).toContain("WrapStyle: 0");
+    expect(out).toContain(`Format: ${ASS_STYLE_FORMAT}`);
+    expect(out).toContain(`Format: ${ASS_EVENTS_FORMAT}`);
+  });
+
+  it("el Format de styles tiene 23 columnas y el de events 10", () => {
+    expect(ASS_STYLE_FORMAT.split(",")).toHaveLength(23);
+    expect(ASS_EVENTS_FORMAT.split(",")).toHaveLength(10);
+  });
+
+  it("numera los estilos por índice del array de hablantes y mete el color de cada uno", () => {
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
+    const styles = out.split("\n").filter((l) => l.startsWith("Style:"));
+    expect(styles[0]).toMatch(/^Style: H1,Inter,48,&H004E5DE8,/);
+    expect(styles[1]).toMatch(/^Style: H2,Inter,48,&H00E8A84E,/);
+  });
+
+  it("emite un Style Default con el color del preset", () => {
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
+    expect(out).toContain("Style: Default,Inter,48,&H00FFFFFF,");
+  });
+
+  it("usa el nombre cosmético en la columna Name y el estilo en la columna Style", () => {
+    const out = buildAss(
+      [{ ...cap("a", 0, 3), hablante_id: "sp2" }],
+      HABLANTES,
+      PRESET,
+      1920,
+      1080,
+    );
+    expect(out).toContain("Dialogue: 0,0:00:00.00,0:00:03.00,H2,María,0,0,40,,x");
+  });
+
+  it("los captions sin hablante van al estilo Default", () => {
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
+    expect(out).toContain(",Default,,0,0,40,,x");
+  });
+
+  it("cae a tecla o id cuando el hablante no tiene nombre", () => {
+    const sinNombre: Hablante[] = [
+      { id: "spX", nombre: "", tecla: "7", color: "#FFFFFF" },
+    ];
+    const out = buildAss(
+      [{ ...cap("a", 0, 3), hablante_id: "spX" }],
+      sinNombre,
+      PRESET,
+      1920,
+      1080,
+    );
+    expect(out).toContain(",H1,7,");
+  });
+
+  it("ordena los eventos por inicio aunque le lleguen desordenados", () => {
+    const out = buildAss(
+      [cap("b", 5, 6, "segundo"), cap("a", 1, 2, "primero")],
+      HABLANTES,
+      PRESET,
+      1920,
+      1080,
+    );
+    expect(out.indexOf("primero")).toBeLessThan(out.indexOf("segundo"));
+  });
+
+  it("escapa comas del nombre cosmético para no romper el parseo", () => {
+    const conComa: Hablante[] = [
+      { id: "sp1", nombre: "Smith, John", tecla: "1", color: "#FFFFFF" },
+    ];
+    const out = buildAss(
+      [{ ...cap("a", 0, 3), hablante_id: "sp1" }],
+      conComa,
+      PRESET,
+      1920,
+      1080,
+    );
+    expect(out).toContain(",H1,Smith John,0,0,40,,x");
+  });
+
+  it("sin solapes deja todos los MarginV en el del preset", () => {
+    const out = buildAss([cap("a", 0, 3), cap("b", 3, 6)], HABLANTES, PRESET, 1920, 1080);
+    const margins = out
+      .split("\n")
+      .filter((l) => l.startsWith("Dialogue:"))
+      .map((l) => l.split(",")[7]);
+    expect(margins).toEqual(["40", "40"]);
+  });
+
+  it("con solapes sube el MarginV del segundo", () => {
+    const out = buildAss([cap("a", 0, 3), cap("b", 2, 5)], HABLANTES, PRESET, 1920, 1080);
+    const margins = out
+      .split("\n")
+      .filter((l) => l.startsWith("Dialogue:"))
+      .map((l) => +l.split(",")[7]);
+    expect(margins[1]).toBeGreaterThan(margins[0]);
+  });
+
+  it("los margins del preset se van al Style y no al Dialogue", () => {
+    const outro: PresetAss = { ...PRESET, outline: 5, shadow: 3, marginV: 80 };
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, outro, 1920, 1080);
+    expect(out).toContain(",1,5,3,2,10,10,80,1");
   });
 });
