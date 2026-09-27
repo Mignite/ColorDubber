@@ -107,9 +107,10 @@ Filtrado de captions: se exportan **todas**, incluidas las sin hablante.
   (`\{`, `\}`) porque ASS los lee como bloque de override.
 - `unescapeAssText(s)` → inverso, para el import. Quita los bloques `{...}`
   completos (no preservamos `\pos` ni overrides: no son parte del modelo).
-- `sanitizeStyleName(s)` → quita comas y recorta. Los nombres de estilo son `Hn`
-  y no necesitan sanitize, pero el nombre cosmético de la columna `Name` puede
-  traer comas sin problema (el texto de `Dialogue:` es el último campo).
+- `sanitizeNombreDialogo(s)` → **quita comas** (las reemplaza por espacio). La columna
+  `Name` es el campo 5 de 10, **no** el último: una coma ahí corre todos los campos
+  siguientes al parsearlos. Solo el `Text`, que sí es el último, tolera comas. Los
+  nombres de estilo (`H1..Hn`) no llevan sanitize porque no tienen.
 - `parseAssTime(str)` → segundos. Para el import.
 
 ### Estructura del archivo
@@ -130,7 +131,7 @@ Style: Default,Inter,48,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 Dialogue: 0,0:00:01.00,0:00:03.00,H1,Juan,0,0,40,,Texto del diálogo
-Dialogue: 0,0:00:02.50,0:00:05.00,H2,María,0,0,104,,Otro texto
+Dialogue: 0,0:00:02.50,0:00:05.00,H2,María,0,0,105,,Otro texto
 ```
 
 - `SecondaryColour` = copia de `PrimaryColour` (ASS solo lo usa con
@@ -291,9 +292,12 @@ el usuario cancela.
 1. Menú `Archivo` → nuevo item **"Cargar .ass"** con id `cargar_ass`.
 2. `open()` de plugin-dialog con `filters: [{ name: "Advanced SubStation Alpha (.ass)", extensions: ["ass"] }]`.
 3. `invoke("leer_archivo_texto", { ruta })` → `parseAss(contenido)`.
-4. Reemplaza `captions` y `hablantes` (como `cargar_srt` / `importar_autosubs`),
-   limpia la selección, y **marca el proyecto dirty** (`isDirtyRef` + `setHayCambios`),
-   igual que el resto de rutas de escritura.
+4. Reemplaza `captions` y `hablantes` siguiendo exactamente el patrón de
+   `cargarSrtDesdeRuta` (App.tsx:409): `ignoreNextChangeRef = true`,
+   `isDirtyRef = false`, `setHayCambios(false)`, `setSelectedCaptionIds([])`. O sea
+   la carga deja el proyecto **limpio**, no dirty — misma semántica que cargar un SRT
+   o importar auto-subs: el contenido recién cargado no se cuenta como "cambios sin
+   guardar" hasta que el usuario edite algo.
 5. Mensaje con el conteo. Si `parseAss` falla, mensaje de error y **no** se toca el
    proyecto.
 
