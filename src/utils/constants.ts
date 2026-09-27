@@ -27,10 +27,13 @@ export const ISLA_FALLBACK = 1.5;
 
 // ==== Export .ass (Advanced SubStation Alpha) ====
 export const ASS_PRESETS_ARCHIVO = "presets_ass.json";
+// "Arial" y no "Inter": Inter es una fuente de Google que no viene con
+// Windows y la app tampoco la declara en @font-face, asi que el .ass caeria
+// al fallback en cualquier maquina que no la tenga instalada.
 export const DEFAULT_PRESET_ASS: PresetAss = {
   id: "preset-default",
   nombre: "Default",
-  fontname: "Inter",
+  fontname: "Arial",
   fontsize: 48,
   color: "#FFFFFF",
   outlineColor: "#000000",
