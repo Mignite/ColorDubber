@@ -1516,8 +1516,46 @@ button.primary:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: auto;
+  /* Sin margin-top:auto: la lista es una columna flex dentro de un grid row
+     que estira a la altura de la columna de campos, y el auto los mandaba al
+     fondo del modal, lejos de la lista de presets. */
   padding-top: 10px;
+}
+
+.assPresetAdd,
+.assPresetDel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  font-size: 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--textDim);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.assPresetAdd:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.assPresetAddPlus {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.assPresetDel:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.assPresetDel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .assFields {

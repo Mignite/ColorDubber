@@ -78,7 +78,7 @@
   "dialog.filterProject": "ColorDubber Project",
   "dialog.filterJsonCombined": "Combined JSON",
   "assExport.title": "Export .ass",
-  "assExport.newPreset": "Duplicate",
+  "assExport.newPreset": "New preset",
   "assExport.delete": "Delete",
   "assExport.save": "Save",
   "assExport.export": "Export",

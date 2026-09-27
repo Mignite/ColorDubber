@@ -35,6 +35,15 @@ const CAMPOS_NUMERO: (keyof PresetAss)[] = [
   "marginV",
 ];
 
+/** "Default" -> "Default 2", y si ya existe "Default 3". Evita el
+ *  "Default copia copia" de concatenar la palabra cada vez. */
+function nombreLibre(base: string, existentes: string[]): string {
+  const limpio = base.replace(/\s+\d+$/, "");
+  let n = 2;
+  while (existentes.includes(`${limpio} ${n}`)) n++;
+  return `${limpio} ${n}`;
+}
+
 export function AssExportModal({
   presets,
   hablantes,
@@ -94,9 +103,11 @@ export function AssExportModal({
     setSeleccionId(borrador.id);
   };
 
-  const guardarComoNuevo = () => {
-    if (!borrador) return;
-    const nuevo = nuevoPreset({ ...borrador, nombre: `${borrador.nombre} copia` });
+  const agregarPreset = () => {
+    // Parte del preset actual: casi siempre querés tweaked lo que ya te gusta,
+    // no volver de cero. El nombre se renumera solo.
+    const base = nombreLibre(borrador?.nombre ?? "Preset", presets.map((p) => p.nombre));
+    const nuevo = nuevoPreset({ ...borrador, nombre: base });
     onGuardar([...presets, nuevo]);
     setSeleccionId(nuevo.id);
     setBorrador(nuevo);
@@ -134,13 +145,21 @@ export function AssExportModal({
               </button>
             ))}
             <div className="assPresetActions">
-              <button className="addFragmentBtn" onClick={guardarComoNuevo}>
+              <button
+                className="assPresetAdd"
+                onClick={agregarPreset}
+                title={t("assExport.newPreset")}
+              >
+                <span className="assPresetAddPlus" aria-hidden="true">
+                  +
+                </span>
                 {t("assExport.newPreset")}
               </button>
               <button
-                className="addFragmentBtn"
+                className="assPresetDel"
                 onClick={borrar}
                 disabled={presets.length <= 1}
+                title={t("assExport.delete")}
               >
                 {t("assExport.delete")}
               </button>
