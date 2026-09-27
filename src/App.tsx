@@ -774,18 +774,30 @@ function App() {
     }
   }
 
-  async function exportarAssConPreset(preset: PresetAss) {
+  async function exportarAssConPreset(
+    asignacion: Record<string, string>,
+    presetSinHablante: string,
+  ) {
     try {
       const path = await save({
         filters: [{ name: t("dialog.filterAss"), extensions: ["ass"] }],
         defaultPath: "subtitulos.ass",
       });
       if (!path) return;
+      // La asignacion vive solo en el modal: se resuelve a un preset por
+      // hablante y se la pasa al builder. No se persiste en ningun lado.
+      const porId = new Map(presetsAss.map((p) => [p.id, p]));
+      const primero = presetsAss[0];
+      const sinHablante = porId.get(presetSinHablante) ?? primero;
+      if (!sinHablante) return;
+      const presetDe = (hablanteId: string | null) =>
+        (hablanteId ? porId.get(asignacion[hablanteId]) : undefined) ??
+        sinHablante;
       // Se arma DESPUÉS del save: si el usuario cancela, no se hace el trabajo.
       const contenido = buildAss(
         captionsRef.current,
         hablantesRef.current,
-        preset,
+        presetDe,
         resAss.x,
         resAss.y,
       );
@@ -3123,8 +3135,6 @@ function App() {
         <AssExportModal
           presets={presetsAss}
           hablantes={hablantes}
-          resX={resAss.x}
-          resY={resAss.y}
           onCerrar={() => setAssModalAbierto(false)}
           onExportar={exportarAssConPreset}
           onGuardar={persistirPresets}

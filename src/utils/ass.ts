@@ -2,7 +2,6 @@
 // Puras y sin dependencias: el builder y el parser se apoyan acá.
 
 import type { Caption, Hablante, PresetAss } from "../types";
-import { ASS_FACTOR_ANCHO, ASS_FACTOR_ALTO_LINEA } from "./constants";
 
 const RE_HEX6 = /^[0-9a-fA-F]{6}$/;
 // ASS escribe &HAABBGGRR. Acepta 8 dígitos (con alpha) o 6 (sin alpha),
@@ -84,87 +83,79 @@ export function sanitizeNombreDialogo(s: string): string {
   return s.replace(/,\s*/g, " ").trim();
 }
 
-/** Greedy de interval graph: cada caption entra al primer carril libre.
- *  `fin <= inicio` — dos captions que solo se tocan comparten carril.
- *  Ordena por inicio acá adentro: el llamador no puede olvidarse. */
-export function asignarCarriles(caps: Caption[]): Map<string, number> {
-  const carriles = new Map<string, number>();
-  const finPorCarril: number[] = [];
-  for (const c of [...caps].sort((a, b) => a.inicio - b.inicio)) {
-    let carril = finPorCarril.findIndex((fin) => fin <= c.inicio);
-    if (carril === -1) {
-      carril = finPorCarril.length;
-      finPorCarril.push(c.fin);
-    } else {
-      finPorCarril[carril] = c.fin;
+export interface SegmentoAss {
+  inicio: number;
+  fin: number;
+  /** Activos en ese tramo, ordenados por inicio. */
+  captions: Caption[];
+}
+
+/** Barrido (sweep-line): un segmento por cada instante en que cambia el set de
+ *  captions activos. NO es agrupación en cadena — con A=[0,10] B=[5,15]
+ *  C=[12,20] la cadena daría un evento [0,20] con las tres y dejaría el texto
+ *  de A visible 10 s después de que terminó. */
+export function segmentarPorSolape(caps: Caption[]): SegmentoAss[] {
+  const ordenados = [...caps]
+    .filter((c) => c.fin > c.inicio)
+    .sort((a, b) => a.inicio - b.inicio || a.fin - b.fin);
+  const segmentos: SegmentoAss[] = [];
+  let activas: Caption[] = [];
+  let i = 0;
+  let t = ordenados.length > 0 ? ordenados[0].inicio : 0;
+
+  while (i < ordenados.length || activas.length > 0) {
+    let siguiente = Infinity;
+    if (i < ordenados.length) siguiente = ordenados[i].inicio;
+    for (const c of activas) siguiente = Math.min(siguiente, c.fin);
+
+    if (activas.length > 0) {
+      segmentos.push({ inicio: t, fin: siguiente, captions: [...activas] });
     }
-    carriles.set(c.id, carril);
+    activas = activas.filter((c) => c.fin > siguiente);
+    while (i < ordenados.length && ordenados[i].inicio <= siguiente) {
+      if (ordenados[i].fin > siguiente) activas.push(ordenados[i]);
+      i++;
+    }
+    t = siguiente;
   }
-  return carriles;
+  return segmentos;
 }
 
-/** Renglones estimados. Los \n explícitos cuentan como renglones completos;
- *  el resto se estima por ancho de glifo contra el ancho útil del canvas. */
-export function lineasDeCaption(
-  texto: string,
-  preset: PresetAss,
-  resX: number,
-): number {
-  const partes = texto.split("\n");
-  const explicitas = partes.length - 1;
-  const resto = partes[partes.length - 1];
-  const anchoUtil = Math.max(1, resX - preset.marginL - preset.marginR);
-  const charsPorLinea = Math.max(
-    1,
-    anchoUtil / (preset.fontsize * ASS_FACTOR_ANCHO),
-  );
-  return explicitas + Math.max(1, Math.ceil(resto.length / charsPorLinea));
+/** Overrides ASS de una línea, SOLO por los campos que difieren del preset base.
+ *  Vacío cuando no difiere nada, que es el caso normal de un solo hablante. */
+export function overridesDeLinea(linea: PresetAss, base: PresetAss): string {
+  const p: string[] = [];
+  if (linea.fontname !== base.fontname) p.push(`\\fn${linea.fontname}`);
+  if (linea.fontsize !== base.fontsize) p.push(`\\fs${linea.fontsize}`);
+  if (linea.color.toLowerCase() !== base.color.toLowerCase())
+    p.push(`\\c${hexToAssColor(linea.color)}&`);
+  if (linea.outlineColor.toLowerCase() !== base.outlineColor.toLowerCase())
+    p.push(`\\3c${hexToAssColor(linea.outlineColor)}&`);
+  if (linea.outline !== base.outline) p.push(`\\bord${linea.outline}`);
+  if (linea.shadow !== base.shadow) p.push(`\\shad${linea.shadow}`);
+  return p.length > 0 ? `{${p.join("")}}` : "";
 }
 
-/** MarginV por caption. El offset de un carril es la suma de las alturas
- *  MÁXIMAS de los carriles que tiene debajo, no su propia altura: si no, un
- *  caption de 1 renglón se le monta encima del de 3 que tiene abajo. */
-export function calcularMargenesV(
-  caps: Caption[],
-  preset: PresetAss,
-  resX: number,
-): Map<string, number> {
-  const carriles = asignarCarriles(caps);
-  const altoPorCarril = new Map<number, number>();
-  for (const c of caps) {
-    const carril = carriles.get(c.id) ?? 0;
-    const alto =
-      lineasDeCaption(c.texto, preset, resX) * preset.fontsize * ASS_FACTOR_ALTO_LINEA;
-    altoPorCarril.set(carril, Math.max(altoPorCarril.get(carril) ?? 0, alto));
-  }
-  const offset = new Map<number, number>();
-  let acumulado = 0;
-  for (const carril of [...altoPorCarril.keys()].sort((a, b) => a - b)) {
-    offset.set(carril, acumulado);
-    acumulado += altoPorCarril.get(carril) ?? 0;
-  }
-  const salida = new Map<string, number>();
-  for (const c of caps) {
-    const base = offset.get(carriles.get(c.id) ?? 0) ?? 0;
-    salida.set(c.id, Math.round(preset.marginV + base));
-  }
-  return salida;
+/** Un solo Dialogue con una línea por caption, unida por \N. */
+export function fusionarLineas(
+  captions: Caption[],
+  presetDe: (c: Caption) => PresetAss,
+  base: PresetAss,
+): string {
+  return captions
+    .map((c) => overridesDeLinea(presetDe(c), base) + escapeAssText(c.texto))
+    .join("\\N");
 }
 
-export const ASS_STYLE_FORMAT =
-  "Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, " +
+export const ASS_STYLE_FORMAT =  "Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, " +
   "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, " +
   "Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding";
 
 export const ASS_EVENTS_FORMAT =
   "Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text";
 
-function lineaStyle(
-  nombre: string,
-  colorPrimario: string,
-  preset: PresetAss,
-): string {
-  const c = hexToAssColor(colorPrimario);
+function lineaStyle(nombre: string, preset: PresetAss): string {
+  const c = hexToAssColor(preset.color);
   const o = hexToAssColor(preset.outlineColor);
   return (
     `Style: ${nombre},${preset.fontname},${preset.fontsize},${c},${c},${o},` +
@@ -173,16 +164,16 @@ function lineaStyle(
   );
 }
 
+/** `presetDe` resuelve el preset de un hablante (o el de "sin hablante" con id
+ *  null). La resuelve el caller desde la asignacion elegida en el modal: es mas
+ *  facil de testear que pasar ids sueltos. */
 export function buildAss(
   caps: Caption[],
   hablantes: Hablante[],
-  preset: PresetAss,
+  presetDe: (hablanteId: string | null) => PresetAss,
   resX: number,
   resY: number,
 ): string {
-  const ordenados = [...caps].sort((a, b) => a.inicio - b.inicio);
-  const margenes = calcularMargenesV(ordenados, preset, resX);
-
   // El nombre del estilo es el índice del array de hablantes: por eso un
   // nombre duplicado no puede romper nada (H1, H2, ... son únicos por
   // construcción) y el nombre real, que sí puede repetirse, viaja aparte.
@@ -196,16 +187,23 @@ export function buildAss(
   };
 
   const styles = [
-    ...hablantes.map((h, i) => lineaStyle(`H${i + 1}`, h.color, preset)),
-    lineaStyle("Default", preset.color, preset),
+    ...hablantes.map((h, i) => lineaStyle(`H${i + 1}`, presetDe(h.id))),
+    lineaStyle("Default", presetDe(null)),
   ];
 
-  const eventos = ordenados.map(
-    (c) =>
-      `Dialogue: 0,${formatAssTime(c.inicio)},${formatAssTime(c.fin)},` +
-      `${styleDe(c.hablante_id)},${nombreDe(c.hablante_id)},0,0,` +
-      `${margenes.get(c.id) ?? preset.marginV},,${escapeAssText(c.texto)}`,
-  );
+  const eventos = segmentarPorSolape(caps).map((seg) => {
+    const primero = seg.captions[0];
+    const base = presetDe(primero.hablante_id);
+    return (
+      `Dialogue: 0,${formatAssTime(seg.inicio)},${formatAssTime(seg.fin)},` +
+      `${styleDe(primero.hablante_id)},${nombreDe(primero.hablante_id)},0,0,` +
+      `${base.marginV},,${fusionarLineas(
+        seg.captions,
+        (c) => presetDe(c.hablante_id),
+        base,
+      )}`
+    );
+  });
 
   return (
     "[Script Info]\n" +

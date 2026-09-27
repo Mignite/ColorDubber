@@ -7,16 +7,16 @@ import {
   escapeAssText,
   unescapeAssText,
   sanitizeNombreDialogo,
-  asignarCarriles,
-  calcularMargenesV,
   buildAss,
+  segmentarPorSolape,
+  fusionarLineas,
   parseAss,
   presetDesdeEstilos,
   ASS_STYLE_FORMAT,
   ASS_EVENTS_FORMAT,
 } from "../ass";
 import type { Caption, PresetAss, Hablante } from "../../types";
-import { DEFAULT_PRESET_ASS, ASS_FACTOR_ALTO_LINEA } from "../constants";
+import { DEFAULT_PRESET_ASS } from "../constants";
 
 const HABLANTES: Hablante[] = [
   { id: "sp1", nombre: "Juan", tecla: "1", color: "#E85D4E" },
@@ -128,60 +128,17 @@ function cap(id: string, inicio: number, fin: number, texto = "x"): Caption {
   return { id, inicio, fin, texto, hablante_id: null };
 }
 
-const PRESET: PresetAss = { ...DEFAULT_PRESET_ASS };
-
-describe("asignarCarriles", () => {
-  it("pone en carriles distintos lo que se solapa", () => {
-    const carriles = asignarCarriles([cap("a", 0, 3), cap("b", 2, 5)]);
-    expect(carriles.get("a")).toBe(0);
-    expect(carriles.get("b")).toBe(1);
-  });
-
-  it("reutiliza el mismo carril cuando no hay solape", () => {
-    const carriles = asignarCarriles([cap("a", 0, 3), cap("b", 3, 5)]);
-    expect(carriles.get("a")).toBe(0);
-    expect(carriles.get("b")).toBe(0);
-  });
-
-  it("mete en carriles distintos tres simultáneos", () => {
-    const carriles = asignarCarriles([cap("a", 0, 5), cap("b", 1, 6), cap("c", 2, 7)]);
-    expect([carriles.get("a"), carriles.get("b"), carriles.get("c")]).toEqual([0, 1, 2]);
-  });
-
-  it("ordena por inicio internamente, no confía en el llamador", () => {
-    const carriles = asignarCarriles([cap("b", 2, 5), cap("a", 0, 3)]);
-    expect(carriles.get("a")).toBe(0);
-    expect(carriles.get("b")).toBe(1);
-  });
-});
-
-describe("calcularMargenesV", () => {
-  it("deja todo en marginV cuando no hay solapes", () => {
-    const m = calcularMargenesV([cap("a", 0, 3), cap("b", 3, 5)], PRESET, 1920);
-    expect(m.get("a")).toBe(PRESET.marginV);
-    expect(m.get("b")).toBe(PRESET.marginV);
-  });
-
-  it("sube el segundo carril", () => {
-    const m = calcularMargenesV([cap("a", 0, 3), cap("b", 2, 5)], PRESET, 1920);
-    expect(m.get("b")!).toBeGreaterThan(m.get("a")!);
-  });
-
-  it("el offset del carril de arriba usa el alto MÁXIMO de los de abajo", () => {
-    // a tiene 3 renglones ("\n" explícito), b solo 1: b debe subir 3, no 1.
-    const m = calcularMargenesV(
-      [cap("a", 0, 3, "uno\ndos\ntres"), cap("b", 2, 5, "x")],
-      PRESET,
-      1920,
-    );
-    const unRenglon = PRESET.fontsize * ASS_FACTOR_ALTO_LINEA;
-    expect(m.get("b")! - m.get("a")!).toBe(Math.round(unRenglon * 3));
-  });
-});
-
 describe("buildAss", () => {
+  // Un preset por hablante, como elige el modal. H1=rojo, H2=azul, null=blanco.
+  const P_ROJO: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#E85D4E" };
+  const P_AZUL: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#4EA8E8" };
+  const P_BLANCO: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#FFFFFF" };
+  const porHab = (id: string | null): PresetAss =>
+    id === "sp1" ? P_ROJO : id === "sp2" ? P_AZUL : P_BLANCO;
+  const build = (caps: Caption[]) => buildAss(caps, HABLANTES, porHab, 1920, 1080);
+
   it("escribe las cabeceras v4.00+ con el PlayRes pedido", () => {
-    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1280, 720);
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, porHab, 1280, 720);
     expect(out).toContain("ScriptType: v4.00+");
     expect(out).toContain("PlayResX: 1280");
     expect(out).toContain("PlayResY: 720");
@@ -195,32 +152,27 @@ describe("buildAss", () => {
     expect(ASS_EVENTS_FORMAT.split(",")).toHaveLength(10);
   });
 
-  it("numera los estilos por índice del array de hablantes y mete el color de cada uno", () => {
-    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
+  it("el color sale del preset del hablante, no de su color de paleta", () => {
+    const out = build([cap("a", 0, 3)]);
     const styles = out.split("\n").filter((l) => l.startsWith("Style:"));
     expect(styles[0]).toMatch(/^Style: H1,Inter,48,&H004E5DE8,/);
     expect(styles[1]).toMatch(/^Style: H2,Inter,48,&H00E8A84E,/);
+    expect(styles[2]).toMatch(/^Style: Default,Inter,48,&H00FFFFFF,/);
   });
 
-  it("emite un Style Default con el color del preset", () => {
-    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
-    expect(out).toContain("Style: Default,Inter,48,&H00FFFFFF,");
+  it("un Style por hablante aunque compartan preset", () => {
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, () => P_ROJO, 1920, 1080);
+    expect(out).toContain("Style: H1,Inter,48,&H004E5DE8,");
+    expect(out).toContain("Style: H2,Inter,48,&H004E5DE8,");
   });
 
-  it("usa el nombre cosmético en la columna Name y el estilo en la columna Style", () => {
-    const out = buildAss(
-      [{ ...cap("a", 0, 3), hablante_id: "sp2" }],
-      HABLANTES,
-      PRESET,
-      1920,
-      1080,
-    );
+  it("usa el nombre cosmético en la columna Name y el estilo en la Style", () => {
+    const out = build([{ ...cap("a", 0, 3), hablante_id: "sp2" }]);
     expect(out).toContain("Dialogue: 0,0:00:00.00,0:00:03.00,H2,María,0,0,40,,x");
   });
 
   it("los captions sin hablante van al estilo Default", () => {
-    const out = buildAss([cap("a", 0, 3)], HABLANTES, PRESET, 1920, 1080);
-    expect(out).toContain(",Default,,0,0,40,,x");
+    expect(build([cap("a", 0, 3)])).toContain(",Default,,0,0,40,,x");
   });
 
   it("cae a tecla o id cuando el hablante no tiene nombre", () => {
@@ -230,7 +182,7 @@ describe("buildAss", () => {
     const out = buildAss(
       [{ ...cap("a", 0, 3), hablante_id: "spX" }],
       sinNombre,
-      PRESET,
+      porHab,
       1920,
       1080,
     );
@@ -238,13 +190,7 @@ describe("buildAss", () => {
   });
 
   it("ordena los eventos por inicio aunque le lleguen desordenados", () => {
-    const out = buildAss(
-      [cap("b", 5, 6, "segundo"), cap("a", 1, 2, "primero")],
-      HABLANTES,
-      PRESET,
-      1920,
-      1080,
-    );
+    const out = build([cap("b", 5, 6, "segundo"), cap("a", 1, 2, "primero")]);
     expect(out.indexOf("primero")).toBeLessThan(out.indexOf("segundo"));
   });
 
@@ -255,35 +201,51 @@ describe("buildAss", () => {
     const out = buildAss(
       [{ ...cap("a", 0, 3), hablante_id: "sp1" }],
       conComa,
-      PRESET,
+      porHab,
       1920,
       1080,
     );
     expect(out).toContain(",H1,Smith John,0,0,40,,x");
   });
 
-  it("sin solapes deja todos los MarginV en el del preset", () => {
-    const out = buildAss([cap("a", 0, 3), cap("b", 3, 6)], HABLANTES, PRESET, 1920, 1080);
-    const margins = out
-      .split("\n")
-      .filter((l) => l.startsWith("Dialogue:"))
-      .map((l) => l.split(",")[7]);
-    expect(margins).toEqual(["40", "40"]);
-  });
-
-  it("con solapes sube el MarginV del segundo", () => {
-    const out = buildAss([cap("a", 0, 3), cap("b", 2, 5)], HABLANTES, PRESET, 1920, 1080);
-    const margins = out
-      .split("\n")
-      .filter((l) => l.startsWith("Dialogue:"))
-      .map((l) => +l.split(",")[7]);
-    expect(margins[1]).toBeGreaterThan(margins[0]);
-  });
-
-  it("los margins del preset se van al Style y no al Dialogue", () => {
-    const outro: PresetAss = { ...PRESET, outline: 5, shadow: 3, marginV: 80 };
-    const out = buildAss([cap("a", 0, 3)], HABLANTES, outro, 1920, 1080);
+  it("los margins del preset se van al Style y al MarginV del evento", () => {
+    const outro: PresetAss = { ...P_ROJO, outline: 5, shadow: 3, marginV: 80 };
+    const out = buildAss([cap("a", 0, 3)], HABLANTES, () => outro, 1920, 1080);
     expect(out).toContain(",1,5,3,2,10,10,80,1");
+    expect(out).toContain(",0,0,80,,");
+  });
+
+  it("un solo hablante no emite ningun override", () => {
+    const out = build([
+      { ...cap("a", 0, 3, "hola"), hablante_id: "sp1" },
+      { ...cap("b", 1, 2, "otro"), hablante_id: "sp1" },
+    ]);
+    expect(out).toContain(",H1,Juan,0,0,40,,hola\\N");
+  });
+
+  it("fusiona dos hablantes en un evento con override de color", () => {
+    const out = build([
+      { ...cap("a", 0, 6, "linea de Juan"), hablante_id: "sp1" },
+      { ...cap("b", 3, 9, "linea de Maria"), hablante_id: "sp2" },
+    ]);
+    expect(out).toContain(
+      "Dialogue: 0,0:00:03.00,0:00:06.00,H1,Juan,0,0,40,,linea de Juan\\N{\\c&H00E8A84E&}linea de Maria",
+    );
+  });
+
+  it("emite \\fn y \\fs cuando el preset del segundo cambia la tipografia", () => {
+    const cine: PresetAss = { ...P_AZUL, fontname: "Space Grotesk", fontsize: 64 };
+    const out = buildAss(
+      [
+        { ...cap("a", 0, 6, "juan"), hablante_id: "sp1" },
+        { ...cap("b", 3, 9, "maria"), hablante_id: "sp2" },
+      ],
+      HABLANTES,
+      (id) => (id === "sp2" ? cine : P_ROJO),
+      1920,
+      1080,
+    );
+    expect(out).toContain("juan\\N{\\fnSpace Grotesk\\fs64\\c&H00E8A84E&}maria");
   });
 });
 
@@ -369,15 +331,156 @@ describe("parseAss", () => {
   });
 });
 
+describe("segmentarPorSolape", () => {
+  it("sin solapes devuelve un segmento por caption", () => {
+    const s = segmentarPorSolape([cap("a", 0, 3), cap("b", 5, 8)]);
+    expect(s).toHaveLength(2);
+    expect(s[0]).toMatchObject({ inicio: 0, fin: 3 });
+    expect(s[0].captions.map((c) => c.id)).toEqual(["a"]);
+    expect(s[1].captions.map((c) => c.id)).toEqual(["b"]);
+  });
+
+  it("parte en cada instante en que cambia el set de activos", () => {
+    // No se puede poner la linea de B antes de que B hable, ni quitarla antes
+    // de que termine: el set de activos cambia de verdad en t=2 y en t=5.
+    const s = segmentarPorSolape([cap("a", 0, 5), cap("b", 2, 7)]);
+    expect(s.map((x) => [x.inicio, x.fin, x.captions.map((c) => c.id)])).toEqual([
+      [0, 2, ["a"]],
+      [2, 5, ["a", "b"]],
+      [5, 7, ["b"]],
+    ]);
+  });
+
+  it("un caption contenido en otro produce un tramo con las dos lineas", () => {
+    const s = segmentarPorSolape([cap("a", 0, 10), cap("b", 3, 5)]);
+    expect(s.map((x) => [x.inicio, x.fin, x.captions.map((c) => c.id)])).toEqual([
+      [0, 3, ["a"]],
+      [3, 5, ["a", "b"]],
+      [5, 10, ["a"]],
+    ]);
+  });
+
+  it("corta cuando el set de activos cambia, sin dejar texto colgando", () => {
+    // A=[0,10] B=[5,15] C=[12,20]: A y C NO se solapan. Una agrupacion en
+    // cadena daria un solo evento [0,20] con las tres y dejaria el texto de A
+    // 10 s despues de que termino.
+    const s = segmentarPorSolape([cap("a", 0, 10), cap("b", 5, 15), cap("c", 12, 20)]);
+    expect(s.map((x) => [x.inicio, x.fin, x.captions.map((c) => c.id)])).toEqual([
+      [0, 5, ["a"]],
+      [5, 10, ["a", "b"]],
+      [10, 12, ["b"]],
+      [12, 15, ["b", "c"]],
+      [15, 20, ["c"]],
+    ]);
+  });
+
+  it("no fusiona captions que solo se tocan", () => {
+    const s = segmentarPorSolape([cap("a", 0, 3), cap("b", 3, 6)]);
+    expect(s).toHaveLength(2);
+  });
+
+  it("ordena las lineas por inicio dentro del segmento", () => {
+    const s = segmentarPorSolape([cap("b", 4, 9), cap("a", 0, 6)]);
+    const conAmbas = s.find((x) => x.captions.length === 2);
+    expect(conAmbas!.captions.map((c) => c.id)).toEqual(["a", "b"]);
+  });
+
+  it("el mismo hablante solapado produce dos lineas en el tramo comun", () => {
+    const s = segmentarPorSolape([
+      { ...cap("a", 0, 5), hablante_id: "sp1" },
+      { ...cap("b", 2, 7), hablante_id: "sp1" },
+    ]);
+    const comun = s.find((x) => x.captions.length === 2);
+    expect(comun).toBeDefined();
+    expect(comun!.inicio).toBe(2);
+    expect(comun!.fin).toBe(5);
+  });
+
+  it("descarta captions de duracion cero", () => {
+    const s = segmentarPorSolape([cap("a", 0, 0), cap("b", 1, 3)]);
+    expect(s).toHaveLength(1);
+    expect(s[0].captions.map((c) => c.id)).toEqual(["b"]);
+  });
+
+  it("aguanta vacio y un solo caption", () => {
+    expect(segmentarPorSolape([])).toHaveLength(0);
+    expect(segmentarPorSolape([cap("a", 2, 3)])).toHaveLength(1);
+  });
+});
+
+describe("fusionarLineas", () => {
+  const base: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#FFFFFF" };
+  const rojo: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#E85D4E" };
+  const cine: PresetAss = {
+    ...DEFAULT_PRESET_ASS,
+    color: "#4EA8E8",
+    fontname: "Space Grotesk",
+    fontsize: 64,
+    outline: 4,
+  };
+
+  it("une con \\N y no emite overrides si todas las lineas usan el base", () => {
+    const texto = fusionarLineas(
+      [cap("a", 0, 3, "uno"), cap("b", 0, 3, "dos")],
+      () => base,
+      base,
+    );
+    expect(texto).toBe("uno\\Ndos");
+  });
+
+  it("emite \\c solo con el color que cambia", () => {
+    const texto = fusionarLineas(
+      [cap("a", 0, 3, "uno"), cap("b", 0, 3, "dos")],
+      (c) => (c.id === "a" ? base : rojo),
+      base,
+    );
+    expect(texto).toBe("uno\\N{\\c&H004E5DE8&}dos");
+  });
+
+  it("emite todos los campos que difieren del base", () => {
+    const texto = fusionarLineas(
+      [cap("a", 0, 3, "uno"), cap("b", 0, 3, "dos")],
+      (c) => (c.id === "a" ? base : cine),
+      base,
+    );
+    expect(texto).toBe(
+      "uno\\N{\\fnSpace Grotesk\\fs64\\c&H00E8A84E&\\bord4}dos",
+    );
+  });
+
+  it("no emite override para la primera linea si usa el base", () => {
+    const texto = fusionarLineas(
+      [cap("a", 0, 3, "uno"), cap("b", 0, 3, "dos")],
+      (c) => (c.id === "b" ? rojo : base),
+      base,
+    );
+    expect(texto.startsWith("uno\\N")).toBe(true);
+  });
+
+  it("escapa el texto de cada linea", () => {
+    const texto = fusionarLineas(
+      [cap("a", 0, 3, "l1\nl2"), cap("b", 0, 3, "{x}")],
+      () => base,
+      base,
+    );
+    expect(texto).toBe("l1\\Nl2\\N\\{x\\}");
+  });
+});
 describe("round-trip", () => {
+  const P_ROJO: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#E85D4E" };
+  const P_AZUL: PresetAss = { ...DEFAULT_PRESET_ASS, color: "#4EA8E8" };
+  const porHab = (id: string | null): PresetAss =>
+    id === "sp1" ? P_ROJO : id === "sp2" ? P_AZUL : DEFAULT_PRESET_ASS;
+  const build = (caps: Caption[], hab: Hablante[] = HABLANTES) =>
+    buildAss(caps, hab, porHab, 1920, 1080);
+
   it("reimportar un .ass exportado devuelve el mismo proyecto", () => {
     const caps: Caption[] = [
       { id: "c1", inicio: 1, fin: 4, texto: "Hola mundo", hablante_id: "sp1" },
       { id: "c2", inicio: 5, fin: 8, texto: "Segunda línea", hablante_id: "sp2" },
       { id: "c3", inicio: 9, fin: 12, texto: "Sin hablante", hablante_id: null },
     ];
-    const exportado = buildAss(caps, HABLANTES, PRESET, 1920, 1080);
-    const r = parseAss(exportado);
+    const r = parseAss(build(caps));
 
     expect(r.captions.map((c) => c.texto)).toEqual([
       "Hola mundo",
@@ -395,10 +498,8 @@ describe("round-trip", () => {
     const caps: Caption[] = [
       { id: "c1", inicio: 1, fin: 4, texto: "Hola", hablante_id: "sp1" },
     ];
-    const primera = parseAss(buildAss(caps, HABLANTES, PRESET, 1920, 1080));
-    const segunda = parseAss(
-      buildAss(primera.captions, primera.hablantes, PRESET, 1920, 1080),
-    );
+    const primera = parseAss(build(caps));
+    const segunda = parseAss(build(primera.captions, primera.hablantes));
     // buildAss emite un Style por cada hablante del array, usado o no, así que
     // el import reconstruye los dos. H2 no tiene eventos: su nombre cae al
     // nombre del estilo.
@@ -413,10 +514,25 @@ describe("round-trip", () => {
       { id: "c1", inicio: 1, fin: 2, texto: "yo soy maría", hablante_id: "sp2" },
       { id: "c2", inicio: 3, fin: 4, texto: "yo soy juan", hablante_id: "sp1" },
     ];
-    const r = parseAss(buildAss(caps, HABLANTES, PRESET, 1920, 1080));
+    const r = parseAss(build(caps));
     expect(r.hablantes.map((h) => h.id)).toEqual(["H1", "H2"]);
     expect(r.hablantes[0].nombre).toBe("Juan");
     expect(r.hablantes[1].nombre).toBe("María");
+  });
+
+  it("un evento fusionado vuelve como un caption con las lineas, sin los overrides", () => {
+    // Es la limitacion aceptada: unescapeAssText descarta los bloques {...},
+    // asi que el color por linea no sobrevive al round-trip. No es info
+    // corrupta, es info que no esta.
+    const caps: Caption[] = [
+      { id: "c1", inicio: 0, fin: 6, texto: "juan", hablante_id: "sp1" },
+      { id: "c2", inicio: 3, fin: 9, texto: "maria", hablante_id: "sp2" },
+    ];
+    const r = parseAss(build(caps));
+    const conDosLineas = r.captions.filter((c) => c.texto.includes("\n"));
+    expect(conDosLineas).toHaveLength(1);
+    expect(conDosLineas[0].texto).toBe("juan\nmaria");
+    expect(conDosLineas[0].texto).not.toContain("{");
   });
 });
 

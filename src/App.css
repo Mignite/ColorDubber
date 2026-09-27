@@ -1713,3 +1713,89 @@ button.primary:hover {
   background: none;
   color: var(--warn);
 }
+
+.assHead .grow,
+.assAssignRow .grow,
+.assAssignHead .grow {
+  flex: 1;
+}
+
+.assModalHead .grow {
+  flex: 1;
+}
+
+.assRight {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.assPresetSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px var(--borderStrong);
+}
+
+.assAssign {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.assAssignHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.assAssignTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--textFaint);
+}
+
+.assAssignRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--textDim);
+}
+
+.assAssignName {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assAssignDotSin {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #4a4853;
+}
+
+.assAssignRow select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 3px 6px;
+  min-width: 130px;
+}
+
+.assAssignRow select:focus {
+  outline: none;
+  border-color: var(--accent);
+}

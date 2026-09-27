@@ -3,15 +3,12 @@ import type { Hablante, PresetAss } from "../types";
 import { useLocale } from "../i18n";
 import { nuevoPreset } from "../utils/assPresets";
 import { fuentesDisponibles } from "../utils/fuentes";
-import { AssPreview } from "./AssPreview";
 
 interface Props {
   presets: PresetAss[];
   hablantes: Hablante[];
-  resX: number;
-  resY: number;
   onCerrar: () => void;
-  onExportar: (preset: PresetAss) => void;
+  onExportar: (asignacion: Record<string, string>, presetSinHablante: string) => void;
   onGuardar: (presets: PresetAss[]) => void;
 }
 
@@ -48,8 +45,6 @@ function nombreLibre(base: string, existentes: string[]): string {
 export function AssExportModal({
   presets,
   hablantes,
-  resX,
-  resY,
   onCerrar,
   onExportar,
   onGuardar,
@@ -61,6 +56,14 @@ export function AssExportModal({
   const [pendiente, setPendiente] = useState<(() => void) | null>(null);
   const [fuentes, setFuentes] = useState<string[]>([]);
   const [listaFuentesAbierta, setListaFuentesAbierta] = useState(false);
+  // Mapeo hablante -> preset SOLO para este export. No se persiste: no es una
+  // propiedad del hablante ni del proyecto, es una decisión de esta exportación.
+  const primero = presets[0]?.id ?? "";
+  const [asignacion, setAsignacion] = useState<Record<string, string>>({});
+  const [presetSinHablante, setPresetSinHablante] = useState<string>(primero);
+
+  const presetDe = (hablanteId: string): string =>
+    asignacion[hablanteId] ?? primero;
 
   // El modal se monta fresco en cada apertura, así que esto corre una vez por
   // apertura (y la promesa está cacheada por sesión).
@@ -141,9 +144,8 @@ export function AssExportModal({
       <div className="assModal" onClick={(e) => e.stopPropagation()}>
         <div className="assModalHead">
           <h2>{t("assExport.title")}</h2>
-          <span className="assPreviewLabel">
-            {resX}x{resY}
-          </span>
+          <span className="grow" />
+          <span className="muted">{t("assExport.assignmentHint")}</span>
         </div>
 
         <div className="assBody">
@@ -156,6 +158,11 @@ export function AssExportModal({
                 }
                 onClick={() => seleccionar(p.id)}
               >
+                <span
+                  className="assPresetSwatch"
+                  style={{ background: p.color }}
+                  aria-hidden="true"
+                />
                 {p.nombre}
               </button>
             ))}
@@ -181,9 +188,10 @@ export function AssExportModal({
             </div>
           </div>
 
-          {borrador && (
-            <div className="assFields">
-              <div className="assField">
+          <div className="assRight">
+            {borrador && (
+              <div className="assFields">
+                <div className="assField">
                 <label>{t("assExport.field_nombre")}</label>
                 <input
                   value={borrador.nombre}
@@ -288,21 +296,72 @@ export function AssExportModal({
                   onChange={(e) => editar("outlineColor", e.target.value)}
                 />
               </div>
-            </div>
-          )}
-        </div>
+              </div>
+            )}
 
-        {borrador && (
-          <div className="assPreviewWrap">
-            <div className="assPreviewLabel">{t("assExport.preview")}</div>
-            <AssPreview
-              preset={borrador}
-              hablantes={hablantes}
-              resX={resX}
-              resY={resY}
-            />
+            <div className="assAssign">
+              <div className="assAssignHead">
+                <span className="assAssignTitle">
+                  {t("assExport.assignment")}
+                </span>
+                <span className="grow" />
+                <button
+                  className="assPresetAdd"
+                  onClick={() => {
+                    const todos: Record<string, string> = {};
+                    for (const h of hablantes) todos[h.id] = borrador?.id ?? primero;
+                    setAsignacion(todos);
+                    setPresetSinHablante(borrador?.id ?? primero);
+                  }}
+                >
+                  {t("assExport.applyToAll")}
+                </button>
+              </div>
+              {hablantes.map((h) => (
+                <div className="assAssignRow" key={h.id}>
+                  <span
+                    className="speakerDot"
+                    style={{ background: h.color }}
+                    aria-hidden="true"
+                  />
+                  <span className="assAssignName">
+                    {h.nombre || h.tecla || h.id}
+                  </span>
+                  <span className="grow" />
+                  <select
+                    value={presetDe(h.id)}
+                    onChange={(e) =>
+                      setAsignacion((a) => ({ ...a, [h.id]: e.target.value }))
+                    }
+                  >
+                    {presets.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              <div className="assAssignRow">
+                <span className="assAssignDotSin" aria-hidden="true" />
+                <span className="assAssignName muted">
+                  {t("assExport.unassigned")}
+                </span>
+                <span className="grow" />
+                <select
+                  value={presetSinHablante || primero}
+                  onChange={(e) => setPresetSinHablante(e.target.value)}
+                >
+                  {presets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {pendiente && (
           <div className="assUnsaved">
@@ -339,7 +398,7 @@ export function AssExportModal({
           </button>
           <button
             className="addFragmentBtn primary"
-            onClick={() => borrador && onExportar(borrador)}
+            onClick={() => borrador && onExportar(asignacion, presetSinHablante || primero)}
             disabled={!borrador}
           >
             {t("assExport.export")}

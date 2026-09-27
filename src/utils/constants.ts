@@ -27,11 +27,6 @@ export const ISLA_FALLBACK = 1.5;
 
 // ==== Export .ass (Advanced SubStation Alpha) ====
 export const ASS_PRESETS_ARCHIVO = "presets_ass.json";
-// Ancho medio de glifo como fracción del tamaño de fuente. Conservador a
-// propósito: subestimar renglones hace que el caption de arriba se monte
-// encima del de abajo (el lado peligroso); sobreestimar solo deja un hueco.
-export const ASS_FACTOR_ANCHO = 0.5;
-export const ASS_FACTOR_ALTO_LINEA = 1.35;
 export const DEFAULT_PRESET_ASS: PresetAss = {
   id: "preset-default",
   nombre: "Default",

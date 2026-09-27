@@ -106,5 +106,9 @@
   "assExport.importPresetCreated": "Created preset \"{name}\" from the file.",
   "dialog.filterAss": "Advanced SubStation Alpha (.ass)",
   "assExport.fontPlaceholder": "Type or pick a font...",
-  "assExport.fontNotInstalled": "Not installed: the .ass will fall back"
+  "assExport.fontNotInstalled": "Not installed: the .ass will fall back",
+  "assExport.assignment": "Style per speaker",
+  "assExport.assignmentHint": "This export only, not saved",
+  "assExport.applyToAll": "Apply to all",
+  "assExport.unassigned": "Unassigned"
 }

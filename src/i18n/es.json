@@ -106,5 +106,9 @@
   "assExport.importPresetCreated": "Se creó el preset \"{name}\" desde el archivo.",
   "dialog.filterAss": "Advanced SubStation Alpha (.ass)",
   "assExport.fontPlaceholder": "Escribí o elegí una fuente...",
-  "assExport.fontNotInstalled": "No está instalada: el .ass caerá al fallback"
+  "assExport.fontNotInstalled": "No está instalada: el .ass caerá al fallback",
+  "assExport.assignment": "Estilo por hablante",
+  "assExport.assignmentHint": "Solo para este export, no se guarda",
+  "assExport.applyToAll": "Aplicar a todos",
+  "assExport.unassigned": "Sin hablante asignado"
 }
