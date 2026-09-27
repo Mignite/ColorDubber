@@ -155,15 +155,17 @@ describe("buildAss", () => {
   it("el color sale del preset del hablante, no de su color de paleta", () => {
     const out = build([cap("a", 0, 3)]);
     const styles = out.split("\n").filter((l) => l.startsWith("Style:"));
-    expect(styles[0]).toMatch(/^Style: H1,Inter,48,&H004E5DE8,/);
-    expect(styles[1]).toMatch(/^Style: H2,Inter,48,&H00E8A84E,/);
-    expect(styles[2]).toMatch(/^Style: Default,Inter,48,&H00FFFFFF,/);
+    // Se compara contra el nombre del preset, no hardcodeado: si el default
+    // cambia de fuente el test sigue valiendo.
+    expect(styles[0]).toMatch(new RegExp(`^Style: H1,${P_ROJO.fontname},48,&H004E5DE8,`));
+    expect(styles[1]).toMatch(new RegExp(`^Style: H2,${P_AZUL.fontname},48,&H00E8A84E,`));
+    expect(styles[2]).toMatch(new RegExp(`^Style: Default,${P_BLANCO.fontname},48,&H00FFFFFF,`));
   });
 
   it("un Style por hablante aunque compartan preset", () => {
     const out = buildAss([cap("a", 0, 3)], HABLANTES, () => P_ROJO, 1920, 1080);
-    expect(out).toContain("Style: H1,Inter,48,&H004E5DE8,");
-    expect(out).toContain("Style: H2,Inter,48,&H004E5DE8,");
+    expect(out).toContain(`Style: H1,${P_ROJO.fontname},48,&H004E5DE8,`);
+    expect(out).toContain(`Style: H2,${P_ROJO.fontname},48,&H004E5DE8,`);
   });
 
   it("usa el nombre cosmético en la columna Name y el estilo en la Style", () => {
