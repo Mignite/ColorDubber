@@ -1,4 +1,13 @@
 [build]
-# Target dir corto: el build de whisper-rs-sys con la ruta larga del SDK de
-# Vulkan supera el límite de longitud de ruta de Windows (error "path too long").
-target-dir = "C:/t/debug"
+# Target dir corto. Cargo busca config desde el cwd hacia los padres, y este
+# archivo está en la raíz para que LO VEA TANTO `tauri dev` (cwd = src-tauri/)
+# COMO un `cargo` manual desde la raíz. Antes había dos configs que se
+# contradecían (raíz -> C:/t/debug, src-tauri -> C:\t) y ganaba el más
+# cercano: cada uno leía un caché distinto, y builds "desaparecidos" de 9 GB
+# quedaban huérfanos. Un solo config, un solo target dir.
+#
+# Hace falta por路径 corto en Windows: builds nativos con rutas profundas
+# (CMake, Vulkan SDK) chocan con el límite de 260 caracteres. Ya no aplica a
+# las deps actuales (tauri, serde, symphonia, tokio) pero se mantiene: mover el
+# target de vuelta al default fuerza recompilar debug Y release desde cero.
+target-dir = "C:\\t"

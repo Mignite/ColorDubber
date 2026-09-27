@@ -14,14 +14,14 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 - `src/utils/captions.ts` — `findSnapTime()`, `BuildOverlapReport()` (no `computeCaptionLanes` — carriles ahora por hablante, ver session log)
 - `src/utils/time.ts` — `formatTime()`, `parseTimeInput()`
 - `src/hooks/useHistory.ts` — `pushHistorial`/`deshacer`/`rehacer` snapshot undo
-- `src/utils/__tests__/` — vitest suites for srt, time, captions, selection, audioIslands, autosubs (53 tests)
+- `src/utils/__tests__/` — vitest suites for srt, time, captions, selection, audioIslands, autosubs, ass, assPresets (113 tests)
 - `src-tauri/src/lib.rs` — All Rust commands + menu
 - `src-tauri/Cargo.toml` — Dependencies: tauri 2, symphonia, tokio
 - `design/mockup.html` — Approved design study (tokens, typography, track-per-speaker timeline)
 
 ## Commands
 - `npm run build` — tsc + vite build (typecheck gate; run before finishing)
-- `npm test` — vitest run (53 tests: srt/time/captions/selection/audioIslands/autosubs)
+- `npm test` — vitest run (113 tests: srt/time/captions/selection/audioIslands/autosubs/ass/assPresets)
 - `npm run dev` — browser-only Vite
 - `npm run tauri` — desktop dev
 - `npm run tauri:build:release` — release build (user runs it in admin terminal, installer lands in `C:\t\release\bundle\nsis`)
@@ -29,7 +29,15 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 
 ## Windows build prerequisites (after a fresh install/format)
 - **Visual Studio Build Tools** with C++ workload (MSVC), Rust toolchain, ffmpeg on PATH. (Sin whisper-rs no hay build CMake: ni CMake ni Vulkan SDK necesarios.)
-- **Target dir**: `.cargo/config.toml` sets `target-dir = "C:/t/debug"` to avoid Windows path-too-long errors (whisper-rs-sys + long Vulkan SDK path). Don't remove it.
+- **Target dir**: `.cargo/config.toml` (en la **raíz**, no en `src-tauri/`) sets
+  `target-dir = "C:\t"`. Debe quedar en la raíz a propósito: cargo busca config desde el cwd
+  hacia los padres, y `tauri dev` corre cargo con cwd = `src-tauri/`, así que un config en la
+  raíz es el único lugar que ven tanto `tauri dev` como un `cargo` manual desde la raíz.
+  **No dupliques el config en `src-tauri/`**: dos configs con `target-dir` distintos se
+  contradicen y gana el más cercano, cada invocation lee un caché distinto y quedan
+  directorios huérfanos (pasó: 9 GB en `C:\t\debug\debug` y `C:\t\debug\release`).
+  El motivo original del path corto (whisper-rs-sys + Vulkan SDK) ya no aplica: las deps
+  actuales son tauri/serde/symphonia/tokio. Ver "Session log 2026-09-26 — target dir duplicado".
 
 ## Critical Patterns
 1. **Dual ref+state** — `useRef` synced via a bare `useEffect` (no deps, App.tsx ~line 300) for every value read in rAF or event listeners. Ref is source of truth in callbacks.
