@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "colordubber-ai",
+  "productName": "ColorDubber",
   "version": "0.1.0",
-  "identifier": "com.migue.colordubberai",
+  "identifier": "com.migue.colordubber",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://127.0.0.1:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "colordubber",
+        "title": "ColorDubber",
         "width": 800,
         "height": 600
       }

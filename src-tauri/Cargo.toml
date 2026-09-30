@@ -1,10 +1,10 @@
 [package]
-name = "colordubber-ai"
+name = "colordubber"
 version = "0.1.0"
-description = "ColorDubber AI — editor de subtítulos multi-hablante con diarización"
+description = "ColorDubber — editor de subtítulos multi-hablante"
 authors = ["migue"]
 edition = "2021"
-default-run = "colordubber-ai"
+default-run = "colordubber"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

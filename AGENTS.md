@@ -28,7 +28,7 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 - `npm test` — vitest run (127 tests: srt/time/captions/selection/audioIslands/autosubs/ass/assPresets)
 - `npm run dev` — browser-only Vite
 - `npm run tauri` — desktop dev
-- `npm run tauri:build:release` — release build (~10 min en target limpio: 261 crates + LTO). Instalador en `src-tauri\target\release\bundle\nsis\colordubber-ai_0.1.0_x64-setup.exe` (2.2 MB). Per-user (`currentUser`): instalar en silencio con `/S`, sin admin
+- `npm run tauri:build:release` — release build (~10 min en target limpio: 261 crates + LTO). Instalador en `src-tauri\target\release\bundle\nsis\colordubber_0.1.0_x64-setup.exe` (2.2 MB). Per-user (`currentUser`): instalar en silencio con `/S`, sin admin
 - Rust has no linter configured
 
 ## Windows build prerequisites (after a fresh install/format)
