@@ -41,6 +41,11 @@
         "installMode": "currentUser",
         "installerIcon": "icons/icon.ico"
       }
+    },
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": true
+      }
     }
   }
 }

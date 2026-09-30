@@ -78,6 +78,16 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
   "Bebas Neue Regular" y "Arial Black" SÍ resuelven y quedan en la lista aunque la familia
   sea "Bebas Neue"/"Arial". Con `DirectWrite`/`font-kit` se obtendrían las familias limpias;
   ver la nota de deps abajo.
+- **AppImage crasheaba al abrir video (SIGABRT en WebKitWebProcess)**: NO era GPU ni NVIDIA —
+  era GStreamer. El AppImage traía el **core** de GStreamer 1.24.2 embebido y **ningún plugin**
+  (los plugins salen del host, que en Fedora 44 son de gstreamer 1.28.7). GStreamer rechaza
+  plugins de otra versión → no hay decodificador → el WebProcess aborta. La ventana abría bien
+  y el crash era solo al cargar un video, lo que despistaba. Diagnóstico: `strings` sobre
+  `squashfs-root/usr/lib/libgstreamer-1.0.so.0` vs `rpm -q gstreamer1` + `find -name "libgst*"`
+  (0 plugins en el AppImage). Fix: `bundle.linux.appimage.bundleMediaFramework = true`
+  (tauri.conf.json), que mete el stack completo coherente (+15-35 MB). El `.deb` nunca sufre
+  esto: usa `libwebkit2gtk-4.1-0`/`libgtk-3-0` del sistema, igual que el dev.
+  **Lección: app que manipula video en Linux necesita el media framework completo en el AppImage.**
 - **`devCsp` y el host de Vite**: el websocket de HMR tiene que estar permitido para el
   MISMO host al que apunta `devUrl`. `devUrl` está pineado a `127.0.0.1:1420` y Vite
   escucha en `127.0.0.1`, así que `connect-src` necesita `ws://127.0.0.1:1420` (dejar

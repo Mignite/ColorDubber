@@ -77,8 +77,13 @@ Frontend at `http://127.0.0.1:1420`, Rust backend with hot-reload.
 # Windows (NSIS installer):
 npm run tauri:build:release
 # Linux (config targets NSIS, override per build):
-npx tauri build --bundles deb   # or: appimage
+npx tauri build --bundles deb
+npx tauri build --bundles appimage
 ```
+
+> The AppImage bundles the full GStreamer stack (`bundleMediaFramework: true`) — without it the
+> AppImage ships GStreamer's core with no plugins, video decoding fails and the web process
+> crashes on opening any file. The `.deb` uses system libraries and is unaffected.
 
 ## Usage
 
