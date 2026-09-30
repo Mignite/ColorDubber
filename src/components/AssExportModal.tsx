@@ -42,6 +42,13 @@ function nombreLibre(base: string, existentes: string[]): string {
   return `${limpio} ${n}`;
 }
 
+/** CSS para pintar un nombre en su propia fuente (apoyo visual en el
+ *  selector). Entrecomillado + fallback sans-serif; undefined si vacío. */
+function familiaCss(nombre: string): string | undefined {
+  const limpio = nombre.trim().replace(/["']/g, "");
+  return limpio === "" ? undefined : `"${limpio}", sans-serif`;
+}
+
 export function AssExportModal({
   presets,
   hablantes,
@@ -216,6 +223,7 @@ export function AssExportModal({
                     ref={inputFuenteRef}
                     className="assFontInput"
                     value={borrador.fontname}
+                    style={{ fontFamily: familiaCss(borrador.fontname) }}
                     placeholder={t("assExport.fontPlaceholder")}
                     onFocus={() => setListaFuentesAbierta(true)}
                     onBlur={() =>
@@ -275,6 +283,7 @@ export function AssExportModal({
                           <button
                             key={f}
                             className="assFontItem"
+                            style={{ fontFamily: familiaCss(f) }}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                               editar("fontname", f);

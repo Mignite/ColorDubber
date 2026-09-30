@@ -525,23 +525,59 @@ fn escribir_archivo_texto(ruta: String, contenido: String) -> Result<(), String>
 /// del frontend descarta midiendo pero no puede renombrar.
 #[tauri::command]
 fn listar_fuentes_sistema() -> Result<Vec<String>, String> {
-    const PS: &str = "Add-Type -AssemblyName System.Drawing; [System.Drawing.Text.InstalledFontCollection]::new().Families | ForEach-Object { $_.Name }";
-    if let Ok(salida) = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", PS])
-        .output()
+    // Windows: GDI+ da las familias reales (ver doc arriba).
+    #[cfg(target_os = "windows")]
     {
-        let familias: Vec<String> = String::from_utf8_lossy(&salida.stdout)
-            .lines()
-            .map(|l| l.trim().to_string())
-            .filter(|l| !l.is_empty())
-            .collect();
-        if !familias.is_empty() {
-            return Ok(familias);
+        const PS: &str = "Add-Type -AssemblyName System.Drawing; [System.Drawing.Text.InstalledFontCollection]::new().Families | ForEach-Object { $_.Name }";
+        if let Ok(salida) = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", PS])
+            .output()
+        {
+            let familias: Vec<String> = String::from_utf8_lossy(&salida.stdout)
+                .lines()
+                .map(|l| l.trim().to_string())
+                .filter(|l| !l.is_empty())
+                .collect();
+            if !familias.is_empty() {
+                return Ok(familias);
+            }
         }
+        return Ok(familias_del_registro());
     }
-    Ok(familias_del_registro())
+    // Linux: fontconfig (`fc-list : family`, una familia por línea; las
+    // entradas multi-familia vienen separadas por coma). Sin deps nuevas.
+    #[cfg(target_os = "linux")]
+    {
+        return Ok(familias_fc_list());
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        return Ok(Vec::new());
+    }
 }
 
+#[cfg(target_os = "linux")]
+fn familias_fc_list() -> Vec<String> {
+    use std::collections::HashSet;
+    let Ok(salida) = std::process::Command::new("fc-list").args([":", "family"]).output()
+    else {
+        return Vec::new();
+    };
+    let mut vistas: HashSet<String> = HashSet::new();
+    let mut todas: Vec<String> = Vec::new();
+    for linea in String::from_utf8_lossy(&salida.stdout).lines() {
+        for parte in linea.split(',') {
+            let nombre = parte.trim().to_string();
+            if !nombre.is_empty() && vistas.insert(nombre.clone()) {
+                todas.push(nombre);
+            }
+        }
+    }
+    todas.sort();
+    todas
+}
+
+#[cfg(target_os = "windows")]
 fn familias_del_registro() -> Vec<String> {
     let claves = [
         r"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts",

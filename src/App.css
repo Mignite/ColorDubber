@@ -44,6 +44,10 @@
 
 /* ===== TOKENS ===== */
 :root {
+  /* Controles nativos (selects, popups, scrollbars) en tema oscuro.
+     Sin esto WebKitGTK los pinta claros y los popups cantan en blanco. */
+  color-scheme: dark;
+
   /* neutros (carbón cálido) */
   --bg: #121114;
   --surface: #1b1a20;
@@ -1453,6 +1457,13 @@ button.primary:hover {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Sin esto, cuando el contenido supera 88vh el algoritmo flex COMPRIME
+   head/body/footer (flex-shrink:1 por defecto) y el footer se pinta
+   encima de las filas de hablante en vez de quedar debajo con scroll. */
+.assModal > * {
+  flex-shrink: 0;
 }
 
 .assModalHead {
