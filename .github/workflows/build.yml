@@ -59,6 +59,19 @@ jobs:
           libwebkit2gtk-4.1-dev build-essential curl wget file
           libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 
+      # El plugin linuxdeploy de gstreamer (bundleMediaFramework) copia los
+      # plugins del sistema de build: sin estos paquetes aborta con
+      # "could not find plugins directory". patchelf lo exige tambien.
+      - name: Instala GStreamer + patchelf (Linux)
+        if: runner.os == 'Linux'
+        run: >
+          sudo apt-get update &&
+          sudo apt-get install -y
+          patchelf
+          gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+          gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly
+          gstreamer1.0-libav
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
