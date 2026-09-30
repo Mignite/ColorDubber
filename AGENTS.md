@@ -13,18 +13,22 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 - `src/utils/srt.ts` — `parseSrt()`, `buildSrt()`, `formatSrtTimestamp()`
 - `src/utils/captions.ts` — `findSnapTime()`, `BuildOverlapReport()` (no `computeCaptionLanes` — carriles ahora por hablante, ver session log)
 - `src/utils/time.ts` — `formatTime()`, `parseTimeInput()`
+- `src/utils/ass.ts` — Todo el formato `.ass`: `hexToAssColor`/`assColorToHex` (BGR invertido), `formatAssTime`/`parseAssTime` (centisegundos), `escapeAssText`/`unescapeAssText`, `segmentarPorSolape` (barrido), `overridesDeLinea`/`fusionarLineas`, `buildAss()`, `parseAss()`
+- `src/utils/assPresets.ts` — Presets globales en `appConfigDir()/presets_ass.json` (sin comandos Rust nuevos)
+- `src/utils/fuentes.ts` — `limpiarNombresFuentes`, `detectarFamilias`, `fuenteResuelve`, `fuentesDisponibles`
+- `src/components/AssExportModal.tsx` — Modal de export `.ass`: lista de presets, editor, filas hablante→preset (efímeras), selector de fuentes con caret
 - `src/hooks/useHistory.ts` — `pushHistorial`/`deshacer`/`rehacer` snapshot undo
-- `src/utils/__tests__/` — vitest suites for srt, time, captions, selection, audioIslands, autosubs, ass, assPresets (113 tests)
+- `src/utils/__tests__/` — vitest suites for srt, time, captions, selection, audioIslands, autosubs, ass, assPresets (127 tests)
 - `src-tauri/src/lib.rs` — All Rust commands + menu
 - `src-tauri/Cargo.toml` — Dependencies: tauri 2, symphonia, tokio
 - `design/mockup.html` — Approved design study (tokens, typography, track-per-speaker timeline)
 
 ## Commands
 - `npm run build` — tsc + vite build (typecheck gate; run before finishing)
-- `npm test` — vitest run (113 tests: srt/time/captions/selection/audioIslands/autosubs/ass/assPresets)
+- `npm test` — vitest run (127 tests: srt/time/captions/selection/audioIslands/autosubs/ass/assPresets)
 - `npm run dev` — browser-only Vite
 - `npm run tauri` — desktop dev
-- `npm run tauri:build:release` — release build (user runs it in admin terminal, installer lands in `C:\t\release\bundle\nsis`)
+- `npm run tauri:build:release` — release build (~10 min en target limpio: 261 crates + LTO). Instalador en `src-tauri\target\release\bundle\nsis\colordubber-ai_0.1.0_x64-setup.exe` (2.2 MB). Per-user (`currentUser`): instalar en silencio con `/S`, sin admin
 - Rust has no linter configured
 
 ## Windows build prerequisites (after a fresh install/format)
@@ -92,6 +96,12 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 - **Keyboard guard**: the global `keydown` returns early for `INPUT`/`TEXTAREA`/`SELECT` — arrow keys or space in the track `<select>` won't seek/play.
 - **Undo**: call `pushHistorial()` *after* validating (e.g., check `currentCaptionIdxRef` before pushing in `asignarHablante`) to avoid empty undo steps.
 - **Tauri en navegador**: `npm run dev` (vite puro) no tiene `window.__TAURI__` — `listen`/`invoke` lanzan "Cannot read properties of undefined (reading 'metadata')" en consola. Esperado; la UI igual renderiza.
+- **Formato `.ass` — tres gotchas que salen de ejecutarlo, no de leerlo**:
+  (1) Los colores son `&HAABBGGRR`, **BGR invertido** (`#E85D4E` → `&H004E5DE8`). Es lo que más se confunde al escribir un preset a ojo.
+  (2) `escapeAssText` tiene que escapar `\` y `{}` **primero** y recién al final convertir `\n`→`\N`. Al revés, el `\N` generado se re-escapa y el round-trip se rompe. Igual en `unescapeAssText` el orden es inverso.
+  (3) `parseAss` tiene que ordenar los hablantes por el **orden de las líneas `Style:` del archivo**, no por el de los eventos; si no, `H1`↔`H2` se renumeran cuando el hablante 2 habla primero. También tiene que unir las líneas de continuación de un `Dialogue:` y NO tratar `Comment:`/`Picture:` como continuaciones.
+  - El import es **parcial a propósito**: un evento fusionado que se reimporta pierde sus colores por línea porque `unescapeAssText` quita los `{...}`. Hay un test que fija esa limitación para que no se lea como bug.
+  - En JS, `\{` dentro de un template literal es un escape **descartado**: los fixtures de test necesitan `\\{`.
 - **Canvas vs HTML timeline**: canvas 56px (`WAVEFORM_H`) + `.trackArea` (max-height `TRACK_VISIBLE*TRACK_H` = 56px, scroll desde 5 carriles) + `.trackHandle` 16px. Grid y playhead del canvas empiezan en `TRACK_LABEL_W` (42px) para alinearse con los labels de carril; `playheadLine` (div) replica el playhead sobre los carriles desde `drawCanvasFrame`.
 - **ffmpeg + `.part` sin extensión**: ffmpeg 9 elige el muxer por la EXTENSIÓN del archivo de salida — escribir a `foo.part` (con `with_extension("part")`) falla con "Unable to choose an output format" y `extraer_audio_stream` DEJA DE FUNCIONAR (audio silencioso: el elemento `<audio>` nunca recibe src; el waveform SÍ se ve porque `analizar_volumen` decodifica del video con symphonia). SIEMPRE pasar `-f mp4` explícito en comandos ffmpeg cuyo output sea un `.part` (el rename final a `.m4a` preserva el formato).
 - **Audio mudo**: el `<audio>` element (video muteado por diseño) depende de `audioSrc` del track extraído. El sync de `canplay` debe ser PERMANENTE (no `{ once: true }`): con once, si el `audio.play()` se intenta antes de que el elemento esté listo (NotSupportedError silenciado por el catch) el audio queda mudo para siempre; el canplay permanente reintenta. NO desmutear el video como fallback (dos fuentes = combate de fase/tartamudeo); ante error del elemento: `audio.load()` + log `[AUDIO]`. El sync de `currentTime` lleva umbral de 0.5s (resetear a cada canplay/seeked del video —stalls de decodificación— tartamudea el audio). Verificación de contenido: ffmpeg `-af silencedetect` — el `.m4a` extraído es bit-exacto al stream del video (el usuario verifica en **mpv**).
@@ -190,7 +200,7 @@ Tauri v2 + React 19 + Rust. Multi-speaker subtitle editor (color-coding); auto-s
 - **User additions**: language selector (`es`/`en`/`auto`/`pt`/`fr`/`it`/`de`/`ja`/`zh`) + sampling mode (`beam5`/`greedy`) wired as dual ref+state (`idiomaWhisper`/`modoMuestreoWhisper`); decode tuning `set_language(None)` for auto; VAD model download is now async (`reqwest::get`, no `blocking` feature in Cargo.toml) with `.part`+rename; `CaptionList` virtualization improved (optional `rowRefs`, 600px height fallback, inline placeholder, ResizeObserver + `measure` callback).
 
 ## IPC Surface (commands)
-`guardar_proyecto`, `cargar_proyecto`, `existe_archivo`, `leer_archivo_texto`, `escribir_archivo_texto`, `escribir_archivo_en_carpeta`, `analizar_volumen` (emits `volumen_chunk`), `existe_cache_volumen`, `cargar_cache_volumen`, `listar_tracks_audio`, `extraer_audio_stream`, `verificar_ffmpeg`
+`guardar_proyecto`, `cargar_proyecto`, `existe_archivo`, `leer_archivo_texto`, `escribir_archivo_texto`, `escribir_archivo_en_carpeta`, `analizar_volumen` (emits `volumen_chunk`), `existe_cache_volumen`, `cargar_cache_volumen`, `listar_tracks_audio`, `extraer_audio_stream`, `verificar_ffmpeg`, `listar_fuentes_sistema` (GDI+/DirectWrite vía PowerShell, ~400 ms; registro solo de fallback)
 Era IA (hasta 2026-09-20): whisper-rs + polyvoice + pyannote externo; ver spec companion.
 
 ## Memoria del usuario
