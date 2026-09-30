@@ -29,7 +29,6 @@ AGENTS.md
 
 # Benchmarks de diarizacion: codigo, pesos de modelo (.onnx), ejecutables y
 # material de prueba. Son GB y NO van al repo. Un `git add -A` los metio en el
-# historial (commit 044f3b1, 2026-09-26) y el push subió ~1 GB de LFS.
-# Los .venv de Python que hay adentro son ademas la causa del watcher de Vite
-# colgandose (ver "Known Traps" en AGENTS.md).
+# historial (commit 044f3b1, 2026-09-26) y el push subio ~1 GB de LFS; se purgo
+# con filter-branch el 2026-09-29. La carpeta ya no esta en disco.
 diarization-benchmark/
